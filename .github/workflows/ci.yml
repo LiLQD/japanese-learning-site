@@ -9,14 +9,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false # Chặn tự động install trước khi setup-node nhận cache
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm format:check
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm build
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Code format check
+        run: pnpm format:check
+
+      - name: Lint check
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Run Tests
+        run: pnpm test
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
+      - name: Build Application
+        run: pnpm build
+        env:
+          DATABASE_URL: postgresql://app:app@localhost:5432/app
+          PRISMA_SKIP_POSTINSTALL_GENERATE: true
