@@ -3,6 +3,7 @@
   "private": true,
   "packageManager": "pnpm@12.9.1",
   "scripts": {
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",
@@ -10,6 +11,9 @@
     "test": "pnpm -r --if-present test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
+  },
+  "engines": {
+    "node": ">=24"
   },
   "devDependencies": {
     "prettier": "^3.9.9",
