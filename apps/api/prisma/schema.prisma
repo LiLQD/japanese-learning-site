@@ -38,6 +38,9 @@ model User {
   updatedAt       DateTime            @updatedAt
   sessions        Session[]
   tokens          VerificationToken[]
+  notifications   Notification[]
+  favoriteWords   FavoriteWord[]
+  flashcardDecks  FlashcardDeck[]
 
   @@map("users")
 }
@@ -66,4 +69,215 @@ model VerificationToken {
 
   @@index([userId])
   @@map("verification_tokens")
+}
+
+// ============================================================
+// Sprint 1: Dictionary
+// ============================================================
+
+model Word {
+  id            Int            @id @default(autoincrement())
+  text          String
+  jlpt          Int?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  readings      Reading[]
+  senses        Sense[]
+  wordKanjis    WordKanji[]
+  favoriteWords FavoriteWord[]
+
+  @@index([jlpt])
+  @@index([text])
+  @@map("words")
+}
+
+model Reading {
+  id        Int     @id @default(autoincrement())
+  wordId    Int
+  kana      String
+  isPrimary Boolean @default(false)
+  word      Word    @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([wordId, kana])
+  @@index([wordId])
+  @@index([kana])
+  @@map("readings")
+}
+
+model Sense {
+  id           Int     @id @default(autoincrement())
+  wordId       Int
+  partOfSpeech String[]
+  position     Int
+  word         Word    @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  glosses      Gloss[]
+
+  @@index([wordId])
+  @@map("senses")
+}
+
+model Gloss {
+  id      Int    @id @default(autoincrement())
+  senseId Int
+  lang    String
+  text    String
+  sense   Sense  @relation(fields: [senseId], references: [id], onDelete: Cascade)
+
+  @@index([senseId])
+  @@index([lang])
+  @@map("glosses")
+}
+
+model Kanji {
+  id          Int         @id @default(autoincrement())
+  character   String      @unique
+  strokeCount Int?
+  radical     String?
+  jlpt        Int?
+  grade       Int?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  wordKanjis  WordKanji[]
+
+  @@index([jlpt])
+  @@map("kanji")
+}
+
+model WordKanji {
+  wordId   Int
+  kanjiId  Int
+  position Int
+  word     Word  @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  kanji    Kanji @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+
+  @@id([wordId, position])
+  @@index([kanjiId])
+  @@map("word_kanji")
+}
+
+// ============================================================
+// Sprint 1: Notifications
+// ============================================================
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  type      String
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+// ============================================================
+// Sprint 2: Favorite words
+// ============================================================
+
+model FavoriteWord {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  wordId    Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  word      Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, wordId])
+  @@index([userId])
+  @@map("favorite_words")
+}
+
+// ============================================================
+// Sprint 2: Grammar
+// ============================================================
+
+model Grammar {
+  id        Int              @id @default(autoincrement())
+  title     String
+  pattern   String
+  meaning   String
+  jlpt      Int?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  examples  GrammarExample[]
+
+  @@index([jlpt])
+  @@map("grammars")
+}
+
+model GrammarExample {
+  id        Int     @id @default(autoincrement())
+  grammarId Int
+  japanese  String
+  reading   String?
+  english   String
+  position  Int
+  grammar   Grammar @relation(fields: [grammarId], references: [id], onDelete: Cascade)
+
+  @@index([grammarId])
+  @@map("grammar_examples")
+}
+
+// ============================================================
+// Sprint 2: Reading passages
+// ============================================================
+
+model ReadingPassage {
+  id        Int               @id @default(autoincrement())
+  title     String
+  content   String
+  jlpt      Int?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  questions ReadingQuestion[]
+
+  @@index([jlpt])
+  @@map("reading_passages")
+}
+
+model ReadingQuestion {
+  id           Int            @id @default(autoincrement())
+  passageId    Int
+  question     String
+  options      String[]
+  correctIndex Int
+  position     Int
+  passage      ReadingPassage @relation(fields: [passageId], references: [id], onDelete: Cascade)
+
+  @@index([passageId])
+  @@map("reading_questions")
+}
+
+// ============================================================
+// Sprint 2: Flashcards
+// ============================================================
+
+model FlashcardDeck {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  name        String
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cards       Flashcard[]
+
+  @@index([userId])
+  @@map("flashcard_decks")
+}
+
+model Flashcard {
+  id        Int           @id @default(autoincrement())
+  deckId    Int
+  front     String
+  back      String
+  position  Int
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deck      FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@index([deckId])
+  @@map("flashcards")
 }

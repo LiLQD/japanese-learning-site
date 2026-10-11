@@ -1,177 +1,334 @@
-# Data Model — Dictionary
+# Data Model
 
-Tài liệu này mô tả mô hình dữ liệu cho từ điển Nhật–Anh, phục vụ Sprint 2 (US-26 trở đi). Nó là thiết kế, chưa phải schema Prisma. Khi team đồng ý, sơ đồ này sẽ được chuyển thành `apps/api/prisma/schema.prisma`.
+Mô hình dữ liệu của hệ thống học tiếng Nhật. Tài liệu này phản ánh `apps/api/prisma/schema.prisma` và giải thích lý do đằng sau mỗi quyết định.
 
-## Phạm vi
+## Tổng quan
 
-Mô hình này chỉ bao phủ **từ điển**. Không bao gồm:
+Hệ thống có bốn nhóm bảng:
 
-- User, Session, VerificationToken (đã có trong schema hiện tại)
-- Tiến độ học của người dùng (Sprint 3)
-- Bài tập, quiz (Sprint 3)
-- Ngữ pháp (chưa có US cụ thể)
+1. **Tài khoản** — người dùng, phiên đăng nhập, token xác minh
+2. **Từ điển** — từ vựng, cách đọc, nghĩa, kanji
+3. **Thông báo** — thông báo cho người dùng
+4. **Học tập** — yêu thích, ngữ pháp, bài đọc, flashcard
 
-## Quyết định thiết kế
+Nhóm 1–3 phục vụ Sprint 1. Nhóm 4 phục vụ Sprint 2. Các bảng cho Sprint 3–4 (thanh toán, chat, quiz, báo cáo) chưa có, sẽ bổ sung khi chốt được các quyết định kỹ thuật tương ứng.
 
-1. **Word và Kanji là hai thực thể riêng.** Từ (word) là đơn vị tra cứu. Kanji là ký tự Hán tự, có thuộc tính riêng (số nét, bộ thủ). Một từ chứa nhiều kanji; một kanji xuất hiện trong nhiều từ.
-2. **Reading là một-nhiều với Word.** Một từ có thể có nhiều cách đọc (にほん, にっぽん).
-3. **Sense là một-nhiều với Word; Gloss là một-nhiều với Sense.** Một từ có nhiều nghĩa; mỗi nghĩa có nhiều gloss (tiếng Anh, sau này tiếng Việt).
-4. **JLPT level thuộc Word.** Đơn giản, đúng phần lớn trường hợp. Nếu sau này cần chính xác hơn, thêm cột `jlpt` nullable vào `senses` và để code ưu tiên sense-level.
-
-## Sơ đồ ERD
+## Sơ đồ quan hệ
 
 ```mermaid
 erDiagram
-    Word ||--o{ Reading : "has"
-    Word ||--o{ Sense : "has"
-    Sense ||--o{ Gloss : "has"
-    Word ||--o{ WordKanji : "contains"
+    User ||--o{ Session : "has"
+    User ||--o{ VerificationToken : "has"
+    User ||--o{ Notification : "receives"
+    User ||--o{ FavoriteWord : "saves"
+    User ||--o{ FlashcardDeck : "owns"
+
+    Word ||--o{ Reading : "read as"
+    Word ||--o{ Sense : "means"
+    Word ||--o{ WordKanji : "written with"
+    Word ||--o{ FavoriteWord : "saved by"
+
+    Sense ||--o{ Gloss : "translated as"
     Kanji ||--o{ WordKanji : "appears in"
 
-    Word {
-        int id PK
-        string text "cách viết chính (kanji hoặc kana)"
-        int jlpt "1-5, nullable"
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    Reading {
-        int id PK
-        int wordId FK
-        string kana "cách đọc bằng kana"
-        boolean isPrimary "cách đọc chính"
-    }
-
-    Sense {
-        int id PK
-        int wordId FK
-        string[] partOfSpeech "n, v1, adj-i, ..."
-        int order "thứ tự nghĩa"
-    }
-
-    Gloss {
-        int id PK
-        int senseId FK
-        string lang "en, vi, ..."
-        string text
-    }
-
-    Kanji {
-        int id PK
-        string character "một ký tự, unique"
-        int strokeCount "nullable"
-        string radical "nullable"
-        int jlpt "nullable"
-        int grade "nullable"
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    WordKanji {
-        int wordId FK
-        int kanjiId FK
-        int position "vị trí trong từ"
-    }
+    Grammar ||--o{ GrammarExample : "illustrated by"
+    ReadingPassage ||--o{ ReadingQuestion : "has"
+    FlashcardDeck ||--o{ Flashcard : "contains"
 ```
 
-## Giải thích từng bảng
+## Nhóm 1 — Tài khoản
+
+### `users`
+
+Bảng trung tâm. Mọi thứ khác đều gắn về đây.
+
+| Cột                      | Kiểu           | Ghi chú                                          |
+| ------------------------ | -------------- | ------------------------------------------------ |
+| `id`                     | SERIAL         | Khóa chính                                       |
+| `email`                  | TEXT UNIQUE    | Chuẩn hóa lowercase trước khi lưu                |
+| `passwordHash`           | TEXT           | bcryptjs, không bao giờ trả về API               |
+| `displayName`            | TEXT           | 1–50 ký tự                                       |
+| `avatarKey`              | TEXT NULL      | Tên file trong `uploads/`, không phải URL đầy đủ |
+| `role`                   | Role           | `USER` hoặc `ADMIN`                              |
+| `status`                 | AccountStatus  | `ACTIVE` hoặc `LOCKED`                           |
+| `emailVerifiedAt`        | TIMESTAMP NULL | NULL = chưa xác minh                             |
+| `createdAt`, `updatedAt` | TIMESTAMP      |                                                  |
+
+Hai enum: `Role` (hai giá trị) và `AccountStatus` (hai giá trị). Cố ý dùng enum thay vì bảng riêng — với hai giá trị cố định, một bảng join chỉ thêm phức tạp mà không thêm khả năng. Nếu sau này cần nhiều role hơn hoặc phân quyền theo hành động, chuyển thành bảng là một migration đơn giản.
+
+`avatarKey` chỉ lưu tên file, không lưu URL. Khi deploy lên host có ổ đĩa tạm, đổi sang object storage chỉ cần đổi hàm sinh URL, không cần đụng database.
+
+### `sessions`
+
+Phiên đăng nhập. Lưu server-side để có thể thu hồi ngay lập tức.
+
+| Cột         | Kiểu        | Ghi chú               |
+| ----------- | ----------- | --------------------- |
+| `id`        | SERIAL      |                       |
+| `tokenHash` | TEXT UNIQUE | SHA-256 của token thô |
+| `userId`    | INTEGER FK  | ON DELETE CASCADE     |
+| `expiresAt` | TIMESTAMP   |                       |
+| `createdAt` | TIMESTAMP   |                       |
+
+Chỉ lưu hash, không lưu token thô. Token thô đi vào cookie `httpOnly`, không bao giờ vào database. Nếu database rò rỉ, kẻ tấn công không có token dùng được.
+
+Index trên `userId` để khi khóa tài khoản (US-21) xóa được tất cả session của user bằng một câu lệnh.
+
+### `verification_tokens`
+
+Token dùng một lần cho xác minh email và đặt lại mật khẩu.
+
+| Cột         | Kiểu           | Ghi chú                              |
+| ----------- | -------------- | ------------------------------------ |
+| `id`        | SERIAL         |                                      |
+| `tokenHash` | TEXT UNIQUE    | SHA-256                              |
+| `type`      | TokenType      | `EMAIL_VERIFY` hoặc `PASSWORD_RESET` |
+| `userId`    | INTEGER FK     | ON DELETE CASCADE                    |
+| `expiresAt` | TIMESTAMP      |                                      |
+| `usedAt`    | TIMESTAMP NULL | NULL = chưa dùng                     |
+| `createdAt` | TIMESTAMP      |                                      |
+
+Cùng nguyên tắc với `sessions`: hash, không lưu token thô. `usedAt` để đảm bảo token chỉ dùng một lần — kiểm tra `usedAt IS NULL` trước khi chấp nhận.
+
+## Nhóm 2 — Từ điển
+
+Bốn thực thể: từ, cách đọc, nghĩa, kanji. Quan hệ nhiều-nhiều giữa từ và kanji qua bảng nối.
 
 ### `words`
 
-Đơn vị tra cứu chính. Một row là một từ.
+Đơn vị tra cứu chính.
 
-- `text` — cách viết chính. Với 日本 là `日本`. Với từ không có kanji (ví dụ これ) là kana.
-- `jlpt` — 1 đến 5, hoặc `NULL` nếu chưa xác định. JLPT N1 = 1, N5 = 5.
-- `createdAt`, `updatedAt` — giống bảng `users`.
+| Cột                      | Kiểu         | Ghi chú                           |
+| ------------------------ | ------------ | --------------------------------- |
+| `id`                     | SERIAL       |                                   |
+| `text`                   | TEXT         | Cách viết chính (kanji hoặc kana) |
+| `jlpt`                   | INTEGER NULL | 1–5, NULL nếu chưa xác định       |
+| `createdAt`, `updatedAt` | TIMESTAMP    |                                   |
 
-Index cần thiết:
+`text` **không unique**. Đồng âm khác nghĩa có thể trùng kana, và ngay cả kanji cũng có trường hợp trùng. Ràng buộc unique sẽ chặn dữ liệu hợp lệ; code xử lý tốt hơn.
 
-- `UNIQUE (text)` — không chắc, vì hai từ khác nhau có thể cùng cách viết? Thực tế hiếm, nhưng đồng âm khác nghĩa có thể cùng kana. Ví dụ 橋 (cầu) và 箸 (đũa) đều viết はし. Vậy **không unique** trên `text`. Nếu cần, dùng `(text, jlpt)` hoặc để code xử lý.
-- Index trên `jlpt` cho lọc theo cấp.
+`jlpt` thuộc về từ, không thuộc về nghĩa. Phần lớn từ có một cấp độ duy nhất. Nếu sau này cần chính xác hơn, thêm cột `jlpt` nullable vào `senses` và ưu tiên giá trị sense-level khi có.
+
+Index trên `text` và `jlpt`.
 
 ### `readings`
 
-Cách đọc của một từ.
+Cách đọc của từ.
 
-- `kana` — chuỗi kana, ví dụ `にほん`.
-- `isPrimary` — `true` cho cách đọc chính, `false` cho cách đọc phụ. Một từ có thể có 0 hoặc 1 primary.
+| Cột         | Kiểu       | Ghi chú           |
+| ----------- | ---------- | ----------------- |
+| `id`        | SERIAL     |                   |
+| `wordId`    | INTEGER FK | ON DELETE CASCADE |
+| `kana`      | TEXT       | Ví dụ `にほん`    |
+| `isPrimary` | BOOLEAN    | Cách đọc chính    |
 
-Index: `(wordId)`, có thể `UNIQUE (wordId, kana)`.
+Ràng buộc `UNIQUE (wordId, kana)`. Một từ có thể có nhiều cách đọc, và có thể có nhiều cách đọc chính trong trường hợp hiếm — không ràng buộc `isPrimary`.
+
+Index trên `kana` vì tìm kiếm theo cách đọc là một trong ba cách tra cứu chính.
 
 ### `senses`
 
 Một nghĩa của từ.
 
-- `partOfSpeech` — mảng chuỗi theo mã JMdict: `n` (noun), `v1` (ichidan verb), `adj-i` (i-adjective), `adv` (adverb), v.v. Dùng mảng vì một nghĩa có thể vừa là noun vừa là verb.
-- `order` — 1, 2, 3... để giữ thứ tự nghĩa như trong JMdict.
+| Cột            | Kiểu       | Ghi chú                             |
+| -------------- | ---------- | ----------------------------------- |
+| `id`           | SERIAL     |                                     |
+| `wordId`       | INTEGER FK | ON DELETE CASCADE                   |
+| `partOfSpeech` | TEXT[]     | Mã JMdict: `n`, `v1`, `adj-i`, v.v. |
+| `position`     | INTEGER    | Thứ tự nghĩa                        |
 
-Index: `(wordId)`.
+`partOfSpeech` là mảng vì một nghĩa có thể vừa là noun vừa là verb. Dùng mảng thay vì enum vì JMdict có khoảng ba mươi mã và có thể thay đổi; enum sẽ phải migrate mỗi lần.
+
+`position` giữ thứ tự nghĩa như trong nguồn dữ liệu. Gọi là `position` chứ không phải `order` vì `order` là từ khóa SQL.
 
 ### `glosses`
 
 Bản dịch của một nghĩa.
 
-- `lang` — `"en"`, `"vi"`, v.v. Dùng ISO 639-1.
-- `text` — nội dung gloss, ví dụ `"to open"`.
+| Cột       | Kiểu       | Ghi chú                     |
+| --------- | ---------- | --------------------------- |
+| `id`      | SERIAL     |                             |
+| `senseId` | INTEGER FK | ON DELETE CASCADE           |
+| `lang`    | TEXT       | ISO 639-1: `en`, `vi`, v.v. |
+| `text`    | TEXT       | Nội dung, ví dụ `to open`   |
 
-Index: `(senseId)`, `(lang)`.
+Thêm gloss tiếng Việt sau này chỉ là thêm row với `lang = 'vi'`. Không đổi schema.
 
 ### `kanji`
 
 Ký tự Hán tự riêng lẻ.
 
-- `character` — một ký tự duy nhất, ví dụ `日`. **UNIQUE.**
-- `strokeCount` — số nét.
-- `radical` — bộ thủ, ví dụ `日` thuộc bộ `日`.
-- `jlpt` — cấp JLPT của kanji (khác với cấp của word chứa nó).
-- `grade` — cấp học phổ thông Nhật (1–6, 8 cho joyo, 9–10 cho jinmeiyo).
+| Cột                      | Kiểu         | Ghi chú                                    |
+| ------------------------ | ------------ | ------------------------------------------ |
+| `id`                     | SERIAL       |                                            |
+| `character`              | TEXT UNIQUE  | Một ký tự duy nhất                         |
+| `strokeCount`            | INTEGER NULL | Số nét                                     |
+| `radical`                | TEXT NULL    | Bộ thủ                                     |
+| `jlpt`                   | INTEGER NULL | Cấp độ của kanji (khác cấp của từ chứa nó) |
+| `grade`                  | INTEGER NULL | Cấp học phổ thông Nhật                     |
+| `createdAt`, `updatedAt` | TIMESTAMP    |                                            |
+
+Tách khỏi `words` vì kanji có thuộc tính riêng (số nét, bộ thủ) và có thể học độc lập (US-37–40). Nếu gộp vào `words`, không có thực thể để gắn tiến độ học kanji.
 
 ### `word_kanji`
 
-Bảng nối giữa `words` và `kanji`.
+Bảng nối giữa từ và kanji.
 
-- `position` — vị trí kanji trong từ. 日本 có 日 ở vị trí 0, 本 ở vị trí 1.
-- Primary key tổng hợp: `(wordId, position)`. **Không** dùng `(wordId, kanjiId)` vì một từ có thể dùng cùng một kanji nhiều lần (ví dụ 木木, hiếm nhưng có).
+| Cột        | Kiểu       | Ghi chú         |
+| ---------- | ---------- | --------------- |
+| `wordId`   | INTEGER FK |                 |
+| `kanjiId`  | INTEGER FK |                 |
+| `position` | INTEGER    | Vị trí trong từ |
 
-## Search strategy
+Khóa chính tổng hợp `(wordId, position)`, không phải `(wordId, kanjiId)`. Lý do: một từ có thể dùng cùng một kanji nhiều lần (ví dụ 木木), và khi đó cần phân biệt bằng vị trí.
 
-Người dùng cần tìm theo ba cách:
+Index trên `kanjiId` để tra cứu ngược: một kanji xuất hiện trong những từ nào.
 
-1. **Theo kanji** — `SELECT * FROM words WHERE text LIKE '日本%'`. Index thường trên `text` là đủ cho giai đoạn đầu. Nếu dataset lớn, thêm GIN index với `pg_trgm`.
-2. **Theo reading** — join `words` với `readings` và tìm theo `kana`. Index trên `readings.kana`.
-3. **Theo gloss** — join `words → senses → glosses` và tìm theo `glosses.text` với `lang = 'en'`. Index trên `glosses.text` (hoặc full-text search sau này).
+## Nhóm 3 — Thông báo
 
-Giai đoạn đầu: dùng `LIKE '%...%'` cho cả ba. Khi dataset đạt ~200k từ (JMdict có khoảng đó), cân nhắc `pg_trgm` hoặc `tsvector`.
+### `notifications`
 
-## Nguồn dữ liệu và license
+| Cột         | Kiểu           | Ghi chú                                  |
+| ----------- | -------------- | ---------------------------------------- |
+| `id`        | SERIAL         |                                          |
+| `userId`    | INTEGER FK     | ON DELETE CASCADE                        |
+| `type`      | TEXT           | Ví dụ `EMAIL_VERIFIED`, `ACCOUNT_LOCKED` |
+| `payload`   | JSONB          | Nội dung tùy theo `type`                 |
+| `readAt`    | TIMESTAMP NULL | NULL = chưa đọc                          |
+| `createdAt` | TIMESTAMP      |                                          |
 
-Nguồn đề xuất:
+`type` là TEXT chứ không phải enum vì số loại thông báo sẽ tăng khi hệ thống mở rộng, và một enum cứng sẽ phải migrate mỗi lần thêm loại mới. Quy ước đặt tên trong code, không ràng buộc ở database.
 
-- **jmdict-simplified** (JSON) — phiên bản JSON của JMdict, dễ parse. Dùng cho `words`, `readings`, `senses`, `glosses`.
-- **kanjidic2** (bản simplified JSON nếu có) — dùng cho `kanji`.
+`payload` là JSONB vì mỗi loại thông báo cần dữ liệu khác nhau. Ví dụ:
 
-Cả hai đều thuộc **EDRDG License** (Electronic Dictionary Research and Development Group). Tóm tắt điều kiện:
+- `EMAIL_VERIFIED` → `{ verifiedAt: "..." }`
+- `ACCOUNT_LOCKED` → `{ reason: "..." }`
 
-- Được phép dùng, sao chép, phân phối lại, kể cả thương mại.
-- Phải ghi công EDRDG trong tài liệu sản phẩm.
-- Không được bán riêng dữ liệu từ điển như một sản phẩm độc lập.
+Index tổng hợp `(userId, readAt)` để câu truy vấn "đếm thông báo chưa đọc của user" chạy nhanh.
 
-**Bắt buộc:** Đọc license gốc tại http://www.edrdg.org/edrdg/licence.html trước khi import, và ghi credit vào README của repo (mục 0.C.6). Đây là việc phải làm trước khi merge bất kỳ PR nào import dữ liệu.
+## Nhóm 4 — Học tập
 
-## Tiến hóa schema
+### `favorite_words`
 
-Ba thay đổi có khả năng xảy ra, và cách xử lý không phá vỡ schema cũ:
+Từ vựng người dùng đã lưu.
 
-1. **Gloss tiếng Việt** — chỉ thêm row với `lang = 'vi'`. Không đổi schema.
-2. **JLPT theo sense** — thêm cột `jlpt` nullable vào `senses`. Code ưu tiên sense-level nếu có, fallback về word-level.
-3. **Kanji có nhiều âm on/kun** — thêm bảng `kanji_readings` với `kanjiId`, `kana`, `type` (`on` hoặc `kun`). Không đổi bảng `kanji` hiện tại.
+| Cột         | Kiểu       | Ghi chú           |
+| ----------- | ---------- | ----------------- |
+| `id`        | SERIAL     |                   |
+| `userId`    | INTEGER FK | ON DELETE CASCADE |
+| `wordId`    | INTEGER FK | ON DELETE CASCADE |
+| `createdAt` | TIMESTAMP  |                   |
 
-## Việc cần review
+Ràng buộc `UNIQUE (userId, wordId)` — không yêu thích cùng một từ hai lần.
 
-Trước khi chuyển sang `schema.prisma`:
+### `grammars`
 
-- [ ] Tên bảng dùng snake_case (Postgres convention), tên model Prisma dùng PascalCase. Cần thống nhất trước khi sinh migration.
-- [ ] `partOfSpeech` dùng mảng chuỗi hay enum? Mảng linh hoạt hơn; enum an toàn hơn nhưng phải liệt kê hết mã JMdict.
-- [ ] `words.text` không unique — cần xác nhận với team rằng điều này chấp nhận được.
-- [ ] Có cần `createdAt`/`updatedAt` cho các bảng con (`readings`, `senses`, `glosses`) không? Hiện đang bỏ.
+Cấu trúc ngữ pháp.
+
+| Cột                      | Kiểu         | Ghi chú                        |
+| ------------------------ | ------------ | ------------------------------ |
+| `id`                     | SERIAL       |                                |
+| `title`                  | TEXT         | Tên hiển thị, ví dụ `～ている` |
+| `pattern`                | TEXT         | Cấu trúc, ví dụ `V-て + いる`  |
+| `meaning`                | TEXT         | Giải thích                     |
+| `jlpt`                   | INTEGER NULL |                                |
+| `createdAt`, `updatedAt` | TIMESTAMP    |                                |
+
+### `grammar_examples`
+
+Ví dụ cho một cấu trúc ngữ pháp.
+
+| Cột         | Kiểu       | Ghi chú            |
+| ----------- | ---------- | ------------------ |
+| `id`        | SERIAL     |                    |
+| `grammarId` | INTEGER FK | ON DELETE CASCADE  |
+| `japanese`  | TEXT       | Câu tiếng Nhật     |
+| `reading`   | TEXT NULL  | Cách đọc bằng kana |
+| `english`   | TEXT       | Bản dịch           |
+| `position`  | INTEGER    | Thứ tự             |
+
+### `reading_passages`
+
+Bài đọc tiếng Nhật.
+
+| Cột                      | Kiểu         | Ghi chú          |
+| ------------------------ | ------------ | ---------------- |
+| `id`                     | SERIAL       |                  |
+| `title`                  | TEXT         |                  |
+| `content`                | TEXT         | Nội dung bài đọc |
+| `jlpt`                   | INTEGER NULL |                  |
+| `createdAt`, `updatedAt` | TIMESTAMP    |                  |
+
+### `reading_questions`
+
+Câu hỏi trắc nghiệm cho bài đọc.
+
+| Cột            | Kiểu       | Ghi chú                           |
+| -------------- | ---------- | --------------------------------- |
+| `id`           | SERIAL     |                                   |
+| `passageId`    | INTEGER FK | ON DELETE CASCADE                 |
+| `question`     | TEXT       |                                   |
+| `options`      | TEXT[]     | Các lựa chọn                      |
+| `correctIndex` | INTEGER    | Index đáp án đúng trong `options` |
+| `position`     | INTEGER    | Thứ tự                            |
+
+Lưu `options` dưới dạng mảng và `correctIndex` là số nguyên, thay vì mỗi lựa chọn một row riêng. Cách này đơn giản hơn cho câu hỏi trắc nghiệm cố định, và không có nhu cầu truy vấn riêng lẻ từng lựa chọn.
+
+### `flashcard_decks`
+
+Bộ flashcard của người dùng.
+
+| Cột                      | Kiểu       | Ghi chú           |
+| ------------------------ | ---------- | ----------------- |
+| `id`                     | SERIAL     |                   |
+| `userId`                 | INTEGER FK | ON DELETE CASCADE |
+| `name`                   | TEXT       |                   |
+| `description`            | TEXT NULL  |                   |
+| `createdAt`, `updatedAt` | TIMESTAMP  |                   |
+
+### `flashcards`
+
+Thẻ trong một bộ.
+
+| Cột                      | Kiểu       | Ghi chú           |
+| ------------------------ | ---------- | ----------------- |
+| `id`                     | SERIAL     |                   |
+| `deckId`                 | INTEGER FK | ON DELETE CASCADE |
+| `front`                  | TEXT       | Mặt trước         |
+| `back`                   | TEXT       | Mặt sau           |
+| `position`               | INTEGER    | Thứ tự trong bộ   |
+| `createdAt`, `updatedAt` | TIMESTAMP  |                   |
+
+## Chiến lược tìm kiếm
+
+Người dùng tra cứu theo ba cách:
+
+**Theo cách viết** — `words.text LIKE '%q%'`. Index thường trên `text` đủ cho giai đoạn đầu.
+
+**Theo cách đọc** — join `words` với `readings`, tìm trên `readings.kana`. Index trên `kana`.
+
+**Theo nghĩa** — join `words → senses → glosses`, tìm trên `glosses.text` với `lang = 'en'`. Index trên `glosses.text`.
+
+Khi dataset đạt khoảng 200.000 từ (kích thước của JMdict), cân nhắc `pg_trgm` hoặc `tsvector` cho cả ba trường hợp. Ở quy mô đồ án, `LIKE` là đủ.
+
+## Nguồn dữ liệu
+
+Hai nguồn, cùng license EDRDG:
+
+- **jmdict-simplified** — JMdict dạng JSON. Cung cấp dữ liệu cho `words`, `readings`, `senses`, `glosses`.
+- **kanjidic2** — dạng JSON. Cung cấp dữ liệu cho `kanji`.
+
+License yêu cầu ghi công EDRDG trong tài liệu sản phẩm. Xem mục Credits trong `README.md`.
+
+Dữ liệu thô không commit vào Git — file JSON của JMdict nặng hàng chục MB. Import qua script seed, không qua migration.
+
+## Bảng chưa có
+
+Các nhóm bảng sau chưa được thiết kế vì phụ thuộc vào quyết định kỹ thuật chưa chốt:
+
+- **Thanh toán** — `Payment`, `Subscription`, `PremiumPlan`. Phụ thuộc vào việc chọn cổng thanh toán (VNPay, Momo, Stripe). Mỗi cổng có cấu trúc giao dịch khác nhau.
+- **Chat** — `Conversation`, `Message`. Phụ thuộc vào việc chọn WebSocket hay polling.
+- **Quiz** — `Quiz`, `QuizAttempt`, `QuizAnswer`. Chưa chốt cấu trúc câu hỏi và cách chấm điểm.
+- **Báo cáo và kiểm duyệt** — `Report`, `Feedback`, `Comment`. Chưa chốt đối tượng bị báo cáo (từ vựng, bình luận, người dùng) và quy trình xử lý.
+
+Khi gần tới Sprint 3, chốt các quyết định trên rồi thiết kế. Thêm bảng mới bằng migration riêng, không sửa migration cũ.
