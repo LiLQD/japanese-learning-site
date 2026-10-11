@@ -1,160 +1,160 @@
 # Japanese Learning Site
 
-Ứng dụng web hỗ trợ học tiếng Nhật.
+Ứng dụng web hỗ trợ học tiếng Nhật: từ vựng, kanji, ngữ pháp, từ điển, flashcard, quiz và các bài luyện tập.
 
-## Tech Stack
+Dự án đang trong giai đoạn xây dựng, phát triển theo 4 sprint trong 10 tuần.
+
+## Tech stack
+
+**Frontend**
 
 - React + TypeScript + Vite
-- Express + TypeScript
-- Zod
-- PostgreSQL
-- pnpm workspace
+- React Router
+- TanStack Query
+- Tailwind CSS
 
-## 1. Clone repository
+**Backend**
 
-```bash
-git clone git@github.com:LiLQD/japanese-learning-site.git
-cd japanese-learning-site
-```
+- Node.js + Express 5
+- TypeScript
+- Prisma 7 + PostgreSQL 17
+- Helmet
 
-## 2. Cài đặt môi trường
+**Shared**
 
-Yêu cầu:
+- Zod (schema dùng chung giữa web và api)
 
-- Node.js
-- pnpm 12
+**Testing & tooling**
+
+- Vitest, Supertest
+- ESLint, Prettier
+- TypeScript
+- GitHub Actions CI
+
+**Dev services**
+
+- PostgreSQL 17 (Docker)
+- Mailpit (SMTP local cho email)
+
+## Yêu cầu
+
+- Node.js 24
+- pnpm (xem trường `packageManager` trong `package.json`)
 - Docker + Docker Compose
+- Git
 
 Kiểm tra:
 
-```bash
-node --version
-pnpm --version
-docker --version
-docker compose version
-```
+    node --version
+    pnpm --version
+    docker compose version
+
+## Cài đặt
+
+Clone repository:
+
+    git clone git@github.com:LiLQD/japanese-learning-site.git
+    cd japanese-learning-site
 
 Cài dependencies:
 
-```bash
-pnpm install
-```
+    pnpm install
 
 Tạo file môi trường:
 
-```bash
-cp .env.example .env
-```
+    cp apps/api/.env.example apps/api/.env
 
-## 3. Chạy project
+Khởi động PostgreSQL và Mailpit:
 
-Khởi động PostgreSQL:
+    docker compose up -d
 
-```bash
-docker compose up -d
-```
+Chạy migration và sinh Prisma Client:
 
-Khởi động web và API:
+    pnpm db:migrate
+    pnpm db:generate
 
-```bash
-pnpm dev
-```
+Nạp dữ liệu mẫu:
 
-Web: `http://localhost:5173`
+    pnpm db:seed
 
-API: `http://localhost:3000`
+Seed tạo sẵn:
 
-Health check:
+- Admin: `admin@localhost` / `admin1234`
+- User: `user@localhost` / `user1234`
+- 20 từ tiếng Nhật mẫu có readings, senses và glosses
 
-```bash
-curl http://localhost:3000/api/health
-```
+## Chạy dự án
 
-## 4. Trước khi tạo PR
+    pnpm dev
 
-Chạy các kiểm tra:
+Các dịch vụ:
 
-```bash
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-```
+| Dịch vụ    | URL                                                  |
+| ---------- | ---------------------------------------------------- |
+| Web        | http://localhost:5173                                |
+| API        | http://localhost:3000                                |
+| API health | http://localhost:3000/api/health                     |
+| Mailpit UI | http://localhost:8025                                |
+| PostgreSQL | localhost:5432 (user/password/db: `app`/`app`/`app`) |
 
-Tất cả phải pass trước khi tạo Pull Request.
+Vite dev server proxy `/api/*` sang API ở cổng 3000, nên frontend có thể gọi đường dẫn tương đối.
 
-## 5. Tạo branch
+## Kiểm tra trước khi commit
 
-Không làm việc trực tiếp trên `main`.
+    pnpm format
+    pnpm check
 
-Cập nhật `main` trước:
+`pnpm format` tự sửa format. `pnpm check` chạy đúng những gì CI chạy: format check, lint, typecheck, test, build. Cả hai phải xanh trước khi tạo pull request.
 
-```bash
-git switch main
-git pull
-```
+Chi tiết quy trình làm việc, đặt tên branch, commit message và quy tắc review: xem [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-Tạo branch mới:
+## Scripts
 
-```bash
-git switch -c feat/ten-tinh-nang
-```
+| Lệnh               | Mô tả                               |
+| ------------------ | ----------------------------------- |
+| `pnpm dev`         | Chạy web và api song song           |
+| `pnpm build`       | Build production cho tất cả package |
+| `pnpm test`        | Chạy test                           |
+| `pnpm lint`        | Chạy ESLint                         |
+| `pnpm typecheck`   | Kiểm tra TypeScript                 |
+| `pnpm format`      | Format code bằng Prettier           |
+| `pnpm check`       | Chạy toàn bộ kiểm tra (giống CI)    |
+| `pnpm db:up`       | Chỉ khởi động PostgreSQL            |
+| `pnpm db:migrate`  | Tạo và áp dụng migration mới        |
+| `pnpm db:generate` | Sinh Prisma Client                  |
+| `pnpm db:seed`     | Nạp dữ liệu mẫu                     |
 
-Ví dụ:
+## Cấu trúc repository
 
-```bash
-git switch -c feat/dictionary-search
-```
+    apps/
+      web/       # React + Vite frontend
+      api/       # Express + Prisma backend
+    packages/
+      shared/    # Zod schemas và TypeScript types dùng chung
+    docs/        # Tài liệu thiết kế
 
-## 6. Commit
+Chi tiết mô hình dữ liệu: xem [docs/data-model.md](./docs/data-model.md).
 
-```bash
-git status
-git add -A
-git commit -m "feat: add dictionary search"
-```
+## Cấu trúc dữ liệu
 
-Các prefix thường dùng:
+Hệ thống có bốn nhóm bảng:
 
-- `feat:` — tính năng mới
-- `fix:` — sửa lỗi
-- `refactor:` — refactor code
-- `test:` — thêm hoặc sửa test
-- `docs:` — documentation
-- `chore:` — cấu hình/tooling
+- **Tài khoản**: `users`, `sessions`, `verification_tokens`
+- **Từ điển**: `words`, `readings`, `senses`, `glosses`, `kanji`, `word_kanji`
+- **Thông báo**: `notifications`
+- **Học tập**: `favorite_words`, `grammars`, `grammar_examples`, `reading_passages`, `reading_questions`, `flashcard_decks`, `flashcards`
 
-## 7. Push và tạo Pull Request
+Bảng cho thanh toán, chat, quiz và báo cáo sẽ được thêm ở các sprint sau.
 
-```bash
-git push -u origin HEAD
-gh pr create --fill
-```
+## License và ghi công
 
-Trong PR nên ghi rõ:
+Mã nguồn phát triển cho mục đích học tập.
 
-- Đã thay đổi gì
-- Vì sao cần thay đổi
-- Đã test như thế nào
-- Issue liên quan, nếu có
+Dữ liệu từ điển (khi được import ở Sprint 2) sẽ lấy từ hai nguồn thuộc Electronic Dictionary Research and Development Group (EDRDG):
 
-## 8. Review và merge
+- [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html) — từ điển Nhật–Anh
+- [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project) — từ điển Hán tự
 
-Theo dõi CI:
+Nguồn JSON: [jmdict-simplified](https://github.com/scriptin/jmdict-simplified)
 
-```bash
-gh pr checks --watch
-```
-
-Chờ CI pass và reviewer review trước khi merge.
-
-## Project Structure
-
-```text
-apps/
-  web/       # Frontend
-  api/       # Backend API
-
-packages/
-  shared/    # Shared schemas và types
-```
+License của EDRDG cho phép sử dụng, sao chép và phân phối lại, kể cả cho mục đích thương mại, với điều kiện phải ghi công EDRDG trong tài liệu sản phẩm. Chi tiết đầy đủ: [edrdg.org/edrdg/licence.html](http://www.edrdg.org/edrdg/licence.html).
