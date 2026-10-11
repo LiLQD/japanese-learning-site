@@ -91,11 +91,11 @@ Khi conflict xảy ra:
 
 1. Giải quyết `package.json` trước, chọn đúng dependency cần giữ.
 2. Chọn bản của `main` cho `pnpm-lock.yaml`:
-   
+
        git checkout --theirs pnpm-lock.yaml
 
 3. Chạy lại để sinh lock file mới:
-   
+
        pnpm install
 
 4. Commit kết quả.
