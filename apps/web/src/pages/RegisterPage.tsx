@@ -10,43 +10,76 @@ function RegisterPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+ 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    // Xóa thông báo cũ
     setError("");
     setSuccess("");
 
-    // Kiểm tra họ tên
     if (!displayName.trim()) {
       setError("Vui lòng nhập họ và tên.");
       return;
     }
 
-   
-const emailPattern = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
 
-if (!emailPattern.test(email.trim())) {
-  setError("Vui lòng nhập email hợp lệ, ví dụ abc@gmail.com.");
-  return;
-}
+    if (!emailPattern.test(email.trim())) {
+      setError("Vui lòng nhập email hợp lệ.");
+      return;
+    }
 
-
-    // Kiểm tra độ dài mật khẩu
     if (password.length < 8) {
       setError("Mật khẩu phải có ít nhất 8 ký tự.");
       return;
     }
 
-    // Kiểm tra xác nhận mật khẩu
     if (password !== confirmPassword) {
       setError("Mật khẩu xác nhận không khớp.");
       return;
     }
 
-    // Hiện tại mới kiểm tra dữ liệu trên giao diện
-    setSuccess("Thông tin hợp lệ! Có thể tiếp tục đăng ký.");
+    try {
+      const response = await fetch("http://localhost:3000/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          displayName: displayName.trim(),
+          email: email.trim(),
+          password,
+          confirmPassword,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+  const message =
+    typeof data.message === "string"
+      ? data.message
+      : typeof data.error === "string"
+        ? data.error
+        : "Đăng ký thất bại. Vui lòng thử lại.";
+
+  throw new Error(message);
+}
+
+      setSuccess("Đăng ký tài khoản thành công!");
+      setDisplayName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Không thể kết nối đến máy chủ."
+      );
+    }
   }
+
 
   return (
     <div className="register-page">
