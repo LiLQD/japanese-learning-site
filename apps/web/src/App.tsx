@@ -4,7 +4,7 @@ import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
 import "./App.css";
-
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 function App() {
   return (
     <BrowserRouter>
@@ -17,7 +17,7 @@ function App() {
 
         {/* Trang đăng nhập */}
         <Route path="/login" element={<LoginPage />} />
-
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         {/* Đường dẫn không tồn tại: quay về trang chủ */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

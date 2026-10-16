@@ -17,3 +17,19 @@ export const registerSchema = z
   });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const verificationRequestSchema = z.object({
+  email: z.string().trim().email("Email không hợp lệ").max(255),
+});
+
+export type VerificationRequestInput = z.infer<
+  typeof verificationRequestSchema
+>;
+
+export const verificationConfirmSchema = z.object({
+  token: z.string().trim().min(1, "Token không được để trống"),
+});
+
+export type VerificationConfirmInput = z.infer<
+  typeof verificationConfirmSchema
+>;

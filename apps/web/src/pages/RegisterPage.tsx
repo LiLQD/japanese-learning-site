@@ -10,9 +10,8 @@ function RegisterPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
- 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  event.preventDefault();
 
     setError("");
     setSuccess("");
@@ -22,9 +21,10 @@ function RegisterPage() {
       return;
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
     const emailPattern = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
 
-    if (!emailPattern.test(email.trim())) {
+    if (!emailPattern.test(normalizedEmail)) {
       setError("Vui lòng nhập email hợp lệ.");
       return;
     }
@@ -40,14 +40,14 @@ function RegisterPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/auth/register", {
+      const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           displayName: displayName.trim(),
-          email: email.trim(),
+          email: normalizedEmail,
           password,
           confirmPassword,
         }),
@@ -56,17 +56,37 @@ function RegisterPage() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-  const message =
-    typeof data.message === "string"
-      ? data.message
-      : typeof data.error === "string"
-        ? data.error
-        : "Đăng ký thất bại. Vui lòng thử lại.";
+        const message =
+          typeof data.message === "string"
+            ? data.message
+            : typeof data.error === "string"
+              ? data.error
+              : "Đăng ký thất bại. Vui lòng thử lại.";
 
-  throw new Error(message);
-}
+        throw new Error(message);
+      }
 
-      setSuccess("Đăng ký tài khoản thành công!");
+      const verificationResponse = await fetch(
+        "/api/auth/verification/request",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: normalizedEmail }),
+        },
+      );
+
+      if (!verificationResponse.ok) {
+        throw new Error(
+          "Tài khoản đã được tạo, nhưng chưa gửi được yêu cầu xác minh email. Vui lòng thử gửi lại sau.",
+        );
+      }
+
+      setSuccess(
+        "Đăng ký thành công! Vui lòng kiểm tra email để xác minh tài khoản. Nếu chưa thấy thư, hãy kiểm tra cả mục Spam.",
+      );
+
       setDisplayName("");
       setEmail("");
       setPassword("");
@@ -75,7 +95,7 @@ function RegisterPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Không thể kết nối đến máy chủ."
+          : "Không thể kết nối đến máy chủ.",
       );
     }
   }
