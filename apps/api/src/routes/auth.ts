@@ -1,7 +1,7 @@
 
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-
+import { requireAuth } from "../middleware/auth.js";
 import { createHash, randomBytes } from "node:crypto";
 import {
   registerSchema,
@@ -16,7 +16,32 @@ import { conflict } from "../errors.js";
 import { validateBody } from "../middleware/validate.js";
 
 const router = Router();
+router.get("/me", requireAuth, async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: {
+        id: true,
+        displayName: true,
+        email: true,
+        role: true,
+        status: true,
+        emailVerifiedAt: true,
+      },
+    });
 
+    if (!user || user.status !== "ACTIVE") {
+      res.status(401).json({
+        message: "Phiên đăng nhập không hợp lệ hoặc đã hết hạn.",
+      });
+      return;
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    next(error);
+  }
+});
 router.post("/register", validateBody(registerSchema), async (req, res, next) => {
   try {
     const { displayName, email, password } = registerSchema.parse(req.body);

@@ -1,9 +1,11 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { useAuth } from "../contexts/AuthContext";
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,7 +42,7 @@ function LoginPage() {
         );
         return;
       }
-
+      await refreshUser();
       // Đăng nhập thành công, chuyển về trang chủ.
       navigate("/");
     } catch {
