@@ -1,15 +1,18 @@
 import authRouter from "./routes/auth.js";
 import express from "express";
 import helmet from "helmet";
+import { loadSession } from "./middleware/load-session.js";
 import { healthResponseSchema } from "@app/shared";
 import { errorHandler, notFoundHandler } from "./middleware/error.js";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 export function createApp() {
   const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5174",
+    origin: ["http://localhost:5173", "http://localhost:5174"],
+    credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -17,6 +20,8 @@ app.use(
 
 app.use(helmet());
 app.use(express.json());
+app.use(cookieParser());
+app.use(loadSession);
 app.use("/api/auth", authRouter);
   app.get("/api/health", (_req, res) => {
     res.json(healthResponseSchema.parse({ status: "ok" }));

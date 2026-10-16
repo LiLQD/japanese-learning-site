@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { createHash, randomBytes } from "node:crypto";
 import {
   registerSchema,
+  loginSchema,
   verificationRequestSchema,
   verificationConfirmSchema,
 } from "@app/shared";
@@ -184,4 +185,87 @@ router.post(
   },
 );
 
+router.post("/login", validateBody(loginSchema), async (req, res, next) => {
+  try {
+    const { email, password } = loginSchema.parse(req.body);
+    const normalizedEmail = email.toLowerCase();
+
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    // Không tiết lộ email nào đã đăng ký.
+    if (!user) {
+      res.status(401).json({
+        message: "Email hoặc mật khẩu không chính xác.",
+      });
+      return;
+    }
+
+    const passwordMatches = await bcrypt.compare(
+      password,
+      user.passwordHash,
+    );
+
+    if (!passwordMatches) {
+      res.status(401).json({
+        message: "Email hoặc mật khẩu không chính xác.",
+      });
+      return;
+    }
+
+    if (user.status !== "ACTIVE") {
+      res.status(403).json({
+        message: "Tài khoản hiện không thể đăng nhập.",
+      });
+      return;
+    }
+
+    if (!user.emailVerifiedAt) {
+      res.status(403).json({
+        message: "Vui lòng xác minh email trước khi đăng nhập.",
+        code: "EMAIL_NOT_VERIFIED",
+      });
+      return;
+    }
+
+    const sessionToken = randomBytes(32).toString("hex");
+
+const tokenHash = createHash("sha256")
+  .update(sessionToken)
+  .digest("hex");
+
+const expiresAt = new Date(
+  Date.now() + 7 * 24 * 60 * 60 * 1000,
+);
+
+await prisma.session.create({
+  data: {
+    tokenHash,
+    userId: user.id,
+    expiresAt,
+  },
+});
+
+res.cookie("yume_session", sessionToken, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  path: "/",
+  expires: expiresAt,
+});
+
+res.status(200).json({
+  message: "Đăng nhập thành công.",
+  user: {
+    id: user.id,
+    displayName: user.displayName,
+    email: user.email,
+    role: user.role,
+  },
+});
+  } catch (error) {
+    next(error);
+  }
+});
 export default router;
