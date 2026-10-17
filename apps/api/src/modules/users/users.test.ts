@@ -3,16 +3,20 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthUser } from "../../types.js";
 
-const { findManyMock, countMock, transactionMock } = vi.hoisted(() => ({
-  findManyMock: vi.fn(),
-  countMock: vi.fn(),
-  transactionMock: vi.fn(),
-}));
+const { findManyMock, findUniqueMock, countMock, transactionMock } = vi.hoisted(
+  () => ({
+    findManyMock: vi.fn(),
+    findUniqueMock: vi.fn(),
+    countMock: vi.fn(),
+    transactionMock: vi.fn(),
+  }),
+);
 
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     user: {
       findMany: findManyMock,
+      findUnique: findUniqueMock,
       count: countMock,
     },
     $transaction: transactionMock,
@@ -157,4 +161,75 @@ describe("GET /api/admin/users", () => {
     expect(res.body.error.code).toBe("BAD_REQUEST");
     expect(findManyMock).not.toHaveBeenCalled();
   });
+});
+
+describe("GET /api/admin/users/:id", () => {
+  const sampleUser = {
+    ...sampleUsers[0],
+    updatedAt: new Date("2026-10-11T00:00:00.000Z"),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    findUniqueMock.mockResolvedValue(sampleUser);
+  });
+
+  it("returns 401 when not authenticated", async () => {
+    const res = await request(makeApp()).get("/api/admin/users/2");
+
+    expect(res.status).toBe(401);
+    expect(findUniqueMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for a non-admin user", async () => {
+    const res = await request(makeApp({ id: 2, role: "USER" })).get(
+      "/api/admin/users/2",
+    );
+
+    expect(res.status).toBe(403);
+    expect(findUniqueMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the user details", async () => {
+    const res = await request(makeApp(admin)).get("/api/admin/users/2");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      user: {
+        ...sampleUsers[0],
+        createdAt: "2026-10-10T00:00:00.000Z",
+        updatedAt: "2026-10-11T00:00:00.000Z",
+      },
+    });
+    expect(findUniqueMock).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 2 } }),
+    );
+  });
+
+  it("never selects passwordHash", async () => {
+    await request(makeApp(admin)).get("/api/admin/users/2");
+
+    const { select } = findUniqueMock.mock.calls[0][0];
+    expect(select).not.toHaveProperty("passwordHash");
+  });
+
+  it("returns 404 when the user does not exist", async () => {
+    findUniqueMock.mockResolvedValue(null);
+
+    const res = await request(makeApp(admin)).get("/api/admin/users/999");
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe("NOT_FOUND");
+  });
+
+  it.each(["abc", "0", "-1", "1.5"])(
+    "returns 400 for invalid id %s",
+    async (id) => {
+      const res = await request(makeApp(admin)).get(`/api/admin/users/${id}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("BAD_REQUEST");
+      expect(findUniqueMock).not.toHaveBeenCalled();
+    },
+  );
 });

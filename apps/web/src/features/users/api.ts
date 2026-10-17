@@ -1,4 +1,8 @@
-import type { ErrorResponse, UserListResponse } from "@app/shared";
+import type {
+  ErrorResponse,
+  UserDetailResponse,
+  UserListResponse,
+} from "@app/shared";
 
 export async function fetchUsers(
   page: number,
@@ -26,4 +30,22 @@ export async function fetchUsers(
   }
 
   return (await response.json()) as UserListResponse;
+}
+
+export async function fetchUser(id: number): Promise<UserDetailResponse> {
+  const response = await fetch(`/api/admin/users/${id}`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const data = (await response
+      .json()
+      .catch(() => null)) as ErrorResponse | null;
+    throw new Error(
+      data?.error?.message ?? "Không thể tải thông tin người dùng.",
+    );
+  }
+
+  return (await response.json()) as UserDetailResponse;
 }
