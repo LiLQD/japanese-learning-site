@@ -3,11 +3,13 @@ import type { ErrorResponse, UserListResponse } from "@app/shared";
 export async function fetchUsers(
   page: number,
   pageSize: number,
+  q = "",
 ): Promise<UserListResponse> {
   const params = new URLSearchParams({
     page: String(page),
     pageSize: String(pageSize),
   });
+  if (q) params.set("q", q);
 
   const response = await fetch(`/api/admin/users?${params}`, {
     method: "GET",

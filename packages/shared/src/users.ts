@@ -12,6 +12,13 @@ export const userListQuerySchema = z.object({
     .min(1, "Kích thước trang phải lớn hơn hoặc bằng 1")
     .max(100, "Kích thước trang tối đa là 100")
     .default(20),
+  // Search by email or display name; an empty string means no filter.
+  q: z
+    .string()
+    .trim()
+    .max(100, "Từ khóa tìm kiếm tối đa 100 ký tự")
+    .optional()
+    .transform((value) => value || undefined),
 });
 
 export type UserListQuery = z.infer<typeof userListQuerySchema>;

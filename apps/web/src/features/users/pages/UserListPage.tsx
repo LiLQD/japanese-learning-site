@@ -6,29 +6,45 @@ import { fetchUsers } from "../api";
 import UserTable from "../components/UserTable";
 
 const PAGE_SIZE = 20;
+const SEARCH_DELAY_MS = 300;
 
 function UserListPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const isAdmin = user?.role === "ADMIN";
 
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<UserListResponse | null>(null);
-  // Page whose request has finished (success or error); loading until it matches.
-  const [loadedPage, setLoadedPage] = useState<number | null>(null);
+  // Request whose response has arrived (success or error); loading until it matches.
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const isLoading = loadedPage !== page;
+  const requestKey = `${page}|${search}`;
+  const isLoading = loadedKey !== requestKey;
+
+  // Wait until the admin stops typing, then search from the first page.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const term = searchInput.trim();
+      if (term === search) return;
+      setSearch(term);
+      setPage(1);
+    }, SEARCH_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [searchInput, search]);
 
   useEffect(() => {
     if (!isAdmin) return;
 
     let cancelled = false;
 
-    fetchUsers(page, PAGE_SIZE)
+    fetchUsers(page, PAGE_SIZE, search)
       .then((result) => {
         if (cancelled) return;
         setData(result);
         setErrorMessage("");
-        setLoadedPage(page);
+        setLoadedKey(requestKey);
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -37,13 +53,13 @@ function UserListPage() {
             ? error.message
             : "Không thể tải danh sách người dùng.",
         );
-        setLoadedPage(page);
+        setLoadedKey(requestKey);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [isAdmin, page]);
+  }, [isAdmin, page, search, requestKey]);
 
   if (isAuthLoading) {
     return (
@@ -78,14 +94,41 @@ function UserListPage() {
     <main>
       <h1>Quản lý người dùng</h1>
 
-      {data && <p>Tổng số: {data.total} người dùng</p>}
+      <form role="search" onSubmit={(event) => event.preventDefault()}>
+        <label htmlFor="user-search">Tìm kiếm</label>
+        <input
+          id="user-search"
+          type="search"
+          placeholder="Nhập email hoặc họ tên"
+          maxLength={100}
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
+        />
+      </form>
+
+      {data && (
+        <p>
+          {search
+            ? `Tìm thấy ${data.total} người dùng cho "${search}"`
+            : `Tổng số: ${data.total} người dùng`}
+        </p>
+      )}
 
       {errorMessage && <p role="alert">{errorMessage}</p>}
 
       {isLoading && !data ? (
         <p>Đang tải danh sách...</p>
       ) : (
-        data && <UserTable users={data.users} />
+        data && (
+          <UserTable
+            users={data.users}
+            emptyMessage={
+              search
+                ? "Không tìm thấy người dùng phù hợp."
+                : "Chưa có người dùng nào."
+            }
+          />
+        )
       )}
 
       <nav>

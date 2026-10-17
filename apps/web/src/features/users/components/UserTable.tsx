@@ -2,15 +2,19 @@ import type { UserListItem } from "@app/shared";
 
 type UserTableProps = {
   users: UserListItem[];
+  emptyMessage?: string;
 };
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("vi-VN");
 }
 
-function UserTable({ users }: UserTableProps) {
+function UserTable({
+  users,
+  emptyMessage = "Chưa có người dùng nào.",
+}: UserTableProps) {
   if (users.length === 0) {
-    return <p>Chưa có người dùng nào.</p>;
+    return <p>{emptyMessage}</p>;
   }
 
   return (
