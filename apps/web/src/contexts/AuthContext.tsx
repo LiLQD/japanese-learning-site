@@ -18,6 +18,7 @@ type AuthContextType = {
   user: AuthUser | null;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,13 +47,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
   }
+  async function logout() {
+  try {
+    const response = await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
 
+    if (!response.ok) {
+      throw new Error("Đăng xuất thất bại.");
+    }
+
+    setUser(null);
+  } catch (error) {
+    throw error;
+  }
+}
   useEffect(() => {
     void refreshUser();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, refreshUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -293,4 +293,35 @@ res.status(200).json({
     next(error);
   }
 });
+
+router.post("/logout", async (req, res, next) => {
+  try {
+    const sessionToken = req.cookies?.yume_session;
+
+    if (sessionToken) {
+      const tokenHash = createHash("sha256")
+        .update(sessionToken)
+        .digest("hex");
+
+      await prisma.session.deleteMany({
+        where: {
+          tokenHash,
+        },
+      });
+    }
+
+    res.clearCookie("yume_session", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    });
+
+    res.status(200).json({
+      message: "Đăng xuất thành công.",
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 export default router;
