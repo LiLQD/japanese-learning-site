@@ -1,4 +1,5 @@
 import authRouter from "./routes/auth.js";
+import usersRouter from "./modules/users/users.routes.js";
 import express from "express";
 import helmet from "helmet";
 import { loadSession } from "./middleware/load-session.js";
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(loadSession);
 app.use("/api/auth", authRouter);
+app.use("/api/admin/users", usersRouter);
   app.get("/api/health", (_req, res) => {
     res.json(healthResponseSchema.parse({ status: "ok" }));
   });
