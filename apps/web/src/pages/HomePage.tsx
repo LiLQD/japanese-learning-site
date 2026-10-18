@@ -1,61 +1,57 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { useAuth } from "../contexts/auth-context";
+import Navbar from "../components/Navbar";
+import "./HomePage.css";
 
-function HomePage() {
-  const { user, isLoading, logout } = useAuth();
-  const navigate = useNavigate();
-  const [error, setError] = useState("");
-
-  async function handleLogout() {
-    setError("");
-
-    try {
-      await logout();
-      navigate("/login");
-    } catch {
-      setError("Đăng xuất thất bại. Vui lòng thử lại.");
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <main>
-        <p>Đang kiểm tra phiên đăng nhập...</p>
-      </main>
-    );
-  }
-
+export default function HomePage() {
   return (
-    <main>
-      <h1>Chào mừng đến với Japanese Learning</h1>
-      <p>Học tiếng Nhật theo cách của bạn.</p>
+    <div className="home-layout">
+      <Navbar />
 
-      {user ? (
-        <section>
-          <h2>Xin chào, {user.displayName}!</h2>
-          <p>Email: {user.email}</p>
-          <p>Vai trò: {user.role}</p>
+      <main className="home-main">
+        {/* Hero Section */}
+        <section className="hero-section">
+          <div className="hero-content">
+            <h1 className="hero-title">
+              Học tiếng Nhật,
+              <br />
+              từng bước một
+            </h1>
+            <p className="hero-desc">
+              Tra từ, luyện hán tự và ôn ngữ pháp ở cùng một nơi. [Mô tả ngắn
+              của sản phẩm]
+            </p>
+            <div className="hero-actions">
+              <button className="btn-primary">Bắt đầu học</button>
+              <button className="btn-outline">Tra từ điển</button>
+            </div>
+          </div>
 
-          {user.role === "ADMIN" && (
-            <Link to="/admin/users">Quản lý người dùng</Link>
-          )}
-
-          {error && <p role="alert">{error}</p>}
-
-          <button type="button" onClick={handleLogout}>
-            Đăng xuất
-          </button>
+          <div className="hero-card">
+            <div className="card-header">
+              <span>Từ ví dụ</span>
+              <span className="jlpt-badge jlpt-n5">N5</span>
+            </div>
+            <h2 className="card-word">勉強</h2>
+            <p className="card-reading">べんきょう</p>
+            <p className="card-meaning">study; studying</p>
+          </div>
         </section>
-      ) : (
-        <p>
-          <Link to="/register">Đăng ký tài khoản</Link>
-          {" | "}
-          <Link to="/login">Đăng nhập</Link>
-        </p>
-      )}
-    </main>
+
+        {/* Feature Cards */}
+        <section className="features-section">
+          <div className="feature-card">
+            <h3>Từ vựng và hán tự</h3>
+            <p>Tra nghĩa, cách đọc và các chữ hán trong từ.</p>
+          </div>
+          <div className="feature-card">
+            <h3>Ngữ pháp và bài đọc</h3>
+            <p>Mẫu câu có ví dụ, bài đọc theo cấp độ JLPT.</p>
+          </div>
+          <div className="feature-card">
+            <h3>Ôn tập</h3>
+            <p>Thẻ ghi nhớ và bài kiểm tra để theo dõi tiến độ.</p>
+          </div>
+        </section>
+      </main>
+    </div>
   );
 }
-
-export default HomePage;
