@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import { updateProfileSchema, changePasswordSchema } from "@app/shared";
+import { updateAvatar } from "./profile.service.js";
 import { badRequest, notFound } from "../../errors.js";
 import {
   getProfile,
@@ -46,6 +47,18 @@ export const updatePassword: RequestHandler = async (req, res, next) => {
       result.data.newPassword,
     );
     res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadAvatar: RequestHandler = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return next(badRequest("Vui lòng chọn file ảnh"));
+    }
+    const user = await updateAvatar(req.user!.id, req.file.filename);
+    res.status(200).json({ user });
   } catch (error) {
     next(error);
   }

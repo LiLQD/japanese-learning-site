@@ -38,3 +38,21 @@ export async function changePassword(data: ChangePasswordInput): Promise<void> {
     throw new Error(error.error?.message || "Đổi mật khẩu thất bại");
   }
 }
+
+export async function uploadAvatar(
+  file: File,
+): Promise<{ user: { avatarKey: string } }> {
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  const res = await fetch("/api/users/me/avatar", {
+    method: "POST",
+    body: formData, // Không set Content-Type, trình duyệt tự làm
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error?.message || "Upload ảnh thất bại");
+  }
+  return res.json();
+}

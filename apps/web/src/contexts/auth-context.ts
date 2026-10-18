@@ -5,6 +5,7 @@ export type AuthUser = {
   displayName: string;
   email: string;
   role: "USER" | "ADMIN";
+  avatarKey?: string | null;
 };
 
 export type AuthContextType = {

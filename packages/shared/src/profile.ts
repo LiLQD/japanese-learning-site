@@ -16,6 +16,7 @@ export type ProfileResponse = {
   displayName: string;
   role: "USER" | "ADMIN";
   status: "ACTIVE" | "LOCKED";
+  avatarKey: string | null;
   createdAt: string;
 };
 

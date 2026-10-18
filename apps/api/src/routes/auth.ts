@@ -29,6 +29,7 @@ router.get("/me", requireAuth, async (req, res, next) => {
         role: true,
         status: true,
         emailVerifiedAt: true,
+        avatarKey: true,
       },
     });
 
