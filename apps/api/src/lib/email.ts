@@ -1,4 +1,3 @@
-
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
@@ -11,8 +10,7 @@ export async function sendVerificationEmail(
   to: string,
   token: string,
 ): Promise<void> {
-  const baseUrl =
-    process.env.WEB_BASE_URL ?? "http://localhost:5173";
+  const baseUrl = process.env.WEB_BASE_URL ?? "http://localhost:5173";
 
   const verificationUrl = new URL("/verify-email", baseUrl);
   verificationUrl.searchParams.set("token", token);
