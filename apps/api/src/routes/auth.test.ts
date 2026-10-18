@@ -1,10 +1,7 @@
-
 import express from "express";
 import request from "supertest";
 import bcrypt from "bcryptjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-
 
 const {
   findUniqueMock,
@@ -42,11 +39,9 @@ vi.mock("../lib/prisma.js", () => ({
   },
 }));
 
-
 vi.mock("../lib/email.js", () => ({
   sendVerificationEmail: sendVerificationEmailMock,
 }));
-
 
 import authRouter from "./auth.js";
 import { errorHandler, notFoundHandler } from "../middleware/error.js";
@@ -65,12 +60,12 @@ describe("POST /api/auth/register", () => {
     vi.clearAllMocks();
     findUniqueMock.mockResolvedValue(null);
     createMock.mockImplementation(async ({ data }) => ({
-  id: 1,
-  displayName: data.displayName,
-  email: data.email,
-  role: "USER",
-  createdAt: new Date("2026-01-01T00:00:00.000Z"),
-}));
+      id: 1,
+      displayName: data.displayName,
+      email: data.email,
+      role: "USER",
+      createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    }));
   });
 
   const validBody = {
@@ -96,10 +91,7 @@ describe("POST /api/auth/register", () => {
     const createArgs = createMock.mock.calls[0][0];
     expect(createArgs.data.passwordHash).not.toBe(validBody.password);
     expect(
-      await bcrypt.compare(
-        validBody.password,
-        createArgs.data.passwordHash,
-      ),
+      await bcrypt.compare(validBody.password, createArgs.data.passwordHash),
     ).toBe(true);
   });
 
@@ -174,8 +166,7 @@ describe("POST /api/auth/verification/request", () => {
     expect(tokenArgs.data.userId).toBe(10);
     expect(tokenArgs.data.tokenHash).toMatch(/^[a-f0-9]{64}$/);
 
-    const [sentEmail, sentToken] =
-      sendVerificationEmailMock.mock.calls[0];
+    const [sentEmail, sentToken] = sendVerificationEmailMock.mock.calls[0];
     expect(sentEmail).toBe("test@example.com");
     expect(sentToken).toMatch(/^[a-f0-9]{64}$/);
     expect(tokenArgs.data.tokenHash).not.toBe(sentToken);

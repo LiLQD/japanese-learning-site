@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import "./RegisterPage.css";
 
@@ -11,7 +10,7 @@ function RegisterPage() {
   const [success, setSuccess] = useState("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
+    event.preventDefault();
 
     setError("");
     setSuccess("");
@@ -93,13 +92,10 @@ function RegisterPage() {
       setConfirmPassword("");
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Không thể kết nối đến máy chủ.",
+        err instanceof Error ? err.message : "Không thể kết nối đến máy chủ.",
       );
     }
   }
-
 
   return (
     <div className="register-page">
@@ -147,17 +143,13 @@ function RegisterPage() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="confirmPassword">
-              Xác nhận mật khẩu
-            </label>
+            <label htmlFor="confirmPassword">Xác nhận mật khẩu</label>
             <input
               id="confirmPassword"
               type="password"
               placeholder="Nhập lại mật khẩu"
               value={confirmPassword}
-              onChange={(event) =>
-                setConfirmPassword(event.target.value)
-              }
+              onChange={(event) => setConfirmPassword(event.target.value)}
               required
             />
           </div>
