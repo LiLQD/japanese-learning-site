@@ -6,7 +6,6 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 import UserListPage from "./features/users/pages/UserListPage";
 import UserDetailPage from "./features/users/pages/UserDetailPage";
 import { AuthProvider } from "./contexts/AuthContext";
-import "./App.css";
 
 function App() {
   return (
