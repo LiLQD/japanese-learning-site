@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/auth-context";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -13,9 +12,7 @@ function LoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setErrorMessage("");
@@ -90,9 +87,7 @@ function LoginPage() {
               <input
                 type="checkbox"
                 checked={showPassword}
-                onChange={(event) =>
-                  setShowPassword(event.target.checked)
-                }
+                onChange={(event) => setShowPassword(event.target.checked)}
               />
               Hiện mật khẩu
             </label>

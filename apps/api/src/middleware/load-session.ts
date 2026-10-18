@@ -1,4 +1,3 @@
-
 import type { RequestHandler } from "express";
 import { createHash } from "node:crypto";
 import { prisma } from "../lib/prisma.js";
@@ -12,9 +11,7 @@ export const loadSession: RequestHandler = async (req, _res, next) => {
       return;
     }
 
-    const tokenHash = createHash("sha256")
-      .update(sessionToken)
-      .digest("hex");
+    const tokenHash = createHash("sha256").update(sessionToken).digest("hex");
 
     const session = await prisma.session.findFirst({
       where: {

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import "./VerifyEmailPage.css";
@@ -8,11 +7,20 @@ type VerificationResult = {
   message: string;
 };
 
+type Status = "loading" | "success" | "error";
+
+type ViewState = {
+  status: Status;
+  message: string;
+};
+
+const MISSING_TOKEN_STATE: ViewState = {
+  status: "error",
+  message: "Liên kết xác minh không hợp lệ vì thiếu token.",
+};
+
 // Dùng chung yêu cầu API nếu React chạy effect nhiều lần
-const verificationRequests = new Map<
-  string,
-  Promise<VerificationResult>
->();
+const verificationRequests = new Map<string, Promise<VerificationResult>>();
 
 function verifyToken(token: string): Promise<VerificationResult> {
   const existingRequest = verificationRequests.get(token);
@@ -22,16 +30,13 @@ function verifyToken(token: string): Promise<VerificationResult> {
   }
 
   const request = (async (): Promise<VerificationResult> => {
-    const response = await fetch(
-      "/api/auth/verification/confirm",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token }),
+    const response = await fetch("/api/auth/verification/confirm", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ token }),
+    });
 
     const data = await response.json().catch(() => ({}));
 
@@ -61,40 +66,42 @@ function verifyToken(token: string): Promise<VerificationResult> {
 
 function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState("loading");
-  const [message, setMessage] = useState(
-    "Đang xác minh email của bạn...",
-  );
-
   const token = searchParams.get("token");
 
+  const [result, setResult] = useState<ViewState>({
+    status: "loading",
+    message: "Đang xác minh email của bạn...",
+  });
+
   useEffect(() => {
-    if (!token) {
-      setStatus("error");
-      setMessage("Liên kết xác minh không hợp lệ vì thiếu token.");
-      return;
-    }
+    if (!token) return;
 
     let active = true;
 
     verifyToken(token)
-      .then((result) => {
+      .then((verification) => {
         if (!active) return;
 
-        setStatus(result.success ? "success" : "error");
-        setMessage(result.message);
+        setResult({
+          status: verification.success ? "success" : "error",
+          message: verification.message,
+        });
       })
       .catch(() => {
         if (!active) return;
 
-        setStatus("error");
-        setMessage("Không thể kết nối đến máy chủ.");
+        setResult({
+          status: "error",
+          message: "Không thể kết nối đến máy chủ.",
+        });
       });
 
     return () => {
       active = false;
     };
   }, [token]);
+
+  const { status, message } = token ? result : MISSING_TOKEN_STATE;
 
   return (
     <main className="verify-email-page">
