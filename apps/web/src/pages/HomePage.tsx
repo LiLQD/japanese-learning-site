@@ -37,6 +37,10 @@ function HomePage() {
           <p>Email: {user.email}</p>
           <p>Vai trò: {user.role}</p>
 
+          {user.role === "ADMIN" && (
+            <Link to="/admin/users">Quản lý người dùng</Link>
+          )}
+
           {error && <p role="alert">{error}</p>}
 
           <button type="button" onClick={handleLogout}>
