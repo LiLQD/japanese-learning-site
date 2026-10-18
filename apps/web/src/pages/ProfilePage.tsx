@@ -2,7 +2,11 @@ import { useEffect, useState, type FormEvent } from "react";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../contexts/auth-context";
 import type { ProfileResponse } from "@app/shared";
-import { fetchProfile, updateProfile } from "../features/profile/api";
+import {
+  fetchProfile,
+  updateProfile,
+  changePassword,
+} from "../features/profile/api";
 import "./ProfilePage.css";
 
 export default function ProfilePage() {
@@ -10,8 +14,17 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState({ text: "", type: "" });
+
+  // State cho form Cập nhật thông tin
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileMsg, setProfileMsg] = useState({ text: "", type: "" });
+
+  // State cho form Đổi mật khẩu
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState({ text: "", type: "" });
 
   useEffect(() => {
     fetchProfile()
@@ -19,25 +32,50 @@ export default function ProfilePage() {
         setProfile(data.user);
         setDisplayName(data.user.displayName);
       })
-      .catch((err) => setMessage({ text: err.message, type: "error" }))
+      .catch((err) => setProfileMsg({ text: err.message, type: "error" }))
       .finally(() => setIsLoading(false));
   }, []);
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleUpdateProfile = async (e: FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
-    setMessage({ text: "", type: "" });
+    setIsSavingProfile(true);
+    setProfileMsg({ text: "", type: "" });
 
     try {
       const data = await updateProfile({ displayName });
       setProfile(data.user);
-      await refreshUser(); // Cập nhật lại Navbar
-      setMessage({ text: "Cập nhật thành công!", type: "success" });
+      await refreshUser();
+      setProfileMsg({ text: "Cập nhật thành công!", type: "success" });
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Cập nhật thất bại";
-      setMessage({ text: msg, type: "error" });
+      setProfileMsg({ text: msg, type: "error" });
     } finally {
-      setIsSaving(false);
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleChangePassword = async (e: FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setPasswordMsg({ text: "Mật khẩu xác nhận không khớp", type: "error" });
+      return;
+    }
+
+    setIsSavingPassword(true);
+    setPasswordMsg({ text: "", type: "" });
+
+    try {
+      await changePassword({ oldPassword, newPassword });
+      setPasswordMsg({ text: "Đổi mật khẩu thành công!", type: "success" });
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error ? error.message : "Đổi mật khẩu thất bại";
+      setPasswordMsg({ text: msg, type: "error" });
+    } finally {
+      setIsSavingPassword(false);
     }
   };
 
@@ -49,9 +87,9 @@ export default function ProfilePage() {
           <h1>Thông tin cá nhân</h1>
           <p className="profile-subtitle">Quản lý thông tin hồ sơ của bạn.</p>
 
-          {message.text && (
-            <div className={`profile-alert ${message.type}`}>
-              {message.text}
+          {profileMsg.text && (
+            <div className={`profile-alert ${profileMsg.type}`}>
+              {profileMsg.text}
             </div>
           )}
 
@@ -59,7 +97,7 @@ export default function ProfilePage() {
             <p>Đang tải...</p>
           ) : (
             profile && (
-              <form onSubmit={handleSubmit} className="profile-form">
+              <form onSubmit={handleUpdateProfile} className="profile-form">
                 <div className="form-group">
                   <label>Email (Không thể thay đổi)</label>
                   <input type="email" value={profile.email} disabled />
@@ -92,14 +130,77 @@ export default function ProfilePage() {
                   <button
                     type="submit"
                     className="btn-primary"
-                    disabled={isSaving}
+                    disabled={isSavingProfile}
                   >
-                    {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+                    {isSavingProfile ? "Đang lưu..." : "Lưu thay đổi"}
                   </button>
                 </div>
               </form>
             )
           )}
+        </div>
+
+        {/* FORM ĐỔI MẬT KHẨU */}
+        <div className="profile-card" style={{ marginTop: "32px" }}>
+          <h2>Đổi mật khẩu</h2>
+          <p className="profile-subtitle">
+            Bảo vệ tài khoản bằng mật khẩu mạnh.
+          </p>
+
+          {passwordMsg.text && (
+            <div className={`profile-alert ${passwordMsg.type}`}>
+              {passwordMsg.text}
+            </div>
+          )}
+
+          <form onSubmit={handleChangePassword} className="profile-form">
+            <div className="form-group">
+              <label htmlFor="oldPassword">Mật khẩu hiện tại</label>
+              <input
+                id="oldPassword"
+                type="password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="newPassword">
+                Mật khẩu mới (ít nhất 8 ký tự)
+              </label>
+              <input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={8}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Xác nhận mật khẩu mới</label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={8}
+              />
+            </div>
+
+            <div className="form-actions">
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={isSavingPassword}
+              >
+                {isSavingPassword ? "Đang xử lý..." : "Đổi mật khẩu"}
+              </button>
+            </div>
+          </form>
         </div>
       </main>
     </div>
