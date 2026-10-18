@@ -31,9 +31,10 @@
 }
 
 .brand-logo {
-  height: 40px;
-  width: auto;
+  height: 50px;
+  width: 50px;
   object-fit: contain;
+  border-radius: 8px;
 }
 
 .nav-center {
