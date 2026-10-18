@@ -14,7 +14,10 @@ import { prisma } from "../lib/prisma.js";
 import { conflict } from "../errors.js";
 import { validateBody } from "../middleware/validate.js";
 
+import { createNotification } from "../modules/notifications/notifications.service.js";
+
 const router = Router();
+
 router.get("/me", requireAuth, async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
@@ -41,6 +44,7 @@ router.get("/me", requireAuth, async (req, res, next) => {
     next(error);
   }
 });
+
 router.post(
   "/register",
   validateBody(registerSchema),
@@ -73,6 +77,8 @@ router.post(
           createdAt: true,
         },
       });
+
+      // Đã xóa createNotification ở đây vì đăng ký xong chưa phải "quay trở lại"
 
       res.status(201).json({ message: "Đăng ký thành công", user });
     } catch (error) {
@@ -262,6 +268,11 @@ router.post("/login", validateBody(loginSchema), async (req, res, next) => {
       },
     });
 
+    // THÊM THÔNG BÁO VÀO ĐÂY (Khi đăng nhập thành công)
+    await createNotification(user.id, "LOGIN", {
+      message: `Chào mừng ${user.displayName} quay trở lại YUME!`,
+    });
+
     res.cookie("yume_session", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -312,4 +323,5 @@ router.post("/logout", async (req, res, next) => {
     next(error);
   }
 });
+
 export default router;

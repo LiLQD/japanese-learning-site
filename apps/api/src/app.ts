@@ -2,6 +2,7 @@ import authRouter from "./routes/auth.js";
 
 import usersRouter from "./modules/users/users.routes.js";
 import profileRouter from "./modules/profile/profile.routes.js";
+import notificationsRouter from "./modules/notifications/notifications.routes.js";
 
 import express from "express";
 import helmet from "helmet";
@@ -30,6 +31,8 @@ export function createApp() {
   app.use("/api/auth", authRouter);
   app.use("/api/admin/users", usersRouter);
   app.use("/api/users/me", profileRouter);
+  app.use("/api/notifications", notificationsRouter);
+
   app.get("/api/health", (_req, res) => {
     res.json(healthResponseSchema.parse({ status: "ok" }));
   });
