@@ -30,16 +30,11 @@
   letter-spacing: -0.5px;
 }
 
-.brand-icon {
-  background: var(--color-brand);
-  color: white;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  font-size: 20px;
+.brand-logo {
+  height: 50px;
+  width: 50px;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 .nav-center {
