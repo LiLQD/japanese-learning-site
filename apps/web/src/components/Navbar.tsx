@@ -71,7 +71,7 @@ export default function Navbar() {
     <header className="navbar">
       <div className="nav-container">
         <Link to="/" className="nav-brand">
-          <span className="brand-icon">学</span>
+          <img src="/logo.png" alt="YUME Logo" className="brand-logo" />
           <span className="brand-text">YUME</span>
         </Link>
 
