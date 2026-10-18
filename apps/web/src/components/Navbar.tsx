@@ -104,12 +104,46 @@ export default function Navbar() {
                   Quản lý
                 </Link>
               )}
+
               <Link
                 to="/profile"
                 className="nav-user"
-                style={{ textDecoration: "none" }}
+                style={{
+                  textDecoration: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
               >
-                Chào, {user.displayName}
+                {user.avatarKey ? (
+                  <img
+                    src={`/uploads/${user.avatarKey}`}
+                    alt="Avatar"
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: "50%",
+                      background: "var(--color-brand)",
+                      color: "white",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 14,
+                    }}
+                  >
+                    {user.displayName[0]}
+                  </div>
+                )}
+                <span>{user.displayName}</span>
               </Link>
 
               {/* CHUÔNG THÔNG BÁO */}

@@ -1,5 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
 import bcrypt from "bcryptjs";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 import { unauthorized } from "../../errors.js";
 import { createNotification } from "../notifications/notifications.service.js";
@@ -12,6 +14,7 @@ const profileSelect = {
   role: true,
   status: true,
   createdAt: true,
+  avatarKey: true,
 } as const;
 
 export async function getProfile(userId: number) {
@@ -62,5 +65,22 @@ export async function changePassword(
   // Gửi thông báo
   await createNotification(userId, "PASSWORD_CHANGED", {
     message: "Mật khẩu của bạn đã được thay đổi thành công.",
+  });
+}
+
+export async function updateAvatar(userId: number, filename: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error("Không tìm thấy user");
+
+  // Xóa ảnh cũ nếu có
+  if (user.avatarKey) {
+    const oldPath = path.join(process.cwd(), "uploads", user.avatarKey);
+    await fs.unlink(oldPath).catch(() => {}); // Bỏ qua lỗi nếu file không tồn tại
+  }
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: { avatarKey: filename },
+    select: { id: true, avatarKey: true },
   });
 }

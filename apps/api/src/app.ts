@@ -7,6 +7,7 @@ import notificationsRouter from "./modules/notifications/notifications.routes.js
 import express from "express";
 import helmet from "helmet";
 import { loadSession } from "./middleware/load-session.js";
+import path from "node:path";
 import { healthResponseSchema } from "@app/shared";
 import { errorHandler, notFoundHandler } from "./middleware/error.js";
 import cors from "cors";
@@ -32,6 +33,7 @@ export function createApp() {
   app.use("/api/admin/users", usersRouter);
   app.use("/api/users/me", profileRouter);
   app.use("/api/notifications", notificationsRouter);
+  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
   app.get("/api/health", (_req, res) => {
     res.json(healthResponseSchema.parse({ status: "ok" }));

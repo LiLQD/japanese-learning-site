@@ -8,6 +8,7 @@ import {
   changePassword,
 } from "../features/profile/api";
 import "./ProfilePage.css";
+import { uploadAvatar } from "../features/profile/api";
 
 export default function ProfilePage() {
   const { refreshUser } = useAuth();
@@ -25,6 +26,30 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState({ text: "", type: "" });
+
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      await uploadAvatar(file);
+      const data = await fetchProfile(); // Load lại thông tin
+      setProfile(data.user);
+      await refreshUser(); // Cập nhật lại ảnh trên Navbar
+      setProfileMsg({
+        text: "Cập nhật ảnh đại diện thành công!",
+        type: "success",
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Upload thất bại";
+      setProfileMsg({ text: msg, type: "error" });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   useEffect(() => {
     fetchProfile()
@@ -85,6 +110,53 @@ export default function ProfilePage() {
       <main className="profile-main">
         <div className="profile-card">
           <h1>Thông tin cá nhân</h1>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "24px",
+              marginBottom: "32px",
+            }}
+          >
+            <div className="avatar-wrapper">
+              {profile?.avatarKey ? (
+                <img
+                  src={`/uploads/${profile.avatarKey}`}
+                  alt="Avatar"
+                  className="avatar-img"
+                />
+              ) : (
+                <div className="avatar-placeholder">
+                  {profile?.displayName[0]}
+                </div>
+              )}
+            </div>
+            <div>
+              <label
+                htmlFor="avatar-upload"
+                className="btn-outline"
+                style={{ cursor: "pointer", display: "inline-block" }}
+              >
+                {isUploading ? "Đang tải..." : "Đổi ảnh đại diện"}
+              </label>
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/png, image/jpeg, image/webp"
+                style={{ display: "none" }}
+                onChange={handleAvatarUpload}
+              />
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "var(--color-muted)",
+                  marginTop: "8px",
+                }}
+              >
+                Hỗ trợ JPG, PNG, WebP. Tối đa 2MB.
+              </p>
+            </div>
+          </div>
           <p className="profile-subtitle">Quản lý thông tin hồ sơ của bạn.</p>
 
           {profileMsg.text && (
