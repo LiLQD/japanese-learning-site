@@ -1,5 +1,8 @@
 import authRouter from "./routes/auth.js";
+
 import usersRouter from "./modules/users/users.routes.js";
+import profileRouter from "./modules/profile/profile.routes.js";
+
 import express from "express";
 import helmet from "helmet";
 import { loadSession } from "./middleware/load-session.js";
@@ -7,6 +10,7 @@ import { healthResponseSchema } from "@app/shared";
 import { errorHandler, notFoundHandler } from "./middleware/error.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+
 export function createApp() {
   const app = express();
 
@@ -25,6 +29,7 @@ export function createApp() {
   app.use(loadSession);
   app.use("/api/auth", authRouter);
   app.use("/api/admin/users", usersRouter);
+  app.use("/api/users/me", profileRouter);
   app.get("/api/health", (_req, res) => {
     res.json(healthResponseSchema.parse({ status: "ok" }));
   });
