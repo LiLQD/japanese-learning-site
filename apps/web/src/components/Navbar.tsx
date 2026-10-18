@@ -51,7 +51,13 @@ export default function Navbar() {
                   Quản lý
                 </Link>
               )}
-              <span className="nav-user">Chào, {user.displayName}</span>
+              <Link
+                to="/profile"
+                className="nav-user"
+                style={{ textDecoration: "none" }}
+              >
+                Chào, {user.displayName}
+              </Link>
               <button onClick={handleLogout} className="btn-outline">
                 Đăng xuất
               </button>
