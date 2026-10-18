@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import type { UserListItem } from "@app/shared";
 
 type UserTableProps = {
@@ -34,7 +35,9 @@ function UserTable({
         {users.map((user) => (
           <tr key={user.id}>
             <td>{user.id}</td>
-            <td>{user.email}</td>
+            <td>
+              <Link to={`/admin/users/${user.id}`}>{user.email}</Link>
+            </td>
             <td>{user.displayName}</td>
             <td>{user.role === "ADMIN" ? "Quản trị viên" : "Người dùng"}</td>
             <td>{user.status === "ACTIVE" ? "Hoạt động" : "Đã khóa"}</td>

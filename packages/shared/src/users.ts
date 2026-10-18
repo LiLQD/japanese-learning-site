@@ -39,3 +39,20 @@ export type UserListResponse = {
   page: number;
   pageSize: number;
 };
+
+export const userIdParamsSchema = z.object({
+  id: z.coerce
+    .number({ error: "Mã người dùng không hợp lệ" })
+    .int("Mã người dùng không hợp lệ")
+    .positive("Mã người dùng không hợp lệ"),
+});
+
+export type UserIdParams = z.infer<typeof userIdParamsSchema>;
+
+export type UserDetail = UserListItem & {
+  updatedAt: string;
+};
+
+export type UserDetailResponse = {
+  user: UserDetail;
+};

@@ -35,3 +35,10 @@ export async function listUsers({ page, pageSize, q }: UserListQuery) {
 
   return { users, total, page, pageSize };
 }
+
+export async function getUserById(id: number) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: { ...userListSelect, updatedAt: true },
+  });
+}
