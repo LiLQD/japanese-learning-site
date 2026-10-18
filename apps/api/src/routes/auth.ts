@@ -1,4 +1,3 @@
-
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { requireAuth } from "../middleware/auth.js";
@@ -42,41 +41,45 @@ router.get("/me", requireAuth, async (req, res, next) => {
     next(error);
   }
 });
-router.post("/register", validateBody(registerSchema), async (req, res, next) => {
-  try {
-    const { displayName, email, password } = registerSchema.parse(req.body);
-    const normalizedEmail = email.toLowerCase();
+router.post(
+  "/register",
+  validateBody(registerSchema),
+  async (req, res, next) => {
+    try {
+      const { displayName, email, password } = registerSchema.parse(req.body);
+      const normalizedEmail = email.toLowerCase();
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
-    });
+      const existingUser = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
 
-    if (existingUser) {
-      throw conflict("Email đã được sử dụng");
+      if (existingUser) {
+        throw conflict("Email đã được sử dụng");
+      }
+
+      const passwordHash = await bcrypt.hash(password, 10);
+
+      const user = await prisma.user.create({
+        data: {
+          displayName,
+          email: normalizedEmail,
+          passwordHash,
+        },
+        select: {
+          id: true,
+          displayName: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      });
+
+      res.status(201).json({ message: "Đăng ký thành công", user });
+    } catch (error) {
+      next(error);
     }
-
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    const user = await prisma.user.create({
-      data: {
-        displayName,
-        email: normalizedEmail,
-        passwordHash,
-      },
-      select: {
-        id: true,
-        displayName: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
-    });
-
-    res.status(201).json({ message: "Đăng ký thành công", user });
-  } catch (error) {
-    next(error);
-  }
-});
+  },
+);
 
 router.post(
   "/verification/request",
@@ -106,9 +109,7 @@ router.post(
       }
 
       const token = randomBytes(32).toString("hex");
-      const tokenHash = createHash("sha256")
-        .update(token)
-        .digest("hex");
+      const tokenHash = createHash("sha256").update(token).digest("hex");
 
       await prisma.verificationToken.create({
         data: {
@@ -128,7 +129,6 @@ router.post(
   },
 );
 
-
 router.post(
   "/verification/confirm",
   validateBody(verificationConfirmSchema),
@@ -137,25 +137,22 @@ router.post(
       const { token } = verificationConfirmSchema.parse(req.body);
 
       // Chỉ lưu và tìm kiếm hash, không lưu token thô.
-      const tokenHash = createHash("sha256")
-        .update(token)
-        .digest("hex");
+      const tokenHash = createHash("sha256").update(token).digest("hex");
 
       const now = new Date();
 
-      const verificationToken =
-        await prisma.verificationToken.findFirst({
-          where: {
-            tokenHash,
-            type: "EMAIL_VERIFY",
-            usedAt: null,
-            expiresAt: { gt: now },
-          },
-          select: {
-            id: true,
-            userId: true,
-          },
-        });
+      const verificationToken = await prisma.verificationToken.findFirst({
+        where: {
+          tokenHash,
+          type: "EMAIL_VERIFY",
+          usedAt: null,
+          expiresAt: { gt: now },
+        },
+        select: {
+          id: true,
+          userId: true,
+        },
+      });
 
       if (!verificationToken) {
         res.status(400).json({
@@ -227,10 +224,7 @@ router.post("/login", validateBody(loginSchema), async (req, res, next) => {
       return;
     }
 
-    const passwordMatches = await bcrypt.compare(
-      password,
-      user.passwordHash,
-    );
+    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordMatches) {
       res.status(401).json({
@@ -256,39 +250,35 @@ router.post("/login", validateBody(loginSchema), async (req, res, next) => {
 
     const sessionToken = randomBytes(32).toString("hex");
 
-const tokenHash = createHash("sha256")
-  .update(sessionToken)
-  .digest("hex");
+    const tokenHash = createHash("sha256").update(sessionToken).digest("hex");
 
-const expiresAt = new Date(
-  Date.now() + 7 * 24 * 60 * 60 * 1000,
-);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-await prisma.session.create({
-  data: {
-    tokenHash,
-    userId: user.id,
-    expiresAt,
-  },
-});
+    await prisma.session.create({
+      data: {
+        tokenHash,
+        userId: user.id,
+        expiresAt,
+      },
+    });
 
-res.cookie("yume_session", sessionToken, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
-  path: "/",
-  expires: expiresAt,
-});
+    res.cookie("yume_session", sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      expires: expiresAt,
+    });
 
-res.status(200).json({
-  message: "Đăng nhập thành công.",
-  user: {
-    id: user.id,
-    displayName: user.displayName,
-    email: user.email,
-    role: user.role,
-  },
-});
+    res.status(200).json({
+      message: "Đăng nhập thành công.",
+      user: {
+        id: user.id,
+        displayName: user.displayName,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -299,9 +289,7 @@ router.post("/logout", async (req, res, next) => {
     const sessionToken = req.cookies?.yume_session;
 
     if (sessionToken) {
-      const tokenHash = createHash("sha256")
-        .update(sessionToken)
-        .digest("hex");
+      const tokenHash = createHash("sha256").update(sessionToken).digest("hex");
 
       await prisma.session.deleteMany({
         where: {
