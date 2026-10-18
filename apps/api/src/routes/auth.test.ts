@@ -23,6 +23,10 @@ const {
   transactionMock: vi.fn(),
 }));
 
+vi.mock("../modules/notifications/notifications.service.js", () => ({
+  createNotification: vi.fn().mockResolvedValue({}),
+}));
+
 vi.mock("../lib/prisma.js", () => ({
   prisma: {
     user: {
