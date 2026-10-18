@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import type { UserDetail } from "@app/shared";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useAuth } from "../../../contexts/auth-context";
 import { fetchUser } from "../api";
 
 function formatDateTime(value: string | null) {

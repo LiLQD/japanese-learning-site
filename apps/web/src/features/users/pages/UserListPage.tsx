@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { UserListResponse } from "@app/shared";
-import { useAuth } from "../../../contexts/AuthContext";
+import { useAuth } from "../../../contexts/auth-context";
 import { fetchUsers } from "../api";
 import UserTable from "../components/UserTable";
 
