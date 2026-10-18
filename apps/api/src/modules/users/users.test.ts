@@ -116,16 +116,45 @@ describe("GET /api/admin/users", () => {
     );
   });
 
-  it.each(["page=0", "page=abc", "pageSize=101", "pageSize=0"])(
-    "returns 400 for invalid query %s",
-    async (query) => {
-      const res = await request(makeApp(admin)).get(
-        `/api/admin/users?${query}`,
-      );
+  it("filters by email or display name when q is given", async () => {
+    const res = await request(makeApp(admin)).get(
+      "/api/admin/users?q=%20Learner%20",
+    );
 
-      expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe("BAD_REQUEST");
-      expect(findManyMock).not.toHaveBeenCalled();
-    },
-  );
+    const expectedWhere = {
+      OR: [
+        { email: { contains: "Learner", mode: "insensitive" } },
+        { displayName: { contains: "Learner", mode: "insensitive" } },
+      ],
+    };
+    expect(res.status).toBe(200);
+    expect(findManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expectedWhere }),
+    );
+    expect(countMock).toHaveBeenCalledWith({ where: expectedWhere });
+  });
+
+  it("does not filter when q is empty", async () => {
+    const res = await request(makeApp(admin)).get("/api/admin/users?q=%20");
+
+    expect(res.status).toBe(200);
+    expect(findManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ where: {} }),
+    );
+    expect(countMock).toHaveBeenCalledWith({ where: {} });
+  });
+
+  it.each([
+    "page=0",
+    "page=abc",
+    "pageSize=101",
+    "pageSize=0",
+    `q=${"a".repeat(101)}`,
+  ])("returns 400 for invalid query %s", async (query) => {
+    const res = await request(makeApp(admin)).get(`/api/admin/users?${query}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("BAD_REQUEST");
+    expect(findManyMock).not.toHaveBeenCalled();
+  });
 });

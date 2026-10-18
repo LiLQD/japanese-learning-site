@@ -12,15 +12,25 @@ const userListSelect = {
   createdAt: true,
 } as const;
 
-export async function listUsers({ page, pageSize }: UserListQuery) {
+export async function listUsers({ page, pageSize, q }: UserListQuery) {
+  const where = q
+    ? {
+        OR: [
+          { email: { contains: q, mode: "insensitive" as const } },
+          { displayName: { contains: q, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
+
   const [users, total] = await prisma.$transaction([
     prisma.user.findMany({
+      where,
       select: userListSelect,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
-    prisma.user.count(),
+    prisma.user.count({ where }),
   ]);
 
   return { users, total, page, pageSize };
