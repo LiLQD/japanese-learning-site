@@ -1,40 +1,15 @@
 # Data Model
 
-Mô hình dữ liệu của hệ thống học tiếng Nhật. Tài liệu này phản ánh `apps/api/prisma/schema.prisma` và giải thích lý do đằng sau mỗi quyết định.
+Mô hình dữ liệu của hệ thống học tiếng Nhật. Tài liệu này phản ánh `apps/api/prisma/schema.prisma` và giải thích lý do đằng sau mỗi quyết định thiết kế.
 
 ## Tổng quan
 
-Hệ thống có bốn nhóm bảng:
+Hệ thống gồm bốn nhóm bảng chính:
 
 1. **Tài khoản** — người dùng, phiên đăng nhập, token xác minh
 2. **Từ điển** — từ vựng, cách đọc, nghĩa, kanji
 3. **Thông báo** — thông báo cho người dùng
-4. **Học tập** — yêu thích, ngữ pháp, bài đọc, flashcard
-
-Nhóm 1–3 phục vụ Sprint 1. Nhóm 4 phục vụ Sprint 2. Các bảng cho Sprint 3–4 (thanh toán, chat, quiz, báo cáo) chưa có, sẽ bổ sung khi chốt được các quyết định kỹ thuật tương ứng.
-
-## Sơ đồ quan hệ
-
-```mermaid
-erDiagram
-    User ||--o{ Session : "has"
-    User ||--o{ VerificationToken : "has"
-    User ||--o{ Notification : "receives"
-    User ||--o{ FavoriteWord : "saves"
-    User ||--o{ FlashcardDeck : "owns"
-
-    Word ||--o{ Reading : "read as"
-    Word ||--o{ Sense : "means"
-    Word ||--o{ WordKanji : "written with"
-    Word ||--o{ FavoriteWord : "saved by"
-
-    Sense ||--o{ Gloss : "translated as"
-    Kanji ||--o{ WordKanji : "appears in"
-
-    Grammar ||--o{ GrammarExample : "illustrated by"
-    ReadingPassage ||--o{ ReadingQuestion : "has"
-    FlashcardDeck ||--o{ Flashcard : "contains"
-```
+4. **Học tập** — từ vựng yêu thích, ngữ pháp, flashcard
 
 ## Nhóm 1 — Tài khoản
 
@@ -70,9 +45,9 @@ Phiên đăng nhập. Lưu server-side để có thể thu hồi ngay lập tứ
 | `expiresAt` | TIMESTAMP   |                       |
 | `createdAt` | TIMESTAMP   |                       |
 
-Chỉ lưu hash, không lưu token thô. Token thô đi vào cookie `httpOnly`, không bao giờ vào database. Nếu database rò rỉ, kẻ tấn công không có token dùng được.
+Chỉ lưu hash, không lưu token thô. Token thô đi vào cookie `httpOnly`, không bao giờ vào database.
 
-Index trên `userId` để khi khóa tài khoản (US-21) xóa được tất cả session của user bằng một câu lệnh.
+Index trên `userId` để khi khóa tài khoản, xóa được tất cả session của user bằng một câu lệnh.
 
 ### `verification_tokens`
 
@@ -107,7 +82,7 @@ Bốn thực thể: từ, cách đọc, nghĩa, kanji. Quan hệ nhiều-nhiều
 
 `text` **không unique**. Đồng âm khác nghĩa có thể trùng kana, và ngay cả kanji cũng có trường hợp trùng. Ràng buộc unique sẽ chặn dữ liệu hợp lệ; code xử lý tốt hơn.
 
-`jlpt` thuộc về từ, không thuộc về nghĩa. Phần lớn từ có một cấp độ duy nhất. Nếu sau này cần chính xác hơn, thêm cột `jlpt` nullable vào `senses` và ưu tiên giá trị sense-level khi có.
+`jlpt` thuộc về từ, không thuộc về nghĩa. Phần lớn từ có một cấp độ duy nhất.
 
 Index trên `text` và `jlpt`.
 
@@ -139,7 +114,7 @@ Một nghĩa của từ.
 
 `partOfSpeech` là mảng vì một nghĩa có thể vừa là noun vừa là verb. Dùng mảng thay vì enum vì JMdict có khoảng ba mươi mã và có thể thay đổi; enum sẽ phải migrate mỗi lần.
 
-`position` giữ thứ tự nghĩa như trong nguồn dữ liệu. Gọi là `position` chứ không phải `order` vì `order` là từ khóa SQL.
+`position` giữ thứ tự nghĩa như trong nguồn dữ liệu.
 
 ### `glosses`
 
@@ -168,7 +143,7 @@ Ký tự Hán tự riêng lẻ.
 | `grade`                  | INTEGER NULL | Cấp học phổ thông Nhật                     |
 | `createdAt`, `updatedAt` | TIMESTAMP    |                                            |
 
-Tách khỏi `words` vì kanji có thuộc tính riêng (số nét, bộ thủ) và có thể học độc lập (US-37–40). Nếu gộp vào `words`, không có thực thể để gắn tiến độ học kanji.
+Tách khỏi `words` vì kanji có thuộc tính riêng (số nét, bộ thủ) và có thể học độc lập. Nếu gộp vào `words`, không có thực thể để gắn tiến độ học kanji.
 
 ### `word_kanji`
 
@@ -180,7 +155,7 @@ Bảng nối giữa từ và kanji.
 | `kanjiId`  | INTEGER FK |                 |
 | `position` | INTEGER    | Vị trí trong từ |
 
-Khóa chính tổng hợp `(wordId, position)`, không phải `(wordId, kanjiId)`. Lý do: một từ có thể dùng cùng một kanji nhiều lần (ví dụ 木木), và khi đó cần phân biệt bằng vị trí.
+Khóa chính tổng hợp `(wordId, position)`, không phải `(wordId, kanjiId)`. Lý do: một từ có thể dùng cùng một kanji nhiều lần, và khi đó cần phân biệt bằng vị trí.
 
 Index trên `kanjiId` để tra cứu ngược: một kanji xuất hiện trong những từ nào.
 
@@ -197,7 +172,7 @@ Index trên `kanjiId` để tra cứu ngược: một kanji xuất hiện trong 
 | `readAt`    | TIMESTAMP NULL | NULL = chưa đọc                          |
 | `createdAt` | TIMESTAMP      |                                          |
 
-`type` là TEXT chứ không phải enum vì số loại thông báo sẽ tăng khi hệ thống mở rộng, và một enum cứng sẽ phải migrate mỗi lần thêm loại mới. Quy ước đặt tên trong code, không ràng buộc ở database.
+`type` là TEXT chứ không phải enum vì số loại thông báo sẽ tăng khi hệ thống mở rộng, và một enum cứng sẽ phải migrate mỗi lần thêm loại mới.
 
 `payload` là JSONB vì mỗi loại thông báo cần dữ liệu khác nhau. Ví dụ:
 
@@ -247,33 +222,6 @@ Ví dụ cho một cấu trúc ngữ pháp.
 | `english`   | TEXT       | Bản dịch           |
 | `position`  | INTEGER    | Thứ tự             |
 
-### `reading_passages`
-
-Bài đọc tiếng Nhật.
-
-| Cột                      | Kiểu         | Ghi chú          |
-| ------------------------ | ------------ | ---------------- |
-| `id`                     | SERIAL       |                  |
-| `title`                  | TEXT         |                  |
-| `content`                | TEXT         | Nội dung bài đọc |
-| `jlpt`                   | INTEGER NULL |                  |
-| `createdAt`, `updatedAt` | TIMESTAMP    |                  |
-
-### `reading_questions`
-
-Câu hỏi trắc nghiệm cho bài đọc.
-
-| Cột            | Kiểu       | Ghi chú                           |
-| -------------- | ---------- | --------------------------------- |
-| `id`           | SERIAL     |                                   |
-| `passageId`    | INTEGER FK | ON DELETE CASCADE                 |
-| `question`     | TEXT       |                                   |
-| `options`      | TEXT[]     | Các lựa chọn                      |
-| `correctIndex` | INTEGER    | Index đáp án đúng trong `options` |
-| `position`     | INTEGER    | Thứ tự                            |
-
-Lưu `options` dưới dạng mảng và `correctIndex` là số nguyên, thay vì mỗi lựa chọn một row riêng. Cách này đơn giản hơn cho câu hỏi trắc nghiệm cố định, và không có nhu cầu truy vấn riêng lẻ từng lựa chọn.
-
 ### `flashcard_decks`
 
 Bộ flashcard của người dùng.
@@ -318,17 +266,4 @@ Hai nguồn, cùng license EDRDG:
 - **jmdict-simplified** — JMdict dạng JSON. Cung cấp dữ liệu cho `words`, `readings`, `senses`, `glosses`.
 - **kanjidic2** — dạng JSON. Cung cấp dữ liệu cho `kanji`.
 
-License yêu cầu ghi công EDRDG trong tài liệu sản phẩm. Xem mục Credits trong `README.md`.
-
 Dữ liệu thô không commit vào Git — file JSON của JMdict nặng hàng chục MB. Import qua script seed, không qua migration.
-
-## Bảng chưa có
-
-Các nhóm bảng sau chưa được thiết kế vì phụ thuộc vào quyết định kỹ thuật chưa chốt:
-
-- **Thanh toán** — `Payment`, `Subscription`, `PremiumPlan`. Phụ thuộc vào việc chọn cổng thanh toán (VNPay, Momo, Stripe). Mỗi cổng có cấu trúc giao dịch khác nhau.
-- **Chat** — `Conversation`, `Message`. Phụ thuộc vào việc chọn WebSocket hay polling.
-- **Quiz** — `Quiz`, `QuizAttempt`, `QuizAnswer`. Chưa chốt cấu trúc câu hỏi và cách chấm điểm.
-- **Báo cáo và kiểm duyệt** — `Report`, `Feedback`, `Comment`. Chưa chốt đối tượng bị báo cáo (từ vựng, bình luận, người dùng) và quy trình xử lý.
-
-Khi gần tới Sprint 3, chốt các quyết định trên rồi thiết kế. Thêm bảng mới bằng migration riêng, không sửa migration cũ.
