@@ -1,8 +1,6 @@
-# Japanese Learning Site (YUME)
+# YUME
 
 Ứng dụng web hỗ trợ học tiếng Nhật toàn diện: từ điển, từ vựng, kanji, ngữ pháp và flashcard.
-
-Dự án được phát triển trong 10 tuần theo quy trình Agile/Scrum, chia thành 4 Sprint.
 
 ## Tech Stack
 
@@ -52,7 +50,7 @@ docker compose version
 
 ### 1. Cài đặt lần đầu (Chỉ chạy 1 lần duy nhất)
 
-Khi mới clone dự án về máy, bạn cần chạy các lệnh sau để thiết lập môi trường:
+Khi mới clone dự án về máy, cần chạy các lệnh sau để thiết lập môi trường:
 
 ```bash
 # Cài dependencies
@@ -144,8 +142,6 @@ Hệ thống tập trung vào các **Tính năng cốt lõi (Core Features)**:
 - **Tương tác:** Hệ thống thông báo (Notifications).
 - **Quản trị (Admin):** Quản lý danh sách người dùng, khóa/mở khóa tài khoản.
 - **Học tập:** Tra cứu Từ vựng, Kanji, Ngữ pháp, Hệ thống Flashcard.
-
-_(Ghi chú: Các tính năng như Quiz, Bài đọc, Chat, Thanh toán và AI không nằm trong phạm vi của phiên bản này)._
 
 ## License
 
