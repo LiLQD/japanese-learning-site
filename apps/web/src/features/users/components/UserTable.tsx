@@ -1,14 +1,10 @@
-
 import { Link } from "react-router";
 import type { UserListItem } from "@app/shared";
 
 type UserTableProps = {
   users: UserListItem[];
   emptyMessage?: string;
-  onUpdateStatus: (
-    id: number,
-    status: "ACTIVE" | "LOCKED",
-  ) => void;
+  onUpdateStatus: (id: number, status: "ACTIVE" | "LOCKED") => void;
   updatingUserId: number | null;
   onDelete: (id: number) => void;
   deletingUserId: number | null;
@@ -49,40 +45,23 @@ function UserTable({
           <tr key={user.id}>
             <td>{user.id}</td>
             <td>
-              <Link to={`/admin/users/${user.id}`}>
-                {user.email}
-              </Link>
+              <Link to={`/admin/users/${user.id}`}>{user.email}</Link>
             </td>
             <td>{user.displayName}</td>
-            <td>
-              {user.role === "ADMIN"
-                ? "Quản trị viên"
-                : "Người dùng"}
-            </td>
-            <td>
-              {user.status === "ACTIVE"
-                ? "Hoạt động"
-                : "Đã khóa"}
-            </td>
-            <td>
-              {user.emailVerifiedAt
-                ? "Đã xác minh"
-                : "Chưa xác minh"}
-            </td>
+            <td>{user.role === "ADMIN" ? "Quản trị viên" : "Người dùng"}</td>
+            <td>{user.status === "ACTIVE" ? "Hoạt động" : "Đã khóa"}</td>
+            <td>{user.emailVerifiedAt ? "Đã xác minh" : "Chưa xác minh"}</td>
             <td>{formatDate(user.createdAt)}</td>
             <td>
               <button
                 type="button"
                 disabled={
-                  updatingUserId === user.id ||
-                  deletingUserId === user.id
+                  updatingUserId === user.id || deletingUserId === user.id
                 }
                 onClick={() =>
                   onUpdateStatus(
                     user.id,
-                    user.status === "ACTIVE"
-                      ? "LOCKED"
-                      : "ACTIVE",
+                    user.status === "ACTIVE" ? "LOCKED" : "ACTIVE",
                   )
                 }
               >
@@ -97,8 +76,7 @@ function UserTable({
                 <button
                   type="button"
                   disabled={
-                    updatingUserId === user.id ||
-                    deletingUserId !== null
+                    updatingUserId === user.id || deletingUserId !== null
                   }
                   onClick={() => {
                     const confirmed = window.confirm(
@@ -110,9 +88,7 @@ function UserTable({
                     }
                   }}
                 >
-                  {deletingUserId === user.id
-                    ? "Đang xóa..."
-                    : "Xóa tài khoản"}
+                  {deletingUserId === user.id ? "Đang xóa..." : "Xóa tài khoản"}
                 </button>
               )}
             </td>

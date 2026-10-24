@@ -76,72 +76,78 @@ function UserDetailPage() {
   }
 
   return (
-  <main className="user-detail-page">
-    <Link className="user-detail-back" to="/admin/users">
-      ← Quay lại danh sách
-    </Link>
+    <main className="user-detail-page">
+      <Link className="user-detail-back" to="/admin/users">
+        ← Quay lại danh sách
+      </Link>
 
-    <header className="user-detail-header">
-      <div>
-        <p className="user-detail-eyebrow">YUME · QUẢN TRỊ</p>
-        <h1>Chi tiết người dùng</h1>
-        <p className="user-detail-subtitle">
-          Thông tin tài khoản và trạng thái thành viên.
-        </p>
-      </div>
-    </header>
-
-    {isLoading ? (
-      <p className="user-detail-message">Đang tải thông tin...</p>
-    ) : errorMessage ? (
-      <p className="user-detail-message" role="alert">{errorMessage}</p>
-    ) : detail ? (
-      <section className="user-detail-card">
-        <div className="user-detail-profile">
-          <div className="user-detail-avatar">
-            {(detail.displayName || detail.email).charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <h2>{detail.displayName || "Chưa cập nhật họ tên"}</h2>
-            <p>{detail.email}</p>
-            <span className={`user-detail-status ${detail.status === "ACTIVE" ? "active" : "locked"}`}>
-              {detail.status === "ACTIVE" ? "Đang hoạt động" : "Đã khóa"}
-            </span>
-          </div>
+      <header className="user-detail-header">
+        <div>
+          <p className="user-detail-eyebrow">YUME · QUẢN TRỊ</p>
+          <h1>Chi tiết người dùng</h1>
+          <p className="user-detail-subtitle">
+            Thông tin tài khoản và trạng thái thành viên.
+          </p>
         </div>
+      </header>
 
-        <dl className="user-detail-grid">
-          <div className="user-detail-field">
-            <dt>Mã người dùng</dt>
-            <dd>{detail.id}</dd>
+      {isLoading ? (
+        <p className="user-detail-message">Đang tải thông tin...</p>
+      ) : errorMessage ? (
+        <p className="user-detail-message" role="alert">
+          {errorMessage}
+        </p>
+      ) : detail ? (
+        <section className="user-detail-card">
+          <div className="user-detail-profile">
+            <div className="user-detail-avatar">
+              {(detail.displayName || detail.email).charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h2>{detail.displayName || "Chưa cập nhật họ tên"}</h2>
+              <p>{detail.email}</p>
+              <span
+                className={`user-detail-status ${detail.status === "ACTIVE" ? "active" : "locked"}`}
+              >
+                {detail.status === "ACTIVE" ? "Đang hoạt động" : "Đã khóa"}
+              </span>
+            </div>
           </div>
-          <div className="user-detail-field">
-            <dt>Vai trò</dt>
-            <dd>{detail.role === "ADMIN" ? "Quản trị viên" : "Người dùng"}</dd>
-          </div>
-          <div className="user-detail-field">
-            <dt>Xác minh email</dt>
-            <dd>
-              {detail.emailVerifiedAt
-                ? `Đã xác minh (${formatDateTime(detail.emailVerifiedAt)})`
-                : "Chưa xác minh"}
-            </dd>
-          </div>
-          <div className="user-detail-field">
-            <dt>Ngày tạo tài khoản</dt>
-            <dd>{formatDateTime(detail.createdAt)}</dd>
-          </div>
-          <div className="user-detail-field">
-            <dt>Cập nhật lần cuối</dt>
-            <dd>{formatDateTime(detail.updatedAt)}</dd>
-          </div>
-        </dl>
-      </section>
-    ) : (
-      <p className="user-detail-message">Không có dữ liệu người dùng.</p>
-    )}
-  </main>
-);
+
+          <dl className="user-detail-grid">
+            <div className="user-detail-field">
+              <dt>Mã người dùng</dt>
+              <dd>{detail.id}</dd>
+            </div>
+            <div className="user-detail-field">
+              <dt>Vai trò</dt>
+              <dd>
+                {detail.role === "ADMIN" ? "Quản trị viên" : "Người dùng"}
+              </dd>
+            </div>
+            <div className="user-detail-field">
+              <dt>Xác minh email</dt>
+              <dd>
+                {detail.emailVerifiedAt
+                  ? `Đã xác minh (${formatDateTime(detail.emailVerifiedAt)})`
+                  : "Chưa xác minh"}
+              </dd>
+            </div>
+            <div className="user-detail-field">
+              <dt>Ngày tạo tài khoản</dt>
+              <dd>{formatDateTime(detail.createdAt)}</dd>
+            </div>
+            <div className="user-detail-field">
+              <dt>Cập nhật lần cuối</dt>
+              <dd>{formatDateTime(detail.updatedAt)}</dd>
+            </div>
+          </dl>
+        </section>
+      ) : (
+        <p className="user-detail-message">Không có dữ liệu người dùng.</p>
+      )}
+    </main>
+  );
 }
 
 export default UserDetailPage;

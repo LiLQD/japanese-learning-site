@@ -5,11 +5,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { UserListResponse } from "@app/shared";
 import { useAuth } from "../../../contexts/auth-context";
-import {
-  fetchUsers,
-  updateUserStatus,
-  deleteUser,
-} from "../api";
+import { fetchUsers, updateUserStatus, deleteUser } from "../api";
 import UserTable from "../components/UserTable";
 
 const PAGE_SIZE = 20;
@@ -26,18 +22,13 @@ function UserListPage() {
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
-  const [updatingUserId, setUpdatingUserId] =
-    useState<number | null>(null);
-  const [deletingUserId, setDeletingUserId] =
-    useState<number | null>(null);
+  const [updatingUserId, setUpdatingUserId] = useState<number | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
 
   const requestKey = `${page}|${search}`;
   const isLoading = loadedKey !== requestKey;
 
-  async function handleUpdateStatus(
-    id: number,
-    status: "ACTIVE" | "LOCKED",
-  ) {
+  async function handleUpdateStatus(id: number, status: "ACTIVE" | "LOCKED") {
     const action = status === "LOCKED" ? "khóa" : "mở khóa";
 
     if (!window.confirm(`Bạn có chắc muốn ${action} tài khoản này?`)) {
@@ -165,98 +156,93 @@ function UserListPage() {
     );
   }
 
-  const totalPages = data
-    ? Math.max(1, Math.ceil(data.total / PAGE_SIZE))
-    : 1;
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
   return (
-  <div className="admin-layout">
-    <Navbar />
+    <div className="admin-layout">
+      <Navbar />
 
-    <main className="admin-main">
-      <div className="admin-page-header">
-        <div>
-          <p className="admin-eyebrow">YUME · QUẢN TRỊ</p>
-          <h1>Quản lý người dùng</h1>
-          <p className="admin-description">
-            Theo dõi và quản lý tài khoản thành viên trên Yume.
-          </p>
+      <main className="admin-main">
+        <div className="admin-page-header">
+          <div>
+            <p className="admin-eyebrow">YUME · QUẢN TRỊ</p>
+            <h1>Quản lý người dùng</h1>
+            <p className="admin-description">
+              Theo dõi và quản lý tài khoản thành viên trên Yume.
+            </p>
+          </div>
+
+          <div className="admin-total-card">
+            <span>Tổng số tài khoản</span>
+            <strong>{data?.total ?? 0}</strong>
+          </div>
         </div>
 
-        <div className="admin-total-card">
-          <span>Tổng số tài khoản</span>
-          <strong>{data?.total ?? 0}</strong>
-        </div>
-      </div>
-
-      <form
-        role="search"
-        onSubmit={(event) => event.preventDefault()}
-      >
-        <label htmlFor="user-search">Tìm kiếm</label>
-        <input
-          id="user-search"
-          type="search"
-          placeholder="Nhập email hoặc họ tên"
-          maxLength={100}
-          value={searchInput}
-          onChange={(event) => setSearchInput(event.target.value)}
-        />
-      </form>
-
-      {data && (
-        <p>
-          {search
-            ? `Tìm thấy ${data.total} người dùng cho "${search}"`
-            : `Tổng số: ${data.total} người dùng`}
-        </p>
-      )}
-
-      {errorMessage && <p role="alert">{errorMessage}</p>}
-      {statusMessage && <p role="status">{statusMessage}</p>}
-
-      {isLoading && !data ? (
-        <p>Đang tải danh sách...</p>
-      ) : (
-        data && (
-          <UserTable
-            users={data.users}
-            emptyMessage={
-              search
-                ? "Không tìm thấy người dùng phù hợp."
-                : "Chưa có người dùng nào."
-            }
-            onUpdateStatus={handleUpdateStatus}
-            updatingUserId={updatingUserId}
-            onDelete={handleDeleteUser}
-            deletingUserId={deletingUserId}
+        <form role="search" onSubmit={(event) => event.preventDefault()}>
+          <label htmlFor="user-search">Tìm kiếm</label>
+          <input
+            id="user-search"
+            type="search"
+            placeholder="Nhập email hoặc họ tên"
+            maxLength={100}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
           />
-        )
-      )}
+        </form>
 
-      <nav>
-        <button
-          type="button"
-          onClick={() => setPage((p) => p - 1)}
-          disabled={page <= 1 || isLoading}
-        >
-          Trang trước
-        </button>
+        {data && (
+          <p>
+            {search
+              ? `Tìm thấy ${data.total} người dùng cho "${search}"`
+              : `Tổng số: ${data.total} người dùng`}
+          </p>
+        )}
 
-        <span>
-          Trang {page} / {totalPages}
-        </span>
+        {errorMessage && <p role="alert">{errorMessage}</p>}
+        {statusMessage && <p role="status">{statusMessage}</p>}
 
-        <button
-          type="button"
-          onClick={() => setPage((p) => p + 1)}
-          disabled={page >= totalPages || isLoading}
-        >
-          Trang sau
-        </button>
-      </nav>
-     </main>
-  </div>
+        {isLoading && !data ? (
+          <p>Đang tải danh sách...</p>
+        ) : (
+          data && (
+            <UserTable
+              users={data.users}
+              emptyMessage={
+                search
+                  ? "Không tìm thấy người dùng phù hợp."
+                  : "Chưa có người dùng nào."
+              }
+              onUpdateStatus={handleUpdateStatus}
+              updatingUserId={updatingUserId}
+              onDelete={handleDeleteUser}
+              deletingUserId={deletingUserId}
+            />
+          )
+        )}
+
+        <nav>
+          <button
+            type="button"
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page <= 1 || isLoading}
+          >
+            Trang trước
+          </button>
+
+          <span>
+            Trang {page} / {totalPages}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page >= totalPages || isLoading}
+          >
+            Trang sau
+          </button>
+        </nav>
+      </main>
+    </div>
   );
 }
 
