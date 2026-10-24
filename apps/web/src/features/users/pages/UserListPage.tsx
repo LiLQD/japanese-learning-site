@@ -1,8 +1,15 @@
+import Navbar from "../../../components/Navbar";
+import "./UserListPage.css";
+import "./UserListPage.css";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { UserListResponse } from "@app/shared";
 import { useAuth } from "../../../contexts/auth-context";
-import { fetchUsers } from "../api";
+import {
+  fetchUsers,
+  updateUserStatus,
+  deleteUser,
+} from "../api";
 import UserTable from "../components/UserTable";
 
 const PAGE_SIZE = 20;
@@ -16,17 +23,85 @@ function UserListPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<UserListResponse | null>(null);
-  // Request whose response has arrived (success or error); loading until it matches.
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
+  const [updatingUserId, setUpdatingUserId] =
+    useState<number | null>(null);
+  const [deletingUserId, setDeletingUserId] =
+    useState<number | null>(null);
+
   const requestKey = `${page}|${search}`;
   const isLoading = loadedKey !== requestKey;
 
-  // Wait until the admin stops typing, then search from the first page.
+  async function handleUpdateStatus(
+    id: number,
+    status: "ACTIVE" | "LOCKED",
+  ) {
+    const action = status === "LOCKED" ? "khóa" : "mở khóa";
+
+    if (!window.confirm(`Bạn có chắc muốn ${action} tài khoản này?`)) {
+      return;
+    }
+
+    setUpdatingUserId(id);
+    setErrorMessage("");
+    setStatusMessage("");
+
+    try {
+      await updateUserStatus(id, status);
+
+      const result = await fetchUsers(page, PAGE_SIZE, search);
+      setData(result);
+      setLoadedKey(requestKey);
+      setStatusMessage("Cập nhật trạng thái tài khoản thành công.");
+    } catch (error: unknown) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Không thể cập nhật trạng thái tài khoản.",
+      );
+    } finally {
+      setUpdatingUserId(null);
+    }
+  }
+
+  async function handleDeleteUser(id: number) {
+    setDeletingUserId(id);
+    setErrorMessage("");
+    setStatusMessage("");
+
+    try {
+      await deleteUser(id);
+
+      const result = await fetchUsers(page, PAGE_SIZE, search);
+
+      if (result.users.length === 0 && page > 1) {
+        setPage((currentPage) => currentPage - 1);
+        setStatusMessage("Xóa tài khoản thành công.");
+        return;
+      }
+
+      setData(result);
+      setLoadedKey(requestKey);
+      setStatusMessage("Xóa tài khoản thành công.");
+    } catch (error: unknown) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Không thể xóa tài khoản người dùng.",
+      );
+    } finally {
+      setDeletingUserId(null);
+    }
+  }
+
   useEffect(() => {
     const timer = setTimeout(() => {
       const term = searchInput.trim();
+
       if (term === search) return;
+
       setSearch(term);
       setPage(1);
     }, SEARCH_DELAY_MS);
@@ -42,12 +117,14 @@ function UserListPage() {
     fetchUsers(page, PAGE_SIZE, search)
       .then((result) => {
         if (cancelled) return;
+
         setData(result);
         setErrorMessage("");
         setLoadedKey(requestKey);
       })
       .catch((error: unknown) => {
         if (cancelled) return;
+
         setErrorMessage(
           error instanceof Error
             ? error.message
@@ -88,13 +165,34 @@ function UserListPage() {
     );
   }
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+  const totalPages = data
+    ? Math.max(1, Math.ceil(data.total / PAGE_SIZE))
+    : 1;
 
   return (
-    <main>
-      <h1>Quản lý người dùng</h1>
+  <div className="admin-layout">
+    <Navbar />
 
-      <form role="search" onSubmit={(event) => event.preventDefault()}>
+    <main className="admin-main">
+      <div className="admin-page-header">
+        <div>
+          <p className="admin-eyebrow">YUME · QUẢN TRỊ</p>
+          <h1>Quản lý người dùng</h1>
+          <p className="admin-description">
+            Theo dõi và quản lý tài khoản thành viên trên Yume.
+          </p>
+        </div>
+
+        <div className="admin-total-card">
+          <span>Tổng số tài khoản</span>
+          <strong>{data?.total ?? 0}</strong>
+        </div>
+      </div>
+
+      <form
+        role="search"
+        onSubmit={(event) => event.preventDefault()}
+      >
         <label htmlFor="user-search">Tìm kiếm</label>
         <input
           id="user-search"
@@ -115,6 +213,7 @@ function UserListPage() {
       )}
 
       {errorMessage && <p role="alert">{errorMessage}</p>}
+      {statusMessage && <p role="status">{statusMessage}</p>}
 
       {isLoading && !data ? (
         <p>Đang tải danh sách...</p>
@@ -127,6 +226,10 @@ function UserListPage() {
                 ? "Không tìm thấy người dùng phù hợp."
                 : "Chưa có người dùng nào."
             }
+            onUpdateStatus={handleUpdateStatus}
+            updatingUserId={updatingUserId}
+            onDelete={handleDeleteUser}
+            deletingUserId={deletingUserId}
           />
         )
       )}
@@ -139,9 +242,11 @@ function UserListPage() {
         >
           Trang trước
         </button>
+
         <span>
           Trang {page} / {totalPages}
         </span>
+
         <button
           type="button"
           onClick={() => setPage((p) => p + 1)}
@@ -150,7 +255,8 @@ function UserListPage() {
           Trang sau
         </button>
       </nav>
-    </main>
+     </main>
+  </div>
   );
 }
 

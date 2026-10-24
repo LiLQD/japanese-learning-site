@@ -42,3 +42,52 @@ export async function getUserById(id: number) {
     select: { ...userListSelect, updatedAt: true },
   });
 }
+export async function updateUserStatus(
+  id: number,
+  status: "ACTIVE" | "LOCKED",
+) {
+  return prisma.$transaction(async (tx) => {
+    const result = await tx.user.updateMany({
+      where: { id },
+      data: { status },
+    });
+
+    if (result.count === 0) {
+      return null;
+    }
+
+    // Khi khóa tài khoản, vô hiệu hóa các phiên đăng nhập hiện có.
+    if (status === "LOCKED") {
+      await tx.session.deleteMany({
+        where: { userId: id },
+      });
+    }
+
+    return tx.user.findUnique({
+      where: { id },
+      select: { ...userListSelect, updatedAt: true },
+    });
+  });
+}
+export async function deleteUser(id: number) {
+  return prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({
+      where: { id },
+      select: { id: true, role: true },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    if (user.role === "ADMIN") {
+      return false;
+    }
+
+    await tx.user.delete({
+      where: { id },
+    });
+
+    return true;
+  });
+}
