@@ -1,0 +1,221 @@
+.admin-layout {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.admin-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+}
+
+.admin-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.admin-eyebrow {
+  margin: 0 0 8px;
+  color: var(--color-brand);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.admin-page-header h1 {
+  margin: 0 0 12px;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.admin-description {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.admin-total-card {
+  min-width: 170px;
+  padding: 20px 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.admin-total-card span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.admin-total-card strong {
+  color: var(--color-brand);
+  font-size: 30px;
+}
+
+.admin-main form[role="search"] {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 20px 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+}
+
+.admin-main form[role="search"] label {
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.admin-main form[role="search"] input {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 480px;
+  padding: 12px 16px;
+  color: var(--color-ink);
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  font: inherit;
+}
+
+.admin-main form[role="search"] input:focus {
+  border-color: var(--color-brand);
+  outline: 2px solid rgba(47, 62, 158, 0.12);
+}
+
+.admin-main > p {
+  color: var(--color-muted);
+}
+
+.admin-main table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+}
+
+.admin-main > table,
+.admin-main > p + table {
+  border-radius: var(--radius-card);
+}
+
+.admin-main table th {
+  padding: 16px;
+  color: var(--color-muted);
+  background: #f2f0ea;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.admin-main table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-line);
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.admin-main table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-main table tbody tr:hover {
+  background: #fcfbf8;
+}
+
+.admin-main table td a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.admin-main table td a:hover {
+  text-decoration: underline;
+}
+
+.admin-main table td button {
+  margin: 3px;
+  padding: 8px 12px;
+  color: var(--color-brand);
+  background: white;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-main table td button:hover:not(:disabled) {
+  background: var(--accent-bg);
+  border-color: var(--color-brand);
+}
+
+.admin-main table td button:last-child {
+  color: var(--color-danger);
+}
+
+.admin-main table td button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.admin-main nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.admin-main nav button {
+  padding: 10px 16px;
+  color: white;
+  background: var(--color-brand);
+  border: none;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-main nav button:hover:not(:disabled) {
+  background: var(--color-brand-hover);
+}
+
+.admin-main nav button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (max-width: 768px) {
+  .admin-main {
+    padding: 28px 16px 40px;
+  }
+
+  .admin-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-page-header h1 {
+    font-size: 26px;
+  }
+
+  .admin-main form[role="search"] {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-main table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
