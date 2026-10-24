@@ -195,11 +195,9 @@ describe("GET /api/admin/users/:id", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
-      user: {
-        ...sampleUsers[0],
-        createdAt: "2026-10-10T00:00:00.000Z",
-        updatedAt: "2026-10-11T00:00:00.000Z",
-      },
+      ...sampleUsers[0],
+      createdAt: "2026-10-10T00:00:00.000Z",
+      updatedAt: "2026-10-11T00:00:00.000Z",
     });
     expect(findUniqueMock).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 2 } }),
