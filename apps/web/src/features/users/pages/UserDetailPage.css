@@ -1,0 +1,154 @@
+.user-detail-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+.user-detail-back {
+  display: inline-block;
+  margin-bottom: 28px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.user-detail-back:hover {
+  text-decoration: underline;
+}
+
+.user-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.user-detail-eyebrow {
+  margin: 0 0 8px;
+  color: var(--color-brand);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.user-detail-header h1 {
+  margin: 0 0 10px;
+  font-size: 32px;
+}
+
+.user-detail-subtitle {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.user-detail-card {
+  padding: 28px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.user-detail-profile {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.user-detail-avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  color: white;
+  background: var(--color-brand);
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.user-detail-profile h2 {
+  margin: 0 0 6px;
+  font-size: 21px;
+}
+
+.user-detail-profile p {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.user-detail-status {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.user-detail-status.active {
+  color: #187347;
+  background: #e5f5eb;
+}
+
+.user-detail-status.locked {
+  color: #a12b24;
+  background: #fce9e7;
+}
+
+.user-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 32px;
+  margin: 0;
+}
+
+.user-detail-field {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--color-line);
+  min-width: 0;
+}
+
+.user-detail-field dt {
+  margin-bottom: 7px;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.user-detail-field dd {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.user-detail-message {
+  padding: 20px;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+}
+
+@media (max-width: 640px) {
+  .user-detail-page {
+    padding: 28px 16px 40px;
+  }
+
+  .user-detail-header h1 {
+    font-size: 26px;
+  }
+
+  .user-detail-card {
+    padding: 20px;
+  }
+
+  .user-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
