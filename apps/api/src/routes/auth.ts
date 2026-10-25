@@ -1,6 +1,6 @@
 import { Router } from "express";
-import bcrypt from "bcryptjs";
 import { requireAuth } from "../middleware/auth.js";
+import { hash, compare } from "bcryptjs";
 import { createHash, randomBytes } from "node:crypto";
 import {
   registerSchema,
@@ -62,7 +62,7 @@ router.post(
         throw conflict("Email đã được sử dụng");
       }
 
-      const passwordHash = await bcrypt.hash(password, 10);
+      const passwordHash = await hash(password, 10);
 
       const user = await prisma.user.create({
         data: {
@@ -231,7 +231,7 @@ router.post("/login", validateBody(loginSchema), async (req, res, next) => {
       return;
     }
 
-    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+    const passwordMatches = await compare(password, user.passwordHash);
 
     if (!passwordMatches) {
       res.status(401).json({

@@ -1,26 +1,28 @@
 {
   "name": "japanese-learning-site",
   "private": true,
-  "packageManager": "pnpm@12.9.1",
   "scripts": {
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r --if-present build",
-    "lint": "pnpm -r --if-present lint",
-    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "oxlint",
+    "typecheck": "oxlint --type-aware --type-check",
     "test": "pnpm -r --if-present test",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
     "db:up": "docker compose up -d db",
-    "db:seed": "pnpm --filter api exec tsx prisma/seed.ts",
     "db:generate": "pnpm --filter api exec prisma generate",
-    "db:migrate": "pnpm --filter api exec prisma migrate dev"
+    "db:migrate": "pnpm --filter api exec prisma migrate dev",
+    "db:seed": "pnpm --filter api exec tsx prisma/seed.ts"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.74.0",
+    "oxlint": "^1.89.0",
+    "oxlint-tsgolint": "^7.0.2005",
+    "typescript": "5.9.3"
   },
   "engines": {
     "node": ">=24"
   },
-  "devDependencies": {
-    "prettier": "^3.9.9",
-    "typescript": "5.9.3"
-  }
+  "packageManager": "pnpm@12.9.1"
 }

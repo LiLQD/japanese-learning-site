@@ -1,6 +1,6 @@
 import "dotenv/config";
-import bcrypt from "bcryptjs";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { hash } from "bcryptjs";
 import { PrismaClient } from "../generated/prisma/client.js";
 
 const connectionString = process.env.DATABASE_URL;
@@ -295,8 +295,8 @@ const WORDS: SeedWord[] = [
 ];
 
 async function seedUsers(): Promise<void> {
-  const adminHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-  const userHash = await bcrypt.hash(USER_PASSWORD, 10);
+  const adminHash = await hash(ADMIN_PASSWORD, 10);
+  const userHash = await hash(USER_PASSWORD, 10);
 
   await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },

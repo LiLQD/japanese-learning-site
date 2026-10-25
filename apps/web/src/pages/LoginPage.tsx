@@ -41,7 +41,7 @@ function LoginPage() {
       }
       await refreshUser();
       // Đăng nhập thành công, chuyển về trang chủ.
-      navigate("/");
+      void navigate("/");
     } catch {
       setErrorMessage(
         "Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối và thử lại.",
