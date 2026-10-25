@@ -1,6 +1,5 @@
 import Navbar from "../../../components/Navbar";
 import "./UserListPage.css";
-import "./UserListPage.css";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { UserListResponse } from "@app/shared";
@@ -9,14 +8,11 @@ import { fetchUsers, updateUserStatus, deleteUser } from "../api";
 import UserTable from "../components/UserTable";
 
 const PAGE_SIZE = 20;
-const SEARCH_DELAY_MS = 300;
 
 function UserListPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const isAdmin = user?.role === "ADMIN";
 
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<UserListResponse | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
@@ -25,7 +21,7 @@ function UserListPage() {
   const [updatingUserId, setUpdatingUserId] = useState<number | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
 
-  const requestKey = `${page}|${search}`;
+  const requestKey = `${page}`;
   const isLoading = loadedKey !== requestKey;
 
   async function handleUpdateStatus(id: number, status: "ACTIVE" | "LOCKED") {
@@ -42,7 +38,7 @@ function UserListPage() {
     try {
       await updateUserStatus(id, status);
 
-      const result = await fetchUsers(page, PAGE_SIZE, search);
+      const result = await fetchUsers(page, PAGE_SIZE);
       setData(result);
       setLoadedKey(requestKey);
       setStatusMessage("Cập nhật trạng thái tài khoản thành công.");
@@ -65,7 +61,7 @@ function UserListPage() {
     try {
       await deleteUser(id);
 
-      const result = await fetchUsers(page, PAGE_SIZE, search);
+      const result = await fetchUsers(page, PAGE_SIZE);
 
       if (result.users.length === 0 && page > 1) {
         setPage((currentPage) => currentPage - 1);
@@ -88,24 +84,11 @@ function UserListPage() {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const term = searchInput.trim();
-
-      if (term === search) return;
-
-      setSearch(term);
-      setPage(1);
-    }, SEARCH_DELAY_MS);
-
-    return () => clearTimeout(timer);
-  }, [searchInput, search]);
-
-  useEffect(() => {
     if (!isAdmin) return;
 
     let cancelled = false;
 
-    fetchUsers(page, PAGE_SIZE, search)
+    fetchUsers(page, PAGE_SIZE)
       .then((result) => {
         if (cancelled) return;
 
@@ -127,7 +110,7 @@ function UserListPage() {
     return () => {
       cancelled = true;
     };
-  }, [isAdmin, page, search, requestKey]);
+  }, [isAdmin, page, requestKey]);
 
   if (isAuthLoading) {
     return (
@@ -178,25 +161,7 @@ function UserListPage() {
           </div>
         </div>
 
-        <form role="search" onSubmit={(event) => event.preventDefault()}>
-          <label htmlFor="user-search">Tìm kiếm</label>
-          <input
-            id="user-search"
-            type="search"
-            placeholder="Nhập email hoặc họ tên"
-            maxLength={100}
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-          />
-        </form>
-
-        {data && (
-          <p>
-            {search
-              ? `Tìm thấy ${data.total} người dùng cho "${search}"`
-              : `Tổng số: ${data.total} người dùng`}
-          </p>
-        )}
+        {data && <p>Tổng số: {data.total} người dùng</p>}
 
         {errorMessage && <p role="alert">{errorMessage}</p>}
         {statusMessage && <p role="status">{statusMessage}</p>}
@@ -207,11 +172,7 @@ function UserListPage() {
           data && (
             <UserTable
               users={data.users}
-              emptyMessage={
-                search
-                  ? "Không tìm thấy người dùng phù hợp."
-                  : "Chưa có người dùng nào."
-              }
+              emptyMessage="Chưa có người dùng nào."
               onUpdateStatus={handleUpdateStatus}
               updatingUserId={updatingUserId}
               onDelete={handleDeleteUser}
