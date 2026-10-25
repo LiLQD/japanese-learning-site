@@ -300,7 +300,11 @@ async function seedUsers(): Promise<void> {
 
   await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
-    update: {},
+    update: {
+      role: "ADMIN",
+      status: "ACTIVE",
+      emailVerifiedAt: new Date(),
+    },
     create: {
       email: ADMIN_EMAIL,
       passwordHash: adminHash,
