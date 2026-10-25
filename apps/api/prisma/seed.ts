@@ -11,9 +11,9 @@ if (!connectionString) {
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-const ADMIN_EMAIL = "admin@localhost";
+const ADMIN_EMAIL = "admin@example.com";
 const ADMIN_PASSWORD = "admin1234";
-const USER_EMAIL = "user@localhost";
+const USER_EMAIL = "user@example.com";
 const USER_PASSWORD = "user1234";
 
 type SeedWord = {
