@@ -15,7 +15,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/login");
+    void navigate("/login");
   };
 
   // Fetch thông báo và tự động cập nhật mỗi 30s
@@ -37,7 +37,7 @@ export default function Navbar() {
       }
     };
 
-    fetchNotifications();
+    void fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [user]);

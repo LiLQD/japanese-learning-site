@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
-import bcrypt from "bcryptjs";
+import { hash, compare } from "bcryptjs";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -45,12 +45,12 @@ export async function changePassword(
     throw unauthorized("Không tìm thấy người dùng");
   }
 
-  const isValid = await bcrypt.compare(oldPass, user.passwordHash);
+  const isValid = await compare(oldPass, user.passwordHash);
   if (!isValid) {
     throw unauthorized("Mật khẩu cũ không chính xác");
   }
 
-  const newHash = await bcrypt.hash(newPass, 10);
+  const newHash = await hash(newPass, 10);
 
   await prisma.user.update({
     where: { id: userId },

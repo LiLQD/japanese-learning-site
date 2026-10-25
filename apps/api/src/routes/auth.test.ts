@@ -1,6 +1,6 @@
 import express from "express";
 import request from "supertest";
-import bcrypt from "bcryptjs";
+import { compare } from "bcryptjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
@@ -95,7 +95,7 @@ describe("POST /api/auth/register", () => {
     const createArgs = createMock.mock.calls[0][0];
     expect(createArgs.data.passwordHash).not.toBe(validBody.password);
     expect(
-      await bcrypt.compare(validBody.password, createArgs.data.passwordHash),
+      await compare(validBody.password, createArgs.data.passwordHash),
     ).toBe(true);
   });
 
