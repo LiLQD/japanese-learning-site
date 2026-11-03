@@ -68,7 +68,7 @@ function KanjiListPage() {
 
         {errorMessage && <p role="alert">{errorMessage}</p>}
 
-        {isLoading && !data ? (
+        {isLoading ? (
           <p>Đang tải danh sách...</p>
         ) : (
           data && <KanjiTable kanji={data.kanji} />
