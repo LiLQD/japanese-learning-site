@@ -1,18 +1,38 @@
 import Navbar from "../../../components/Navbar";
 import "./KanjiListPage.css";
 import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
 import type { KanjiListResponse } from "@app/shared";
-import { fetchKanjiList } from "../api";
+import { useAuth } from "../../../contexts/auth-context";
+import { fetchKanjiList, KANJI_PAGE_SIZE as PAGE_SIZE } from "../api";
 import KanjiTable from "../components/KanjiTable";
 
-const PAGE_SIZE = 20;
+// Sent by the add/edit pages when they navigate back to the list.
+export type KanjiListLocationState = {
+  message?: string;
+  page?: number;
+};
 
-// Public page: guests and users can browse; admin actions come in US-22/23/24.
+// Public page: guests and users can browse; only admins see the write actions.
 function KanjiListPage() {
-  const [page, setPage] = useState(1);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
+  const location = useLocation();
+  const navigate = useNavigate();
+  const locationState = location.state as KanjiListLocationState | null;
+
+  const [page, setPage] = useState(locationState?.page ?? 1);
   const [data, setData] = useState<KanjiListResponse | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [statusMessage] = useState(locationState?.message ?? "");
+
+  // Clear the one-time message so it does not reappear on reload.
+  useEffect(() => {
+    if (location.state) {
+      void navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.state, location.pathname, navigate]);
 
   const requestKey = `${page}`;
   const isLoading = loadedKey !== requestKey;
@@ -60,12 +80,25 @@ function KanjiListPage() {
             </p>
           </div>
 
-          <div className="kanji-total-card">
-            <span>Tổng số chữ Kanji</span>
-            <strong>{data?.total ?? 0}</strong>
+          <div className="kanji-header-side">
+            <div className="kanji-total-card">
+              <span>Tổng số chữ Kanji</span>
+              <strong>{data?.total ?? 0}</strong>
+            </div>
+
+            {isAdmin && (
+              <Link to="/kanji/new" className="kanji-button">
+                + Thêm mới
+              </Link>
+            )}
           </div>
         </div>
 
+        {statusMessage && (
+          <p className="kanji-status" role="status">
+            {statusMessage}
+          </p>
+        )}
         {errorMessage && <p role="alert">{errorMessage}</p>}
 
         {isLoading ? (
