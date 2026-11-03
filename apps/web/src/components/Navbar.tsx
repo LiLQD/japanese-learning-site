@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../contexts/auth-context";
 import type { NotificationListResponse, NotificationItem } from "@app/shared";
 import "./Navbar.css";
@@ -7,6 +7,7 @@ import "./Navbar.css";
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isKanjiPage = useLocation().pathname.startsWith("/kanji");
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -88,8 +89,10 @@ export default function Navbar() {
               placeholder="Tìm từ vựng, hán tự, ngữ pháp..."
             />
             <div className="nav-tabs">
-              <span className="active">Từ vựng</span>
-              <span>Hán tự</span>
+              <span className={isKanjiPage ? "" : "active"}>Từ vựng</span>
+              <Link to="/kanji" className={isKanjiPage ? "active" : ""}>
+                Hán tự
+              </Link>
               <span>Ngữ pháp</span>
               <span>Bài đọc</span>
             </div>

@@ -3,6 +3,7 @@ import authRouter from "./routes/auth.js";
 import usersRouter from "./modules/users/users.routes.js";
 import profileRouter from "./modules/profile/profile.routes.js";
 import notificationsRouter from "./modules/notifications/notifications.routes.js";
+import kanjiRouter from "./modules/kanji/kanji.routes.js";
 
 import express from "express";
 import helmet from "helmet";
@@ -31,6 +32,7 @@ export function createApp() {
   app.use(loadSession);
   app.use("/api/auth", authRouter);
   app.use("/api/admin/users", usersRouter);
+  app.use("/api/kanji", kanjiRouter);
   app.use("/api/users/me", profileRouter);
   app.use("/api/notifications", notificationsRouter);
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));

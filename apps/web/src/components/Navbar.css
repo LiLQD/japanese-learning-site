@@ -97,17 +97,22 @@
   width: 100%;
 }
 
-.nav-tabs span {
+.nav-tabs span,
+.nav-tabs a {
   cursor: pointer;
   padding-bottom: 4px;
+  color: inherit;
+  text-decoration: none;
   transition: all 0.2s;
 }
 
-.nav-tabs span:hover {
+.nav-tabs span:hover,
+.nav-tabs a:hover {
   color: var(--color-ink);
 }
 
-.nav-tabs span.active {
+.nav-tabs span.active,
+.nav-tabs a.active {
   color: var(--color-brand);
   font-weight: 600;
   border-bottom: 2px solid var(--color-brand);

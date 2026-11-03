@@ -4,6 +4,7 @@ export * from "./errors.js";
 export * from "./users.js";
 export * from "./profile.js";
 export * from "./notifications.js";
+export * from "./kanji.js";
 
 export const healthResponseSchema = z.object({ status: z.literal("ok") });
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
