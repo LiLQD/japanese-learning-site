@@ -1,0 +1,149 @@
+.kanji-layout {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.kanji-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+}
+
+.kanji-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.kanji-eyebrow {
+  margin: 0 0 8px;
+  color: var(--color-brand);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.kanji-page-header h1 {
+  margin: 0 0 12px;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.kanji-description {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.kanji-total-card {
+  min-width: 170px;
+  padding: 20px 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.kanji-total-card span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.kanji-total-card strong {
+  color: var(--color-brand);
+  font-size: 30px;
+}
+
+.kanji-main > p {
+  color: var(--color-muted);
+}
+
+.kanji-main table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+}
+
+.kanji-main table th {
+  padding: 16px;
+  color: var(--color-muted);
+  background: #f2f0ea;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.kanji-main table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-line);
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.kanji-main table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.kanji-main table tbody tr:hover {
+  background: #fcfbf8;
+}
+
+.kanji-main table td.kanji-character {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.kanji-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.kanji-pagination button {
+  padding: 10px 16px;
+  color: white;
+  background: var(--color-brand);
+  border: none;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kanji-pagination button:hover:not(:disabled) {
+  background: var(--color-brand-hover);
+}
+
+.kanji-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (max-width: 768px) {
+  .kanji-main {
+    padding: 28px 16px 40px;
+  }
+
+  .kanji-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .kanji-page-header h1 {
+    font-size: 26px;
+  }
+
+  .kanji-main table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

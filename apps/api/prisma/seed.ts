@@ -294,6 +294,43 @@ const WORDS: SeedWord[] = [
   },
 ];
 
+type SeedKanji = {
+  character: string;
+  strokeCount: number;
+  radical: string;
+  jlpt: number;
+};
+
+const KANJI: SeedKanji[] = [
+  { character: "日", strokeCount: 4, radical: "日", jlpt: 5 },
+  { character: "月", strokeCount: 4, radical: "月", jlpt: 5 },
+  { character: "火", strokeCount: 4, radical: "火", jlpt: 5 },
+  { character: "水", strokeCount: 4, radical: "水", jlpt: 5 },
+  { character: "木", strokeCount: 4, radical: "木", jlpt: 5 },
+  { character: "金", strokeCount: 8, radical: "金", jlpt: 5 },
+  { character: "土", strokeCount: 3, radical: "土", jlpt: 5 },
+  { character: "山", strokeCount: 3, radical: "山", jlpt: 5 },
+  { character: "川", strokeCount: 3, radical: "川", jlpt: 5 },
+  { character: "人", strokeCount: 2, radical: "人", jlpt: 5 },
+  { character: "口", strokeCount: 3, radical: "口", jlpt: 5 },
+  { character: "大", strokeCount: 3, radical: "大", jlpt: 5 },
+  { character: "小", strokeCount: 3, radical: "小", jlpt: 5 },
+  { character: "中", strokeCount: 4, radical: "丨", jlpt: 5 },
+  { character: "上", strokeCount: 3, radical: "一", jlpt: 5 },
+  { character: "下", strokeCount: 3, radical: "一", jlpt: 5 },
+  { character: "年", strokeCount: 6, radical: "干", jlpt: 5 },
+  { character: "本", strokeCount: 5, radical: "木", jlpt: 5 },
+  { character: "学", strokeCount: 8, radical: "子", jlpt: 5 },
+  { character: "生", strokeCount: 5, radical: "生", jlpt: 5 },
+  { character: "先", strokeCount: 6, radical: "儿", jlpt: 5 },
+  { character: "東", strokeCount: 8, radical: "木", jlpt: 5 },
+  { character: "西", strokeCount: 6, radical: "襾", jlpt: 5 },
+  { character: "南", strokeCount: 9, radical: "十", jlpt: 5 },
+  { character: "北", strokeCount: 5, radical: "匕", jlpt: 5 },
+  { character: "社", strokeCount: 7, radical: "示", jlpt: 4 },
+  { character: "会", strokeCount: 6, radical: "人", jlpt: 4 },
+];
+
 async function seedUsers(): Promise<void> {
   const adminHash = await hash(ADMIN_PASSWORD, 10);
   const userHash = await hash(USER_PASSWORD, 10);
@@ -351,12 +388,25 @@ async function seedWords(): Promise<void> {
   }
 }
 
+async function seedKanji(): Promise<void> {
+  for (const k of KANJI) {
+    await prisma.kanji.upsert({
+      where: { character: k.character },
+      update: {},
+      create: k,
+    });
+  }
+}
+
 async function main(): Promise<void> {
   console.log("Seeding users...");
   await seedUsers();
 
   console.log(`Seeding ${WORDS.length} words...`);
   await seedWords();
+
+  console.log(`Seeding ${KANJI.length} kanji...`);
+  await seedKanji();
 
   console.log("Done.");
   console.log(`  admin: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
