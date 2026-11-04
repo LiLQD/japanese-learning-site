@@ -202,12 +202,12 @@ describe("POST /api/kanji", () => {
   it("stores empty optional fields as null", async () => {
     const res = await request(makeApp(admin))
       .post("/api/kanji")
-      .send({ character: " 雨 ", jlpt: 5, strokeCount: null });
+      .send({ character: " 雨 ", jlpt: 5, strokeCount: null, radical: "雨" });
 
     expect(res.status).toBe(201);
     expect(createMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: { character: "雨", jlpt: 5, strokeCount: null, radical: null },
+        data: { character: "雨", jlpt: 5, strokeCount: null, radical: "雨" },
       }),
     );
   });

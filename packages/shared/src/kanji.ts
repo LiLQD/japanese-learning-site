@@ -56,11 +56,11 @@ export const kanjiInputSchema = z.object({
     .nullable()
     .optional(),
   radical: z
-    .string({ error: "Bộ thủ không hợp lệ" })
+    .string()
     .trim()
-    .regex(singleHanCharacter, "Bộ thủ phải là đúng 1 chữ Hán")
-    .nullable()
-    .optional(),
+    .min(1, "Vui lòng nhập bộ thủ")
+    .max(10, "Bộ thủ tối đa 10 ký tự")
+    .regex(/^\p{Script=Han}+$/u, "Bộ thủ phải là chữ Hán tự"),
 });
 
 export type KanjiInput = z.input<typeof kanjiInputSchema>;

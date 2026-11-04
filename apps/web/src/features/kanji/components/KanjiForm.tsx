@@ -2,7 +2,6 @@ import { useState, type FormEvent } from "react";
 import { kanjiInputSchema, type KanjiInput } from "@app/shared";
 import { CONNECTION_ERROR } from "../api";
 
-// Inputs keep raw strings; they are converted to KanjiInput on submit.
 export type KanjiFormValues = {
   character: string;
   strokeCount: string;
@@ -25,9 +24,7 @@ type KanjiFormProps = {
   initialValues?: KanjiFormValues;
   submitLabel: string;
   submittingLabel: string;
-  // Shown when client-side validation fails, e.g. "Thêm mới thất bại! ...".
   invalidMessage: string;
-  // Prepended to errors returned by the API, e.g. "Thêm mới thất bại!".
   failurePrefix: string;
   onSubmit: (input: KanjiInput) => Promise<void>;
   onCancel: () => void;
@@ -38,7 +35,7 @@ function toInput(values: KanjiFormValues) {
     character: values.character,
     jlpt: values.jlpt ? Number(values.jlpt) : undefined,
     strokeCount: values.strokeCount.trim() ? Number(values.strokeCount) : null,
-    radical: values.radical.trim() ? values.radical : null,
+    radical: values.radical,
   };
 }
 
@@ -94,6 +91,7 @@ function KanjiForm({
           ? CONNECTION_ERROR
           : `${failurePrefix} ${message}`,
       );
+    } finally {
       setIsSubmitting(false);
     }
   }
@@ -139,7 +137,9 @@ function KanjiForm({
       </label>
 
       <label>
-        <span>Bộ thủ</span>
+        <span>
+          Bộ thủ <em>*</em> {/* Sửa ở đây: Thêm dấu * vì đã bắt buộc */}
+        </span>
         <input
           type="text"
           lang="ja"
