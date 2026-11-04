@@ -147,3 +147,56 @@
     white-space: nowrap;
   }
 }
+
+.kanji-header-side {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.kanji-button,
+.kanji-button-secondary {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.kanji-button {
+  color: white;
+  background: var(--color-brand);
+  border: 1px solid var(--color-brand);
+}
+
+.kanji-button:hover:not(:disabled) {
+  background: var(--color-brand-hover);
+}
+
+.kanji-button-secondary {
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+}
+
+.kanji-button-secondary:hover:not(:disabled) {
+  border-color: var(--color-brand);
+}
+
+.kanji-button:disabled,
+.kanji-button-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.kanji-main > p.kanji-status {
+  padding: 12px 16px;
+  color: #1d6b3a;
+  background: rgba(29, 107, 58, 0.08);
+  border-radius: 10px;
+  font-weight: 600;
+}

@@ -32,3 +32,39 @@ export type KanjiListResponse = {
   page: number;
   pageSize: number;
 };
+
+// Exactly one Han character (also matches radical forms such as 氵).
+const singleHanCharacter = /^\p{Script=Han}$/u;
+
+// Shared by the add form (US-22) and the API; optional fields use null when empty.
+export const kanjiInputSchema = z.object({
+  character: z
+    .string({ error: "Vui lòng nhập chữ Kanji" })
+    .trim()
+    .min(1, "Vui lòng nhập chữ Kanji")
+    .regex(singleHanCharacter, "Chữ Kanji phải là đúng 1 chữ Hán"),
+  jlpt: z
+    .number({ error: "Vui lòng chọn cấp độ JLPT" })
+    .int("Cấp độ JLPT không hợp lệ")
+    .min(1, "Cấp độ JLPT không hợp lệ")
+    .max(5, "Cấp độ JLPT không hợp lệ"),
+  strokeCount: z
+    .number({ error: "Số nét phải là số" })
+    .int("Số nét phải là số nguyên")
+    .min(1, "Số nét phải từ 1 đến 84")
+    .max(84, "Số nét phải từ 1 đến 84")
+    .nullable()
+    .optional(),
+  radical: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập bộ thủ")
+    .max(10, "Bộ thủ tối đa 10 ký tự")
+    .regex(/^\p{Script=Han}+$/u, "Bộ thủ phải là chữ Hán tự"),
+});
+
+export type KanjiInput = z.input<typeof kanjiInputSchema>;
+
+export type KanjiResponse = {
+  kanji: KanjiListItem;
+};

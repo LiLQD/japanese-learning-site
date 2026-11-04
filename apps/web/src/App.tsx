@@ -7,6 +7,7 @@ import UserListPage from "./features/users/pages/UserListPage";
 import UserDetailPage from "./features/users/pages/UserDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import KanjiListPage from "./features/kanji/pages/KanjiListPage";
+import KanjiCreatePage from "./features/kanji/pages/KanjiCreatePage";
 import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
           <Route path="/admin/users" element={<UserListPage />} />
           <Route path="/admin/users/:id" element={<UserDetailPage />} />
           <Route path="/kanji" element={<KanjiListPage />} />
+          <Route path="/kanji/new" element={<KanjiCreatePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -3,22 +3,27 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthUser } from "../../types.js";
 
-const { findManyMock, countMock, transactionMock } = vi.hoisted(() => ({
-  findManyMock: vi.fn(),
-  countMock: vi.fn(),
-  transactionMock: vi.fn(),
-}));
+const { findManyMock, countMock, createMock, transactionMock } = vi.hoisted(
+  () => ({
+    findManyMock: vi.fn(),
+    countMock: vi.fn(),
+    createMock: vi.fn(),
+    transactionMock: vi.fn(),
+  }),
+);
 
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     kanji: {
       findMany: findManyMock,
       count: countMock,
+      create: createMock,
     },
     $transaction: transactionMock,
   },
 }));
 
+import { Prisma } from "../../../generated/prisma/client.js";
 import kanjiRouter from "./kanji.routes.js";
 import { errorHandler, notFoundHandler } from "../../middleware/error.js";
 
@@ -139,6 +144,122 @@ describe("GET /api/kanji", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     const res = await request(makeApp(admin)).get("/api/kanji");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe("INTERNAL");
+  });
+});
+
+describe("POST /api/kanji", () => {
+  const validInput = {
+    character: "雨",
+    jlpt: 5,
+    strokeCount: 8,
+    radical: "雨",
+  };
+
+  const createdKanji = {
+    id: 28,
+    ...validInput,
+    createdAt: new Date("2026-11-03T00:00:00.000Z"),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    createMock.mockResolvedValue(createdKanji);
+  });
+
+  it("returns 401 for guests", async () => {
+    const res = await request(makeApp()).post("/api/kanji").send(validInput);
+
+    expect(res.status).toBe(401);
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for a non-admin user", async () => {
+    const res = await request(makeApp({ id: 2, role: "USER" }))
+      .post("/api/kanji")
+      .send(validInput);
+
+    expect(res.status).toBe(403);
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("creates a kanji and returns 201", async () => {
+    const res = await request(makeApp(admin))
+      .post("/api/kanji")
+      .send(validInput);
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({
+      kanji: { ...createdKanji, createdAt: "2026-11-03T00:00:00.000Z" },
+    });
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({ data: validInput }),
+    );
+  });
+
+  it("stores empty optional fields as null", async () => {
+    const res = await request(makeApp(admin))
+      .post("/api/kanji")
+      .send({ character: " 雨 ", jlpt: 5, strokeCount: null, radical: "雨" });
+
+    expect(res.status).toBe(201);
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { character: "雨", jlpt: 5, strokeCount: null, radical: "雨" },
+      }),
+    );
+  });
+
+  it.each([
+    ["missing character", { jlpt: 5 }],
+    ["empty character", { character: "  ", jlpt: 5 }],
+    ["two characters", { character: "日本", jlpt: 5 }],
+    ["latin letter", { character: "a", jlpt: 5 }],
+    ["hiragana", { character: "あ", jlpt: 5 }],
+    ["missing jlpt", { character: "雨" }],
+    ["jlpt 0", { character: "雨", jlpt: 0 }],
+    ["jlpt 6", { character: "雨", jlpt: 6 }],
+    ["jlpt as text", { character: "雨", jlpt: "N5" }],
+    ["stroke count 0", { character: "雨", jlpt: 5, strokeCount: 0 }],
+    ["stroke count 85", { character: "雨", jlpt: 5, strokeCount: 85 }],
+    ["decimal stroke count", { character: "雨", jlpt: 5, strokeCount: 2.5 }],
+    ["two-letter radical", { character: "雨", jlpt: 5, radical: "ab" }],
+  ])("returns 400 for %s", async (_label, body) => {
+    const res = await request(makeApp(admin)).post("/api/kanji").send(body);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("BAD_REQUEST");
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 409 when the kanji already exists", async () => {
+    createMock.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: "P2002",
+        clientVersion: "test",
+      }),
+    );
+
+    const res = await request(makeApp(admin))
+      .post("/api/kanji")
+      .send(validInput);
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toEqual({
+      code: "CONFLICT",
+      message: "Chữ Kanji này đã tồn tại trong hệ thống!",
+    });
+  });
+
+  it("returns 500 when the database is unreachable", async () => {
+    createMock.mockRejectedValue(new Error("connect ECONNREFUSED"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await request(makeApp(admin))
+      .post("/api/kanji")
+      .send(validInput);
 
     expect(res.status).toBe(500);
     expect(res.body.error.code).toBe("INTERNAL");
