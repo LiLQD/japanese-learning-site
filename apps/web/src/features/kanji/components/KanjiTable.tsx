@@ -1,8 +1,18 @@
+import { Link } from "react-router";
 import type { KanjiListItem } from "@app/shared";
 
 type KanjiTableProps = {
   kanji: KanjiListItem[];
   emptyMessage?: string;
+  // Admins get an extra "Thao tác" column with the edit link.
+  isAdmin?: boolean;
+  // Current list page, so the edit page can return to it.
+  page?: number;
+};
+
+// Sent to the edit page so Hủy / Cập nhật return to the same list page.
+export type KanjiEditLocationState = {
+  fromPage?: number;
 };
 
 function formatDate(value: string) {
@@ -12,6 +22,8 @@ function formatDate(value: string) {
 function KanjiTable({
   kanji,
   emptyMessage = "Chưa có dữ liệu Kanji nào trong hệ thống",
+  isAdmin = false,
+  page = 1,
 }: KanjiTableProps) {
   if (kanji.length === 0) {
     return <p>{emptyMessage}</p>;
@@ -27,6 +39,7 @@ function KanjiTable({
           <th>Bộ thủ</th>
           <th>Cấp độ JLPT</th>
           <th>Ngày tạo</th>
+          {isAdmin && <th>Thao tác</th>}
         </tr>
       </thead>
       <tbody>
@@ -40,6 +53,17 @@ function KanjiTable({
             <td lang="ja">{item.radical ?? "—"}</td>
             <td>{item.jlpt ? `N${item.jlpt}` : "—"}</td>
             <td>{formatDate(item.createdAt)}</td>
+            {isAdmin && (
+              <td>
+                <Link
+                  to={`/kanji/${item.id}/edit`}
+                  state={{ fromPage: page } satisfies KanjiEditLocationState}
+                  className="kanji-button-secondary kanji-row-action"
+                >
+                  Sửa
+                </Link>
+              </td>
+            )}
           </tr>
         ))}
       </tbody>

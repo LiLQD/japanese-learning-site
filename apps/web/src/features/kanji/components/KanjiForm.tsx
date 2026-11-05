@@ -138,7 +138,7 @@ function KanjiForm({
 
       <label>
         <span>
-          Bộ thủ <em>*</em> {/* Sửa ở đây: Thêm dấu * vì đã bắt buộc */}
+          Bộ thủ <em>*</em>
         </span>
         <input
           type="text"

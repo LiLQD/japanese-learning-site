@@ -3,21 +3,30 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthUser } from "../../types.js";
 
-const { findManyMock, countMock, createMock, transactionMock } = vi.hoisted(
-  () => ({
-    findManyMock: vi.fn(),
-    countMock: vi.fn(),
-    createMock: vi.fn(),
-    transactionMock: vi.fn(),
-  }),
-);
+const {
+  findManyMock,
+  findUniqueMock,
+  countMock,
+  createMock,
+  updateMock,
+  transactionMock,
+} = vi.hoisted(() => ({
+  findManyMock: vi.fn(),
+  findUniqueMock: vi.fn(),
+  countMock: vi.fn(),
+  createMock: vi.fn(),
+  updateMock: vi.fn(),
+  transactionMock: vi.fn(),
+}));
 
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     kanji: {
       findMany: findManyMock,
+      findUnique: findUniqueMock,
       count: countMock,
       create: createMock,
+      update: updateMock,
     },
     $transaction: transactionMock,
   },
@@ -41,6 +50,13 @@ function makeApp(user?: AuthUser) {
 }
 
 const admin: AuthUser = { id: 1, role: "ADMIN" };
+
+function prismaError(code: string) {
+  return new Prisma.PrismaClientKnownRequestError("Prisma error", {
+    code,
+    clientVersion: "test",
+  });
+}
 
 const sampleKanji = [
   {
@@ -259,6 +275,164 @@ describe("POST /api/kanji", () => {
 
     const res = await request(makeApp(admin))
       .post("/api/kanji")
+      .send(validInput);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe("INTERNAL");
+  });
+});
+
+describe("GET /api/kanji/:id", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    findUniqueMock.mockResolvedValue(sampleKanji[0]);
+  });
+
+  it("is public and returns the kanji", async () => {
+    const res = await request(makeApp()).get("/api/kanji/1");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      kanji: { ...sampleKanji[0], createdAt: "2026-10-10T00:00:00.000Z" },
+    });
+    expect(findUniqueMock).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 1 } }),
+    );
+  });
+
+  it("returns 404 when the kanji does not exist", async () => {
+    findUniqueMock.mockResolvedValue(null);
+
+    const res = await request(makeApp()).get("/api/kanji/9999");
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toEqual({
+      code: "NOT_FOUND",
+      message: "Không tìm thấy chữ Kanji này!",
+    });
+  });
+
+  it.each(["abc", "0", "-1", "1.5"])(
+    "returns 400 for invalid id %s",
+    async (id) => {
+      const res = await request(makeApp()).get(`/api/kanji/${id}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("BAD_REQUEST");
+      expect(findUniqueMock).not.toHaveBeenCalled();
+    },
+  );
+});
+
+describe("PUT /api/kanji/:id", () => {
+  const validInput = {
+    character: "日",
+    jlpt: 5,
+    strokeCount: 4,
+    radical: "日",
+  };
+
+  const updatedKanji = {
+    id: 1,
+    ...validInput,
+    createdAt: new Date("2026-10-10T00:00:00.000Z"),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    updateMock.mockResolvedValue(updatedKanji);
+  });
+
+  it("returns 401 for guests", async () => {
+    const res = await request(makeApp()).put("/api/kanji/1").send(validInput);
+
+    expect(res.status).toBe(401);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for a non-admin user", async () => {
+    const res = await request(makeApp({ id: 2, role: "USER" }))
+      .put("/api/kanji/1")
+      .send(validInput);
+
+    expect(res.status).toBe(403);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("updates the kanji and returns 200", async () => {
+    const res = await request(makeApp(admin))
+      .put("/api/kanji/1")
+      .send({ ...validInput, character: " 日 ", strokeCount: null });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      kanji: { ...updatedKanji, createdAt: "2026-10-10T00:00:00.000Z" },
+    });
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 1 },
+        data: { character: "日", jlpt: 5, strokeCount: null, radical: "日" },
+      }),
+    );
+  });
+
+  it("returns 400 for an invalid id", async () => {
+    const res = await request(makeApp(admin))
+      .put("/api/kanji/abc")
+      .send(validInput);
+
+    expect(res.status).toBe(400);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["empty character", { ...validInput, character: "" }],
+    ["two characters", { ...validInput, character: "日本" }],
+    ["missing jlpt", { ...validInput, jlpt: undefined }],
+    ["stroke count 85", { ...validInput, strokeCount: 85 }],
+    ["missing radical", { ...validInput, radical: undefined }],
+  ])("returns 400 for %s", async (_label, body) => {
+    const res = await request(makeApp(admin)).put("/api/kanji/1").send(body);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("BAD_REQUEST");
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when the kanji does not exist", async () => {
+    updateMock.mockRejectedValue(prismaError("P2025"));
+
+    const res = await request(makeApp(admin))
+      .put("/api/kanji/9999")
+      .send(validInput);
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toEqual({
+      code: "NOT_FOUND",
+      message: "Không tìm thấy chữ Kanji này!",
+    });
+  });
+
+  it("returns 409 when another kanji already uses the character", async () => {
+    updateMock.mockRejectedValue(prismaError("P2002"));
+
+    const res = await request(makeApp(admin))
+      .put("/api/kanji/1")
+      .send({ ...validInput, character: "月" });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toEqual({
+      code: "CONFLICT",
+      message: "Chữ Kanji này đã tồn tại trong hệ thống!",
+    });
+  });
+
+  it("returns 500 when the database is unreachable", async () => {
+    updateMock.mockRejectedValue(new Error("connect ECONNREFUSED"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await request(makeApp(admin))
+      .put("/api/kanji/1")
       .send(validInput);
 
     expect(res.status).toBe(500);

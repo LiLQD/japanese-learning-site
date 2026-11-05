@@ -16,6 +16,14 @@ export const kanjiListQuerySchema = z.object({
 
 export type KanjiListQuery = z.infer<typeof kanjiListQuerySchema>;
 
+// Validates the :id route param of /api/kanji/:id.
+export const kanjiIdParamSchema = z.object({
+  id: z.coerce
+    .number({ error: "ID Kanji không hợp lệ" })
+    .int("ID Kanji không hợp lệ")
+    .positive("ID Kanji không hợp lệ"),
+});
+
 export type KanjiListItem = {
   id: number;
   character: string;
@@ -36,7 +44,7 @@ export type KanjiListResponse = {
 // Exactly one Han character (also matches radical forms such as 氵).
 const singleHanCharacter = /^\p{Script=Han}$/u;
 
-// Shared by the add form (US-22) and the API; optional fields use null when empty.
+// Shared by the add/edit forms (US-22, US-23) and the API; optional fields use null when empty.
 export const kanjiInputSchema = z.object({
   character: z
     .string({ error: "Vui lòng nhập chữ Kanji" })
