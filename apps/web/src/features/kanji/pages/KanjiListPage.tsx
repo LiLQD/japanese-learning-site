@@ -104,7 +104,9 @@ function KanjiListPage() {
         {isLoading ? (
           <p>Đang tải danh sách...</p>
         ) : (
-          data && <KanjiTable kanji={data.kanji} />
+          data && (
+            <KanjiTable kanji={data.kanji} isAdmin={isAdmin} page={page} />
+          )
         )}
 
         {data && data.total > 0 && (

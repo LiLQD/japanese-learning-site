@@ -72,3 +72,26 @@ export function createKanji(input: KanjiInput): Promise<KanjiResponse> {
     "Không thể thêm chữ Kanji.",
   );
 }
+
+export function fetchKanji(id: number): Promise<KanjiResponse> {
+  return requestJson<KanjiResponse>(
+    `/api/kanji/${id}`,
+    { method: "GET" },
+    "Không thể tải chữ Kanji.",
+  );
+}
+
+export function updateKanji(
+  id: number,
+  input: KanjiInput,
+): Promise<KanjiResponse> {
+  return requestJson<KanjiResponse>(
+    `/api/kanji/${id}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+    "Không thể cập nhật chữ Kanji.",
+  );
+}
