@@ -9,6 +9,9 @@ import ProfilePage from "./pages/ProfilePage";
 import KanjiListPage from "./features/kanji/pages/KanjiListPage";
 import KanjiCreatePage from "./features/kanji/pages/KanjiCreatePage";
 import KanjiEditPage from "./features/kanji/pages/KanjiEditPage";
+import WordLookupPage from "./features/words/pages/WordLookupPage";
+import WordDetailPage from "./features/words/pages/WordDetailPage";
+import WordAuthGuard from "./features/words/components/WordAuthGuard";
 import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
@@ -25,6 +28,10 @@ function App() {
           <Route path="/kanji" element={<KanjiListPage />} />
           <Route path="/kanji/new" element={<KanjiCreatePage />} />
           <Route path="/kanji/:id/edit" element={<KanjiEditPage />} />
+          <Route element={<WordAuthGuard />}>
+            <Route path="/words" element={<WordLookupPage />} />
+            <Route path="/words/:id" element={<WordDetailPage />} />
+          </Route>
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

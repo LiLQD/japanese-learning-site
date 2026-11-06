@@ -5,9 +5,11 @@ export * from "./users.js";
 export * from "./profile.js";
 export * from "./notifications.js";
 export * from "./kanji.js";
+export * from "./words.js";
 
 export const healthResponseSchema = z.object({ status: z.literal("ok") });
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
+
 export const registerSchema = z
   .object({
     displayName: z.string().trim().min(1, "Vui lòng nhập họ tên").max(100),
