@@ -7,7 +7,9 @@ import "./Navbar.css";
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const isKanjiPage = useLocation().pathname.startsWith("/kanji");
+  const pathname = useLocation().pathname;
+  const isKanjiPage = pathname.startsWith("/kanji");
+  const isWordsPage = pathname.startsWith("/words");
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -89,7 +91,9 @@ export default function Navbar() {
               placeholder="Tìm từ vựng, hán tự, ngữ pháp..."
             />
             <div className="nav-tabs">
-              <span className={isKanjiPage ? "" : "active"}>Từ vựng</span>
+              <Link to="/words" className={isWordsPage ? "active" : ""}>
+                Từ vựng
+              </Link>
               <Link to="/kanji" className={isKanjiPage ? "active" : ""}>
                 Hán tự
               </Link>
