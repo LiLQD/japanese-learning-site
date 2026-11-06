@@ -201,7 +201,84 @@
   font-weight: 600;
 }
 
-.kanji-row-action {
+.kanji-row-actions .kanji-row-action {
   padding: 6px 12px;
   font-size: 13px;
+}
+
+.kanji-row-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.kanji-button-danger {
+  display: inline-block;
+  padding: 10px 16px;
+  color: white;
+  background: var(--color-danger);
+  border: 1px solid var(--color-danger);
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kanji-button-danger:hover:not(:disabled) {
+  background: #912018;
+}
+
+.kanji-button-danger:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.kanji-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(30, 34, 48, 0.45);
+}
+
+.kanji-dialog {
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.kanji-dialog h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.kanji-dialog-body p {
+  margin: 0 0 8px;
+  color: var(--color-muted);
+}
+
+.kanji-dialog-body strong {
+  color: var(--color-ink);
+  font-size: 22px;
+}
+
+.kanji-dialog-error {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  color: var(--color-danger);
+  background: rgba(180, 35, 24, 0.08);
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.kanji-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
 }

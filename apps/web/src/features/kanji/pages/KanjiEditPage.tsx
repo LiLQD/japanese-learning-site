@@ -5,12 +5,14 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import type { KanjiInput, KanjiListItem } from "@app/shared";
 import { useAuth } from "../../../contexts/auth-context";
-import { fetchKanji, updateKanji } from "../api";
+import {
+  fetchKanji,
+  KANJI_NOT_FOUND as NOT_FOUND_MESSAGE,
+  updateKanji,
+} from "../api";
 import KanjiForm, { type KanjiFormValues } from "../components/KanjiForm";
 import type { KanjiEditLocationState } from "../components/KanjiTable";
 import type { KanjiListLocationState } from "./KanjiListPage";
-
-const NOT_FOUND_MESSAGE = "Không tìm thấy chữ Kanji này!";
 
 function parseId(value: string | undefined) {
   const id = Number(value);

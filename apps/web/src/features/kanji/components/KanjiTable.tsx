@@ -8,6 +8,7 @@ type KanjiTableProps = {
   isAdmin?: boolean;
   // Current list page, so the edit page can return to it.
   page?: number;
+  onDelete?: (item: KanjiListItem) => void;
 };
 
 // Sent to the edit page so Hủy / Cập nhật return to the same list page.
@@ -24,6 +25,7 @@ function KanjiTable({
   emptyMessage = "Chưa có dữ liệu Kanji nào trong hệ thống",
   isAdmin = false,
   page = 1,
+  onDelete,
 }: KanjiTableProps) {
   if (kanji.length === 0) {
     return <p>{emptyMessage}</p>;
@@ -55,13 +57,24 @@ function KanjiTable({
             <td>{formatDate(item.createdAt)}</td>
             {isAdmin && (
               <td>
-                <Link
-                  to={`/kanji/${item.id}/edit`}
-                  state={{ fromPage: page } satisfies KanjiEditLocationState}
-                  className="kanji-button-secondary kanji-row-action"
-                >
-                  Sửa
-                </Link>
+                <div className="kanji-row-actions">
+                  <Link
+                    to={`/kanji/${item.id}/edit`}
+                    state={{ fromPage: page } satisfies KanjiEditLocationState}
+                    className="kanji-button-secondary kanji-row-action"
+                  >
+                    Sửa
+                  </Link>
+                  {onDelete && (
+                    <button
+                      type="button"
+                      className="kanji-button-danger kanji-row-action"
+                      onClick={() => onDelete(item)}
+                    >
+                      Xóa
+                    </button>
+                  )}
+                </div>
               </td>
             )}
           </tr>

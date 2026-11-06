@@ -7,6 +7,7 @@ import type {
 
 export const CONNECTION_ERROR = "Lỗi kết nối!";
 export const KANJI_PAGE_SIZE = 20;
+export const KANJI_NOT_FOUND = "Không tìm thấy chữ Kanji này!";
 
 async function requestJson<T>(
   url: string,
@@ -40,6 +41,11 @@ async function requestJson<T>(
       .json()
       .catch(() => null)) as ErrorResponse | null;
     throw new Error(data?.error?.message ?? fallbackMessage);
+  }
+
+  // 204 No Content (e.g. DELETE) has no body to parse.
+  if (response.status === 204) {
+    return undefined as T;
   }
 
   return (await response.json()) as T;
@@ -93,5 +99,13 @@ export function updateKanji(
       body: JSON.stringify(input),
     },
     "Không thể cập nhật chữ Kanji.",
+  );
+}
+
+export function deleteKanji(id: number): Promise<void> {
+  return requestJson<void>(
+    `/api/kanji/${id}`,
+    { method: "DELETE" },
+    "Không thể xóa chữ Kanji.",
   );
 }
