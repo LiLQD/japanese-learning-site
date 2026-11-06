@@ -100,3 +100,17 @@ export async function updateKanji(id: number, data: KanjiData) {
     throw error;
   }
 }
+
+// Deleting a kanji also removes its word_kanji links (onDelete: Cascade);
+// the words themselves are kept.
+export async function deleteKanji(id: number) {
+  try {
+    await prisma.kanji.delete({ where: { id } });
+  } catch (error) {
+    if (isPrismaError(error, "P2025")) {
+      throw notFound(KANJI_NOT_FOUND_MESSAGE);
+    }
+
+    throw error;
+  }
+}

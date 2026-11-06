@@ -8,6 +8,7 @@ import {
 import { badRequest } from "../../errors.js";
 import {
   createKanji,
+  deleteKanji,
   getKanjiById,
   listKanji,
   updateKanji,
@@ -81,6 +82,22 @@ export const updateKanjiHandler: RequestHandler = async (req, res, next) => {
     res
       .status(200)
       .json({ kanji: await updateKanji(params.data.id, body.data) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteKanjiHandler: RequestHandler = async (req, res, next) => {
+  try {
+    const params = kanjiIdParamSchema.safeParse(req.params);
+
+    if (!params.success) {
+      next(badRequest(issuesMessage(params.error)));
+      return;
+    }
+
+    await deleteKanji(params.data.id);
+    res.status(204).end();
   } catch (error) {
     next(error);
   }

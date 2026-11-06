@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireRole } from "../../middleware/auth.js";
 import {
   createKanjiHandler,
+  deleteKanjiHandler,
   getKanjiByIdHandler,
   getKanjiList,
   updateKanjiHandler,
@@ -15,5 +16,6 @@ router.get("/", getKanjiList);
 router.get("/:id", getKanjiByIdHandler);
 router.post("/", requireRole("ADMIN"), createKanjiHandler);
 router.put("/:id", requireRole("ADMIN"), updateKanjiHandler);
+router.delete("/:id", requireRole("ADMIN"), deleteKanjiHandler);
 
 export default router;

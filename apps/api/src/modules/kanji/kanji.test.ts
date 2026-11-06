@@ -9,6 +9,7 @@ const {
   countMock,
   createMock,
   updateMock,
+  deleteMock,
   transactionMock,
 } = vi.hoisted(() => ({
   findManyMock: vi.fn(),
@@ -16,6 +17,7 @@ const {
   countMock: vi.fn(),
   createMock: vi.fn(),
   updateMock: vi.fn(),
+  deleteMock: vi.fn(),
   transactionMock: vi.fn(),
 }));
 
@@ -27,6 +29,7 @@ vi.mock("../../lib/prisma.js", () => ({
       count: countMock,
       create: createMock,
       update: updateMock,
+      delete: deleteMock,
     },
     $transaction: transactionMock,
   },
@@ -434,6 +437,67 @@ describe("PUT /api/kanji/:id", () => {
     const res = await request(makeApp(admin))
       .put("/api/kanji/1")
       .send(validInput);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe("INTERNAL");
+  });
+});
+
+describe("DELETE /api/kanji/:id", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    deleteMock.mockResolvedValue(sampleKanji[0]);
+  });
+
+  it("returns 401 for guests", async () => {
+    const res = await request(makeApp()).delete("/api/kanji/1");
+
+    expect(res.status).toBe(401);
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for a non-admin user", async () => {
+    const res = await request(makeApp({ id: 2, role: "USER" })).delete(
+      "/api/kanji/1",
+    );
+
+    expect(res.status).toBe(403);
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes the kanji and returns 204", async () => {
+    const res = await request(makeApp(admin)).delete("/api/kanji/1");
+
+    expect(res.status).toBe(204);
+    expect(res.text).toBe("");
+    expect(deleteMock).toHaveBeenCalledWith({ where: { id: 1 } });
+  });
+
+  it.each(["abc", "0", "1.5"])("returns 400 for invalid id %s", async (id) => {
+    const res = await request(makeApp(admin)).delete(`/api/kanji/${id}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("BAD_REQUEST");
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when the kanji does not exist", async () => {
+    deleteMock.mockRejectedValue(prismaError("P2025"));
+
+    const res = await request(makeApp(admin)).delete("/api/kanji/9999");
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toEqual({
+      code: "NOT_FOUND",
+      message: "Không tìm thấy chữ Kanji này!",
+    });
+  });
+
+  it("returns 500 when the database is unreachable", async () => {
+    deleteMock.mockRejectedValue(new Error("connect ECONNREFUSED"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await request(makeApp(admin)).delete("/api/kanji/1");
 
     expect(res.status).toBe(500);
     expect(res.body.error.code).toBe("INTERNAL");

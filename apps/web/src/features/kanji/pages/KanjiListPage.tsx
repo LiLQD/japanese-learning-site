@@ -1,10 +1,17 @@
 import Navbar from "../../../components/Navbar";
 import "./KanjiListPage.css";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import type { KanjiListResponse } from "@app/shared";
+import type { KanjiListItem, KanjiListResponse } from "@app/shared";
 import { useAuth } from "../../../contexts/auth-context";
-import { fetchKanjiList, KANJI_PAGE_SIZE as PAGE_SIZE } from "../api";
+import {
+  CONNECTION_ERROR,
+  deleteKanji,
+  fetchKanjiList,
+  KANJI_NOT_FOUND,
+  KANJI_PAGE_SIZE as PAGE_SIZE,
+} from "../api";
+import ConfirmDialog from "../components/ConfirmDialog";
 import KanjiTable from "../components/KanjiTable";
 
 // Sent by the add/edit pages when they navigate back to the list.
@@ -25,7 +32,16 @@ function KanjiListPage() {
   const [data, setData] = useState<KanjiListResponse | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [statusMessage] = useState(locationState?.message ?? "");
+  const [statusMessage, setStatusMessage] = useState(
+    locationState?.message ?? "",
+  );
+  // Bumped to refetch the current page (e.g. after a delete).
+  const [reloadCount, setReloadCount] = useState(0);
+  const [pendingDelete, setPendingDelete] = useState<KanjiListItem | null>(
+    null,
+  );
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   // Clear the one-time message so it does not reappear on reload.
   useEffect(() => {
@@ -34,7 +50,7 @@ function KanjiListPage() {
     }
   }, [location.state, location.pathname, navigate]);
 
-  const requestKey = `${page}`;
+  const requestKey = `${page}:${reloadCount}`;
   const isLoading = loadedKey !== requestKey;
 
   useEffect(() => {
@@ -63,6 +79,52 @@ function KanjiListPage() {
       cancelled = true;
     };
   }, [page, requestKey]);
+
+  function openDeleteDialog(item: KanjiListItem) {
+    setPendingDelete(item);
+    setDeleteError("");
+    setStatusMessage("");
+  }
+
+  const closeDeleteDialog = useCallback(() => {
+    setPendingDelete(null);
+    setDeleteError("");
+  }, []);
+
+  async function handleConfirmDelete() {
+    if (!pendingDelete || isDeleting) return;
+
+    setIsDeleting(true);
+    setDeleteError("");
+
+    try {
+      await deleteKanji(pendingDelete.id);
+      setPendingDelete(null);
+      setStatusMessage("Xóa thành công!");
+      refreshAfterDelete();
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Đã có lỗi xảy ra.";
+      setDeleteError(
+        message === CONNECTION_ERROR
+          ? CONNECTION_ERROR
+          : `Xóa thất bại! ${message}`,
+      );
+      // Someone else already deleted it: refresh so the row disappears.
+      if (message === KANJI_NOT_FOUND) refreshAfterDelete();
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  // Step back a page when the last row of a page was removed.
+  function refreshAfterDelete() {
+    if (page > 1 && data?.kanji.length === 1) {
+      setPage((p) => p - 1);
+    } else {
+      setReloadCount((c) => c + 1);
+    }
+  }
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
@@ -105,7 +167,12 @@ function KanjiListPage() {
           <p>Đang tải danh sách...</p>
         ) : (
           data && (
-            <KanjiTable kanji={data.kanji} isAdmin={isAdmin} page={page} />
+            <KanjiTable
+              kanji={data.kanji}
+              isAdmin={isAdmin}
+              page={page}
+              onDelete={isAdmin ? openDeleteDialog : undefined}
+            />
           )
         )}
 
@@ -133,6 +200,27 @@ function KanjiListPage() {
           </nav>
         )}
       </main>
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Xóa chữ Kanji"
+          confirmLabel="Xóa"
+          busyLabel="Đang xóa..."
+          isBusy={isDeleting}
+          errorMessage={deleteError}
+          onConfirm={() => void handleConfirmDelete()}
+          onCancel={closeDeleteDialog}
+        >
+          <p>
+            Bạn có chắc chắn muốn xóa chữ Kanji{" "}
+            <strong lang="ja">{pendingDelete.character}</strong> không?
+          </p>
+          <p>
+            Các liên kết với từ vựng cũng sẽ bị xóa. Thao tác này không thể hoàn
+            tác.
+          </p>
+        </ConfirmDialog>
+      )}
     </div>
   );
 }
