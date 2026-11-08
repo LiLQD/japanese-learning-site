@@ -33,7 +33,12 @@ async function syncWordKanji(): Promise<void> {
   let conflictingPositions = 0;
 
   for (const word of words) {
-    for (const [index, character] of [...word.text].entries()) {
+    const characters = Array.from(
+      new Intl.Segmenter("ja", { granularity: "grapheme" }).segment(word.text),
+      ({ segment }) => segment,
+    );
+
+    for (const [index, character] of characters.entries()) {
       const kanjiId = kanjiByCharacter.get(character);
       if (kanjiId === undefined) continue;
 
