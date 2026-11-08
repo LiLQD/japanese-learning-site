@@ -2,6 +2,7 @@ import type {
   ErrorResponse,
   WordDetailResponse,
   WordListResponse,
+  CreateWordInput,
 } from "@app/shared";
 
 export const WORDS_PAGE_SIZE = 20;
@@ -62,4 +63,16 @@ export function fetchWord(id: number): Promise<WordDetailResponse> {
     `/api/words/${id}`,
     "Không thể tải thông tin từ vựng.",
   );
+}
+export async function createWord(data: CreateWordInput): Promise<void> {
+  const response = await fetch("/api/words", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.error?.message || "Thêm từ vựng thất bại.");
+  }
 }

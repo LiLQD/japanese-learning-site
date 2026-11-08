@@ -1,11 +1,18 @@
 import { Router } from "express";
-import { requireAuth } from "../../middleware/auth.js";
-import { getWordByIdHandler, getWordList } from "./words.controller.js";
+import { requireRole } from "../../middleware/auth.js";
+import {
+  getWordByIdHandler,
+  getWordList,
+  postWord,
+} from "./words.controller.js";
 
 const router = Router();
 
-router.use(requireAuth);
+// Public routes
 router.get("/", getWordList);
 router.get("/:id", getWordByIdHandler);
+
+// Admin routes
+router.post("/", requireRole("ADMIN"), postWord);
 
 export default router;

@@ -78,11 +78,10 @@ describe("GET /api/words", () => {
     vi.restoreAllMocks();
   });
 
-  it("requires authentication", async () => {
+  it("is public for guests", async () => {
     const res = await request(makeApp()).get("/api/words");
-
-    expect(res.status).toBe(401);
-    expect(findManyMock).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(findManyMock).toHaveBeenCalled();
   });
 
   it("returns paginated vocabulary with Kana, Romaji, translated POS and Vietnamese meanings", async () => {
@@ -208,11 +207,10 @@ describe("GET /api/words/:id", () => {
     vi.restoreAllMocks();
   });
 
-  it("requires authentication", async () => {
+  it("is public for guests", async () => {
     const res = await request(makeApp()).get("/api/words/1");
-
-    expect(res.status).toBe(401);
-    expect(findUniqueMock).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(findUniqueMock).toHaveBeenCalled();
   });
 
   it("returns the word detail and selects a primary reading", async () => {

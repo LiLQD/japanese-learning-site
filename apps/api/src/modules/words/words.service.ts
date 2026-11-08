@@ -1,4 +1,4 @@
-import type { WordListQuery } from "@app/shared";
+import type { WordListQuery, CreateWordInput } from "@app/shared";
 import { toRomaji } from "wanakana";
 import type { Prisma } from "../../../generated/prisma/client.js";
 import { notFound } from "../../errors.js";
@@ -134,4 +134,28 @@ export async function getWordById(id: number) {
   }
 
   return toWordLookup(word);
+}
+export async function createWord(data: CreateWordInput) {
+  return prisma.word.create({
+    data: {
+      text: data.text,
+      jlpt: data.jlpt ?? null,
+      readings: {
+        create: data.readings,
+      },
+      senses: {
+        create: data.senses.map((sense) => ({
+          partOfSpeech: sense.partOfSpeech,
+          position: sense.position,
+          glosses: {
+            create: sense.glosses.map((g) => ({
+              lang: g.lang ?? "vi",
+              text: g.text,
+            })),
+          },
+        })),
+      },
+    },
+    select: wordSelect,
+  });
 }
