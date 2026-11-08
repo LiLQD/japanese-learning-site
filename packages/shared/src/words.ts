@@ -36,3 +36,33 @@ export type WordListResponse = {
 export type WordDetailResponse = {
   word: WordLookup;
 };
+export const createWordSchema = z.object({
+  text: z.string().trim().min(1, "Vui lòng nhập từ vựng"),
+  jlpt: z.coerce.number().int().min(1).max(5).optional().nullable(),
+  readings: z
+    .array(
+      z.object({
+        kana: z.string().trim().min(1, "Vui lòng nhập cách đọc"),
+        isPrimary: z.boolean().default(false),
+      }),
+    )
+    .min(1, "Phải có ít nhất 1 cách đọc"),
+  senses: z
+    .array(
+      z.object({
+        partOfSpeech: z.array(z.string()).default([]),
+        position: z.number().int().min(1),
+        glosses: z
+          .array(
+            z.object({
+              lang: z.string().default("vi"),
+              text: z.string().trim().min(1, "Vui lòng nhập nghĩa"),
+            }),
+          )
+          .min(1, "Phải có ít nhất 1 nghĩa"),
+      }),
+    )
+    .min(1, "Phải có ít nhất 1 nghĩa"),
+});
+
+export type CreateWordInput = z.infer<typeof createWordSchema>;

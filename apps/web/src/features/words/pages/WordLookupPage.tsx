@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import type { WordListResponse } from "@app/shared";
 import Navbar from "../../../components/Navbar";
 import WordListItem from "../components/WordListItem";
+import { useAuth } from "../../../contexts/auth-context";
 import { fetchWordList, WORDS_PAGE_SIZE } from "../api";
 import "./WordsPage.css";
 
@@ -13,6 +14,7 @@ function WordLookupPage() {
   const [data, setData] = useState<WordListResponse | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const { user } = useAuth();
 
   const requestKey = `${query}:${page}`;
   const isLoading = loadedKey !== requestKey;
@@ -61,6 +63,30 @@ function WordLookupPage() {
           <div className="words-hero-copy">
             <p className="words-eyebrow">YUME · TỪ ĐIỂN NHẬT VIỆT</p>
             <h1>Tra cứu từ vựng</h1>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h1>Tra cứu từ vựng</h1>
+              {user?.role === "ADMIN" && (
+                <Link
+                  to="/words/new"
+                  style={{
+                    padding: "8px 16px",
+                    background: "var(--color-brand)",
+                    color: "white",
+                    textDecoration: "none",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                  }}
+                >
+                  + Thêm từ mới
+                </Link>
+              )}
+            </div>
             <p>Tìm từ bằng chữ Nhật, cách đọc Kana hoặc nghĩa tiếng Việt.</p>
           </div>
           <span className="words-hero-mark" lang="ja" aria-hidden="true">
