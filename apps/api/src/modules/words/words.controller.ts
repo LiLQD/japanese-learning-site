@@ -11,6 +11,7 @@ import {
   listWords,
   createWord,
   updateWord,
+  deleteWord,
 } from "./words.service.js";
 
 function issuesMessage(error: z.ZodError) {
@@ -76,6 +77,19 @@ export const putWord: RequestHandler = async (req, res, next) => {
 
     const word = await updateWord(params.data.id, result.data);
     res.status(200).json({ word });
+  } catch (error) {
+    next(error);
+  }
+};
+export const deleteWordHandler: RequestHandler = async (req, res, next) => {
+  try {
+    const params = wordIdSchema.safeParse(req.params);
+    if (!params.success) {
+      return next(badRequest(issuesMessage(params.error)));
+    }
+
+    await deleteWord(params.data.id);
+    res.status(204).send();
   } catch (error) {
     next(error);
   }

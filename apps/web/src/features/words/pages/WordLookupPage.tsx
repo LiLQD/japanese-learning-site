@@ -1,11 +1,14 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router";
-import type { WordListResponse } from "@app/shared";
+import type { WordListResponse, WordLookup } from "@app/shared";
 import Navbar from "../../../components/Navbar";
 import WordListItem from "../components/WordListItem";
+import ConfirmDialog from "../../kanji/components/ConfirmDialog";
 import { useAuth } from "../../../contexts/auth-context";
-import { fetchWordList, WORDS_PAGE_SIZE } from "../api";
+import { fetchWordList, WORDS_PAGE_SIZE, deleteWord } from "../api";
 import "./WordsPage.css";
+
+const ADMIN = "ADMIN";
 
 function WordLookupPage() {
   const [input, setInput] = useState("");
@@ -16,12 +19,17 @@ function WordLookupPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const { user } = useAuth();
 
-  const requestKey = `${query}:${page}`;
+  // State cho việc xóa
+  const [pendingDelete, setPendingDelete] = useState<WordLookup | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0); // Dùng để trigger load lại data
+
+  const requestKey = `${query}:${page}:${refreshKey}`;
   const isLoading = loadedKey !== requestKey;
 
   useEffect(() => {
     let cancelled = false;
-
     fetchWordList(query, page, WORDS_PAGE_SIZE)
       .then((result) => {
         if (cancelled) return;
@@ -50,6 +58,31 @@ function WordLookupPage() {
     setQuery(input.trim());
   }
 
+  // Xử lý khi bấm nút Xóa (mở Dialog)
+  function handleDeleteClick(word: WordLookup) {
+    setPendingDelete(word);
+    setDeleteError("");
+  }
+
+  // Xử lý khi xác nhận Xóa trong Dialog
+  async function handleDeleteConfirm() {
+    if (!pendingDelete) return;
+
+    setIsDeleting(true);
+    setDeleteError("");
+
+    try {
+      await deleteWord(pendingDelete.id);
+      setPendingDelete(null);
+      // Tăng refreshKey để useEffect tự động gọi lại API lấy danh sách mới
+      setRefreshKey((prev) => prev + 1);
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : "Lỗi khi xóa.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   const totalPages = data
     ? Math.max(1, Math.ceil(data.total / WORDS_PAGE_SIZE))
     : 1;
@@ -57,12 +90,10 @@ function WordLookupPage() {
   return (
     <div className="words-layout">
       <Navbar />
-
       <main className="words-main">
         <section className="words-hero">
           <div className="words-hero-copy">
             <p className="words-eyebrow">YUME · TỪ ĐIỂN NHẬT VIỆT</p>
-            <h1>Tra cứu từ vựng</h1>
             <div
               style={{
                 display: "flex",
@@ -71,7 +102,7 @@ function WordLookupPage() {
               }}
             >
               <h1>Tra cứu từ vựng</h1>
-              {user?.role === "ADMIN" && (
+              {user?.role === ADMIN && (
                 <Link
                   to="/words/new"
                   style={{
@@ -92,7 +123,6 @@ function WordLookupPage() {
           <span className="words-hero-mark" lang="ja" aria-hidden="true">
             言葉
           </span>
-
           <form className="words-search-form" onSubmit={handleSearch}>
             <label className="words-search-label" htmlFor="word-search">
               Từ khóa
@@ -105,6 +135,7 @@ function WordLookupPage() {
                 onChange={(event) => setInput(event.target.value)}
                 placeholder="Ví dụ: 日本語, にほんご, tiếng Nhật"
                 autoComplete="off"
+                required
               />
               <button type="submit" disabled={isLoading}>
                 {isLoading ? "Đang tìm..." : "Tìm kiếm"}
@@ -121,7 +152,7 @@ function WordLookupPage() {
             <div>
               <p className="words-eyebrow">KẾT QUẢ TRA CỨU</p>
               <h2 id="words-results-heading">
-                {query ? `Từ khóa “${query}”` : "Khám phá từ vựng"}
+                {query ? `Từ khóa "${query}"` : "Khám phá từ vựng"}
               </h2>
             </div>
             {data && !errorMessage && (
@@ -169,21 +200,39 @@ function WordLookupPage() {
                     <div style={{ flex: 1 }}>
                       <WordListItem word={word} />
                     </div>
-                    {user?.role === "ADMIN" && (
-                      <Link
-                        to={`/words/${word.id}/edit`}
-                        style={{
-                          padding: "6px 12px",
-                          background: "#e2e8f0",
-                          borderRadius: "4px",
-                          textDecoration: "none",
-                          color: "var(--color-ink)",
-                          fontSize: "14px",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        Sửa
-                      </Link>
+                    {user?.role === ADMIN && (
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <Link
+                          to={`/words/${word.id}/edit`}
+                          style={{
+                            padding: "6px 12px",
+                            background: "#e2e8f0",
+                            borderRadius: "4px",
+                            textDecoration: "none",
+                            color: "var(--color-ink)",
+                            fontSize: "14px",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Sửa
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteClick(word)}
+                          style={{
+                            padding: "6px 12px",
+                            background: "#fee2e2",
+                            color: "#b91c1c",
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            fontSize: "14px",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Xóa
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -221,6 +270,26 @@ function WordLookupPage() {
           </Link>
         </footer>
       </main>
+
+      {/* Hộp thoại xác nhận xóa */}
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Xóa từ vựng"
+          confirmLabel="Xóa"
+          busyLabel="Đang xóa..."
+          isBusy={isDeleting}
+          errorMessage={deleteError}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => {
+            setPendingDelete(null);
+            setDeleteError("");
+          }}
+        >
+          Bạn có chắc chắn muốn xóa từ vựng{" "}
+          <strong>{pendingDelete.text}</strong> không? Hành động này không thể
+          hoàn tác.
+        </ConfirmDialog>
+      )}
     </div>
   );
 }

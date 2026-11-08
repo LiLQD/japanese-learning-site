@@ -91,3 +91,14 @@ export async function updateWord(
     throw new Error(errorData?.error?.message || "Cập nhật từ vựng thất bại.");
   }
 }
+
+export async function deleteWord(id: number): Promise<void> {
+  const response = await fetch(`/api/words/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.error?.message || "Xóa từ vựng thất bại.");
+  }
+}
