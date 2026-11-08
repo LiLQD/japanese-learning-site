@@ -1,6 +1,6 @@
 import type { WordListQuery, CreateWordInput } from "@app/shared";
 import { toRomaji } from "wanakana";
-import type { Prisma } from "../../../generated/prisma/client.js";
+import { Prisma } from "../../../generated/prisma/client.js";
 import { notFound } from "../../errors.js";
 import { prisma } from "../../lib/prisma.js";
 
@@ -190,4 +190,19 @@ export async function updateWord(id: number, data: CreateWordInput) {
     },
     select: wordSelect,
   });
+}
+export async function deleteWord(id: number) {
+  try {
+    await prisma.word.delete({
+      where: { id },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      throw notFound(WORD_NOT_FOUND_MESSAGE);
+    }
+    throw error;
+  }
 }
