@@ -29,12 +29,14 @@ function KanjiListPage() {
   const locationState = location.state as KanjiListLocationState | null;
 
   const [page, setPage] = useState(locationState?.page ?? 1);
+  const [keyword, setKeyword] = useState("");
   const [data, setData] = useState<KanjiListResponse | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [statusMessage, setStatusMessage] = useState(
     locationState?.message ?? "",
   );
+
   // Bumped to refetch the current page (e.g. after a delete).
   const [reloadCount, setReloadCount] = useState(0);
   const [pendingDelete, setPendingDelete] = useState<KanjiListItem | null>(
@@ -50,13 +52,13 @@ function KanjiListPage() {
     }
   }, [location.state, location.pathname, navigate]);
 
-  const requestKey = `${page}:${reloadCount}`;
+  const requestKey = `${page}:${keyword}:${reloadCount}`;
   const isLoading = loadedKey !== requestKey;
 
   useEffect(() => {
     let cancelled = false;
 
-    fetchKanjiList(page, PAGE_SIZE)
+    fetchKanjiList(page, PAGE_SIZE, keyword)
       .then((result) => {
         if (cancelled) return;
 
@@ -78,7 +80,13 @@ function KanjiListPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, requestKey]);
+  }, [page, keyword, requestKey]);
+
+  function handleKeywordChange(value: string) {
+    setKeyword(value);
+    setPage(1);
+    setStatusMessage("");
+  }
 
   function openDeleteDialog(item: KanjiListItem) {
     setPendingDelete(item);
@@ -105,11 +113,13 @@ function KanjiListPage() {
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Đã có lỗi xảy ra.";
+
       setDeleteError(
         message === CONNECTION_ERROR
           ? CONNECTION_ERROR
           : `Xóa thất bại! ${message}`,
       );
+
       // Someone else already deleted it: refresh so the row disappears.
       if (message === KANJI_NOT_FOUND) refreshAfterDelete();
     } finally {
@@ -156,23 +166,46 @@ function KanjiListPage() {
           </div>
         </div>
 
+        <div className="kanji-search">
+          <input
+            type="search"
+            value={keyword}
+            onChange={(event) => handleKeywordChange(event.target.value)}
+            placeholder="Tìm kiếm Kanji hoặc bộ thủ..."
+            aria-label="Tìm kiếm Kanji hoặc bộ thủ"
+          />
+
+          {keyword && (
+            <button type="button" onClick={() => handleKeywordChange("")}>
+              Xóa tìm kiếm
+            </button>
+          )}
+        </div>
+
         {statusMessage && (
           <p className="kanji-status" role="status">
             {statusMessage}
           </p>
         )}
+
         {errorMessage && <p role="alert">{errorMessage}</p>}
 
         {isLoading ? (
           <p>Đang tải danh sách...</p>
+        ) : data && data.kanji.length > 0 ? (
+          <KanjiTable
+            kanji={data.kanji}
+            isAdmin={isAdmin}
+            page={page}
+            onDelete={isAdmin ? openDeleteDialog : undefined}
+          />
         ) : (
-          data && (
-            <KanjiTable
-              kanji={data.kanji}
-              isAdmin={isAdmin}
-              page={page}
-              onDelete={isAdmin ? openDeleteDialog : undefined}
-            />
+          !errorMessage && (
+            <p role="status">
+              {keyword.trim()
+                ? "Không tìm thấy chữ Kanji phù hợp."
+                : "Chưa có dữ liệu Kanji."}
+            </p>
           )
         )}
 

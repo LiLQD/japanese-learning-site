@@ -54,13 +54,18 @@ async function requestJson<T>(
 export function fetchKanjiList(
   page: number,
   pageSize: number,
+  keyword = "",
 ): Promise<KanjiListResponse> {
   const params = new URLSearchParams({
     page: String(page),
     pageSize: String(pageSize),
   });
 
-  return requestJson<KanjiListResponse>(
+  if (keyword.trim()) {
+    params.set("keyword", keyword.trim());
+  }
+
+  return requestJson(
     `/api/kanji?${params}`,
     { method: "GET" },
     "Không thể tải danh sách Kanji.",
