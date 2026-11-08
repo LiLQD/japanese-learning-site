@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
+import DashboardPage from "./features/dashboard/pages/DashboardPage";
 import HomePage from "./pages/HomePage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import UserListPage from "./features/users/pages/UserListPage";
@@ -25,6 +26,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/admin/users" element={<UserListPage />} />
+          <Route path="/admin/dashboard" element={<DashboardPage />} />
           <Route path="/admin/users/:id" element={<UserDetailPage />} />
           <Route path="/kanji" element={<KanjiListPage />} />
           <Route path="/kanji/new" element={<KanjiCreatePage />} />
