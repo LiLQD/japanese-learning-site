@@ -72,6 +72,46 @@ const sampleKanji = [
   },
 ];
 
+const sampleKanjiDetail = {
+  ...sampleKanji[0],
+  grade: 1,
+  wordKanjis: [
+    {
+      word: {
+        id: 1,
+        text: "日本",
+        jlpt: 5,
+        readings: [{ kana: "にほん", isPrimary: true }],
+        senses: [{ glosses: [{ text: "Nhật Bản" }] }],
+      },
+    },
+    {
+      word: {
+        id: 2,
+        text: "日本語",
+        jlpt: 5,
+        readings: [
+          { kana: "にほんご", isPrimary: true },
+          { kana: "にっぽんご", isPrimary: false },
+        ],
+        senses: [{ glosses: [{ text: "tiếng Nhật" }] }],
+      },
+    },
+    {
+      word: {
+        id: 2,
+        text: "日本語",
+        jlpt: 5,
+        readings: [
+          { kana: "にほんご", isPrimary: true },
+          { kana: "にっぽんご", isPrimary: false },
+        ],
+        senses: [{ glosses: [{ text: "tiếng Nhật" }] }],
+      },
+    },
+  ],
+};
+
 describe("GET /api/kanji", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -288,19 +328,86 @@ describe("POST /api/kanji", () => {
 describe("GET /api/kanji/:id", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    findUniqueMock.mockResolvedValue(sampleKanji[0]);
+    findUniqueMock.mockResolvedValue(sampleKanjiDetail);
   });
 
-  it("is public and returns the kanji", async () => {
+  it("is public and returns kanji details and related words", async () => {
     const res = await request(makeApp()).get("/api/kanji/1");
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
-      kanji: { ...sampleKanji[0], createdAt: "2026-10-10T00:00:00.000Z" },
+      kanji: {
+        id: 1,
+        character: "日",
+        strokeCount: 4,
+        radical: "日",
+        jlpt: 5,
+        grade: 1,
+        createdAt: "2026-10-10T00:00:00.000Z",
+        words: [
+          {
+            id: 1,
+            text: "日本",
+            jlpt: 5,
+            readings: ["にほん"],
+            meanings: ["Nhật Bản"],
+          },
+          {
+            id: 2,
+            text: "日本語",
+            jlpt: 5,
+            readings: ["にほんご", "にっぽんご"],
+            meanings: ["tiếng Nhật"],
+          },
+        ],
+      },
     });
     expect(findUniqueMock).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 1 } }),
+      expect.objectContaining({
+        where: { id: 1 },
+        select: expect.objectContaining({
+          grade: true,
+          wordKanjis: expect.objectContaining({
+            orderBy: [
+              { word: { text: "asc" } },
+              { wordId: "asc" },
+              { position: "asc" },
+            ],
+          }),
+        }),
+      }),
     );
+  });
+
+  it("returns an empty related word list when the kanji has no links", async () => {
+    findUniqueMock.mockResolvedValue({
+      ...sampleKanjiDetail,
+      wordKanjis: [],
+    });
+
+    const res = await request(makeApp()).get("/api/kanji/1");
+
+    expect(res.status).toBe(200);
+    expect(res.body.kanji.words).toEqual([]);
+  });
+
+  it("returns an empty meanings list when words have no Vietnamese glosses", async () => {
+    findUniqueMock.mockResolvedValue({
+      ...sampleKanjiDetail,
+      wordKanjis: [
+        {
+          word: {
+            ...sampleKanjiDetail.wordKanjis[0].word,
+            senses: [{ glosses: [] }],
+          },
+        },
+      ],
+    });
+
+    const res = await request(makeApp()).get("/api/kanji/1");
+
+    expect(res.status).toBe(200);
+    expect(res.body.kanji.words[0].meanings).toEqual([]);
   });
 
   it("returns 404 when the kanji does not exist", async () => {
@@ -325,6 +432,16 @@ describe("GET /api/kanji/:id", () => {
       expect(findUniqueMock).not.toHaveBeenCalled();
     },
   );
+
+  it("returns 500 when the database is unreachable", async () => {
+    findUniqueMock.mockRejectedValue(new Error("connect ECONNREFUSED"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await request(makeApp()).get("/api/kanji/1");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe("INTERNAL");
+  });
 });
 
 describe("PUT /api/kanji/:id", () => {

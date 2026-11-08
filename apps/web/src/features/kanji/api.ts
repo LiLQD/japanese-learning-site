@@ -1,5 +1,6 @@
 import type {
   ErrorResponse,
+  KanjiDetailResponse,
   KanjiInput,
   KanjiListResponse,
   KanjiResponse,
@@ -84,6 +85,14 @@ export function fetchKanji(id: number): Promise<KanjiResponse> {
     `/api/kanji/${id}`,
     { method: "GET" },
     "Không thể tải chữ Kanji.",
+  );
+}
+
+export function fetchKanjiDetail(id: number): Promise<KanjiDetailResponse> {
+  return requestJson<KanjiDetailResponse>(
+    `/api/kanji/${id}`,
+    { method: "GET" },
+    "Không thể tải chi tiết Kanji.",
   );
 }
 

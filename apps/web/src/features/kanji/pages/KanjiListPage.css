@@ -99,6 +99,16 @@
   line-height: 1;
 }
 
+.kanji-main table td.kanji-character a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.kanji-main table td.kanji-character a:hover {
+  color: var(--color-brand);
+}
+
 .kanji-pagination {
   display: flex;
   align-items: center;

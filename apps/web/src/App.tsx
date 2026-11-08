@@ -9,6 +9,7 @@ import ProfilePage from "./pages/ProfilePage";
 import KanjiListPage from "./features/kanji/pages/KanjiListPage";
 import KanjiCreatePage from "./features/kanji/pages/KanjiCreatePage";
 import KanjiEditPage from "./features/kanji/pages/KanjiEditPage";
+import KanjiDetailPage from "./features/kanji/pages/KanjiDetailPage";
 import WordLookupPage from "./features/words/pages/WordLookupPage";
 import WordDetailPage from "./features/words/pages/WordDetailPage";
 import WordAuthGuard from "./features/words/components/WordAuthGuard";
@@ -28,6 +29,7 @@ function App() {
           <Route path="/kanji" element={<KanjiListPage />} />
           <Route path="/kanji/new" element={<KanjiCreatePage />} />
           <Route path="/kanji/:id/edit" element={<KanjiEditPage />} />
+          <Route path="/kanji/:id" element={<KanjiDetailPage />} />
           <Route element={<WordAuthGuard />}>
             <Route path="/words" element={<WordLookupPage />} />
             <Route path="/words/:id" element={<WordDetailPage />} />
