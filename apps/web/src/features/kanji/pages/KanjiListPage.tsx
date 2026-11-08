@@ -1,4 +1,3 @@
-
 import Navbar from "../../../components/Navbar";
 import "./KanjiListPage.css";
 import { useCallback, useEffect, useState } from "react";
@@ -137,9 +136,7 @@ function KanjiListPage() {
     }
   }
 
-  const totalPages = data
-    ? Math.max(1, Math.ceil(data.total / PAGE_SIZE))
-    : 1;
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
   return (
     <div className="kanji-layout">
@@ -179,10 +176,7 @@ function KanjiListPage() {
           />
 
           {keyword && (
-            <button
-              type="button"
-              onClick={() => handleKeywordChange("")}
-            >
+            <button type="button" onClick={() => handleKeywordChange("")}>
               Xóa tìm kiếm
             </button>
           )}

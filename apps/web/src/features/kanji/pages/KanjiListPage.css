@@ -283,7 +283,6 @@
   margin-top: 20px;
 }
 
-
 .kanji-search {
   display: flex;
   align-items: center;
@@ -299,7 +298,9 @@
   border-radius: 8px;
   font-size: 15px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .kanji-search input:focus {

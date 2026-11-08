@@ -146,7 +146,7 @@ describe("GET /api/kanji", () => {
       expect.objectContaining({ skip: 10, take: 5 }),
     );
   });
-  
+
   it("filters kanji by character keyword", async () => {
     const res = await request(makeApp(admin))
       .get("/api/kanji")
