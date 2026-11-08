@@ -146,6 +146,67 @@ describe("GET /api/kanji", () => {
       expect.objectContaining({ skip: 10, take: 5 }),
     );
   });
+  
+  it("filters kanji by character keyword", async () => {
+    const res = await request(makeApp(admin))
+      .get("/api/kanji")
+      .query({ keyword: "日" });
+
+    expect(res.status).toBe(200);
+    expect(findManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          OR: [
+            { character: { contains: "日" } },
+            { radical: { contains: "日" } },
+          ],
+        },
+      }),
+    );
+    expect(countMock).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          { character: { contains: "日" } },
+          { radical: { contains: "日" } },
+        ],
+      },
+    });
+  });
+
+  it("filters kanji by radical keyword", async () => {
+    const res = await request(makeApp(admin))
+      .get("/api/kanji")
+      .query({ keyword: "氵" });
+
+    expect(res.status).toBe(200);
+    expect(findManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          OR: [
+            { character: { contains: "氵" } },
+            { radical: { contains: "氵" } },
+          ],
+        },
+      }),
+    );
+  });
+
+  it("returns an empty list when keyword has no match", async () => {
+    findManyMock.mockResolvedValue([]);
+    countMock.mockResolvedValue(0);
+
+    const res = await request(makeApp(admin))
+      .get("/api/kanji")
+      .query({ keyword: "不存在" });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      kanji: [],
+      total: 0,
+      page: 1,
+      pageSize: 20,
+    });
+  });
 
   it.each(["page=0", "page=abc", "pageSize=101", "pageSize=0"])(
     "returns 400 for invalid query %s",

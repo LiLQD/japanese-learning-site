@@ -1,6 +1,12 @@
+
 import { z } from "zod";
 
 export const kanjiListQuerySchema = z.object({
+  keyword: z
+    .string()
+    .trim()
+    .max(100, "Từ khóa tối đa 100 ký tự")
+    .optional(),
   page: z.coerce
     .number()
     .int("Số trang phải là số nguyên")

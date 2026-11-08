@@ -37,15 +37,25 @@ function toKanjiRow(data: KanjiData) {
   };
 }
 
-export async function listKanji({ page, pageSize }: KanjiListQuery) {
+export async function listKanji({ page, pageSize, keyword }: KanjiListQuery) {
+  const where: Prisma.KanjiWhereInput = keyword
+    ? {
+        OR: [
+          { character: { contains: keyword } },
+          { radical: { contains: keyword } },
+        ],
+      }
+    : {};
+
   const [kanji, total] = await prisma.$transaction([
     prisma.kanji.findMany({
+      where,
       select: kanjiListSelect,
       orderBy: { id: "asc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
-    prisma.kanji.count(),
+    prisma.kanji.count({ where }),
   ]);
 
   return { kanji, total, page, pageSize };
