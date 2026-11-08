@@ -14,7 +14,7 @@ import { healthResponseSchema } from "@app/shared";
 import { errorHandler, notFoundHandler } from "./middleware/error.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
+import dashboardRouter from "./modules/dashboard/dashboard.routes.js";
 export function createApp() {
   const app = express();
 
@@ -38,7 +38,7 @@ export function createApp() {
   app.use("/api/users/me", profileRouter);
   app.use("/api/notifications", notificationsRouter);
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
+  app.use("/api/admin/dashboard", dashboardRouter);
   app.get("/api/health", (_req, res) => {
     res.json(healthResponseSchema.parse({ status: "ok" }));
   });
