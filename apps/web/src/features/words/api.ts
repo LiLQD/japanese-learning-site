@@ -76,3 +76,18 @@ export async function createWord(data: CreateWordInput): Promise<void> {
     throw new Error(errorData?.error?.message || "Thêm từ vựng thất bại.");
   }
 }
+export async function updateWord(
+  id: number,
+  data: CreateWordInput,
+): Promise<void> {
+  const response = await fetch(`/api/words/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.error?.message || "Cập nhật từ vựng thất bại.");
+  }
+}

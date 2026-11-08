@@ -11,6 +11,7 @@ import KanjiCreatePage from "./features/kanji/pages/KanjiCreatePage";
 import KanjiEditPage from "./features/kanji/pages/KanjiEditPage";
 import WordLookupPage from "./features/words/pages/WordLookupPage";
 import WordDetailPage from "./features/words/pages/WordDetailPage";
+import WordEditPage from "./features/words/pages/WordEditPage";
 import WordAuthGuard from "./features/words/components/WordAuthGuard";
 import { AuthProvider } from "./contexts/AuthContext";
 
@@ -31,6 +32,7 @@ function App() {
           <Route element={<WordAuthGuard />}>
             <Route path="/words" element={<WordLookupPage />} />
             <Route path="/words/:id" element={<WordDetailPage />} />
+            <Route path="/words/:id/edit" element={<WordEditPage />} />
           </Route>
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -6,7 +6,12 @@ import {
   createWordSchema,
 } from "@app/shared";
 import { badRequest } from "../../errors.js";
-import { getWordById, listWords, createWord } from "./words.service.js";
+import {
+  getWordById,
+  listWords,
+  createWord,
+  updateWord,
+} from "./words.service.js";
 
 function issuesMessage(error: z.ZodError) {
   return error.issues.map((issue) => issue.message).join(", ");
@@ -52,6 +57,25 @@ export const postWord: RequestHandler = async (req, res, next) => {
 
     const word = await createWord(result.data);
     res.status(201).json({ word });
+  } catch (error) {
+    next(error);
+  }
+};
+export const putWord: RequestHandler = async (req, res, next) => {
+  try {
+    const params = wordIdSchema.safeParse(req.params);
+    if (!params.success) {
+      return next(badRequest(issuesMessage(params.error)));
+    }
+
+    const result = createWordSchema.safeParse(req.body);
+    if (!result.success) {
+      const message = result.error.issues.map((i) => i.message).join(", ");
+      return next(badRequest(message));
+    }
+
+    const word = await updateWord(params.data.id, result.data);
+    res.status(200).json({ word });
   } catch (error) {
     next(error);
   }
