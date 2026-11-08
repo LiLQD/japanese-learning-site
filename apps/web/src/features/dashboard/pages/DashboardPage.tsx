@@ -3,29 +3,34 @@ import { Link } from "react-router";
 import Navbar from "../../../components/Navbar";
 import "./DashboardPage.css";
 import { useAuth } from "../../../contexts/auth-context";
-import {
-  fetchDashboardStatistics,
-  type DashboardStatistics,
-} from "../api";
+import { fetchDashboardStatistics, type DashboardStatistics } from "../api";
 
 function DashboardPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
 
-  const [statistics, setStatistics] =
-    useState<DashboardStatistics | null>(null);
+  const [statistics, setStatistics] = useState<DashboardStatistics | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
   const isAdmin = user?.role === "ADMIN";
 
+  // Xử lý khi người dùng yêu cầu tải lại dữ liệu.
+  const refreshDashboard = () => {
+    setIsLoading(true);
+    setErrorMessage("");
+    setRefreshKey((current) => current + 1);
+  };
+
   useEffect(() => {
     if (!isAdmin) return;
 
-    let cancelled = false;
+    // refreshKey là tín hiệu kích hoạt request mới.
+    void refreshKey;
 
-    setIsLoading(true);
-    setErrorMessage("");
+    let cancelled = false;
 
     fetchDashboardStatistics()
       .then((result) => {
@@ -97,11 +102,7 @@ function DashboardPage() {
             <p>Tổng quan tình hình hoạt động của hệ thống.</p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setRefreshKey((current) => current + 1)}
-            disabled={isLoading}
-          >
+          <button type="button" onClick={refreshDashboard} disabled={isLoading}>
             Làm mới dữ liệu
           </button>
         </header>
@@ -111,10 +112,7 @@ function DashboardPage() {
         {!isLoading && errorMessage && (
           <div role="alert">
             <p>{errorMessage}</p>
-            <button
-              type="button"
-              onClick={() => setRefreshKey((current) => current + 1)}
-            >
+            <button type="button" onClick={refreshDashboard}>
               Thử lại
             </button>
           </div>

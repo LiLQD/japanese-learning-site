@@ -29,9 +29,7 @@ export async function fetchDashboardStatistics(): Promise<DashboardStatistics> {
       .json()
       .catch(() => null)) as ErrorResponse | null;
 
-    throw new Error(
-      data?.error?.message ?? "Không thể tải dữ liệu Dashboard.",
-    );
+    throw new Error(data?.error?.message ?? "Không thể tải dữ liệu Dashboard.");
   }
 
   const data = (await response.json()) as DashboardStatisticsResponse;

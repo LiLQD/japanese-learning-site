@@ -107,15 +107,15 @@ export default function Navbar() {
           {user ? (
             <>
               {user.role === "ADMIN" && (
-            <>
-            <Link to="/admin/dashboard" className="nav-link-admin">
-              Dashboard
-            </Link>
-            <Link to="/admin/users" className="nav-link-admin">
-             Quản lý
-            </Link>
-             </>
-             )}
+                <>
+                  <Link to="/admin/dashboard" className="nav-link-admin">
+                    Dashboard
+                  </Link>
+                  <Link to="/admin/users" className="nav-link-admin">
+                    Quản lý
+                  </Link>
+                </>
+              )}
 
               <Link
                 to="/profile"

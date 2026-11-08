@@ -15,7 +15,6 @@ import WordDetailPage from "./features/words/pages/WordDetailPage";
 import WordAuthGuard from "./features/words/components/WordAuthGuard";
 import { AuthProvider } from "./contexts/AuthContext";
 
-
 function App() {
   return (
     <AuthProvider>
