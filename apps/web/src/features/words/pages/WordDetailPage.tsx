@@ -17,7 +17,6 @@ function getJlptLabel(jlpt: number | null) {
   ) {
     return NOT_UPDATED_MESSAGE;
   }
-
   return `N${6 - jlpt}`;
 }
 
@@ -25,9 +24,11 @@ function WordDetailPage() {
   const { id: idParam } = useParams();
   const id = Number(idParam);
   const isValidId = Number.isInteger(id) && id > 0;
+
   const [word, setWord] = useState<WordLookup | null>(null);
   const [loadedId, setLoadedId] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+
   const isLoading = isValidId && loadedId !== id;
 
   useEffect(() => {
@@ -61,7 +62,6 @@ function WordDetailPage() {
   return (
     <div className="words-layout">
       <Navbar />
-
       <main className="words-main words-detail-main">
         <Link to="/words" className="words-back-link">
           <span aria-hidden="true">←</span> Quay lại tra cứu
@@ -119,9 +119,9 @@ function WordDetailPage() {
                 <p className="word-detail-missing">{NOT_UPDATED_MESSAGE}</p>
               ) : (
                 <ol className="word-sense-list">
-                  {word.senses.map((sense, index) => (
+                  {word.senses.map((sense, senseIndex) => (
                     <li
-                      key={`${sense.position}-${index}`}
+                      key={`${sense.position}-${senseIndex}`}
                       className="word-sense"
                     >
                       <div className="word-sense-meta">
@@ -130,14 +130,16 @@ function WordDetailPage() {
                         </span>
                         {sense.partOfSpeech.length > 0 ? (
                           <div className="word-pos-list">
-                            {sense.partOfSpeech.map((partOfSpeech, index) => (
-                              <span
-                                className="word-pos-tag"
-                                key={`${partOfSpeech}-${index}`}
-                              >
-                                {partOfSpeech}
-                              </span>
-                            ))}
+                            {sense.partOfSpeech.map(
+                              (partOfSpeech, posIndex) => (
+                                <span
+                                  className="word-pos-tag"
+                                  key={`${partOfSpeech}-${posIndex}`}
+                                >
+                                  {partOfSpeech}
+                                </span>
+                              ),
+                            )}
                           </div>
                         ) : (
                           <span className="word-detail-missing">
@@ -148,8 +150,10 @@ function WordDetailPage() {
 
                       {sense.meanings.length > 0 ? (
                         <ul className="word-meaning-list">
-                          {sense.meanings.map((meaning, index) => (
-                            <li key={`${meaning}-${index}`}>{meaning}</li>
+                          {sense.meanings.map((meaning, meaningIndex) => (
+                            <li key={`${meaning}-${meaningIndex}`}>
+                              {meaning}
+                            </li>
                           ))}
                         </ul>
                       ) : (

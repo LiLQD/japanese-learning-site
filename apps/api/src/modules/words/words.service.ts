@@ -159,3 +159,35 @@ export async function createWord(data: CreateWordInput) {
     select: wordSelect,
   });
 }
+export async function updateWord(id: number, data: CreateWordInput) {
+  const existing = await prisma.word.findUnique({ where: { id } });
+  if (!existing) {
+    throw notFound(WORD_NOT_FOUND_MESSAGE);
+  }
+
+  return prisma.word.update({
+    where: { id },
+    data: {
+      text: data.text,
+      jlpt: data.jlpt ?? null,
+      readings: {
+        deleteMany: {}, // Xóa cách đọc cũ
+        create: data.readings, // Tạo mới
+      },
+      senses: {
+        deleteMany: {}, // Xóa nghĩa cũ (glosses tự xóa theo)
+        create: data.senses.map((sense) => ({
+          partOfSpeech: sense.partOfSpeech,
+          position: sense.position,
+          glosses: {
+            create: sense.glosses.map((g) => ({
+              lang: g.lang ?? "vi",
+              text: g.text,
+            })),
+          },
+        })),
+      },
+    },
+    select: wordSelect,
+  });
+}

@@ -155,7 +155,37 @@ function WordLookupPage() {
             data && (
               <div className="words-result-list">
                 {data.words.map((word) => (
-                  <WordListItem key={word.id} word={word} />
+                  <div
+                    key={word.id}
+                    className="word-row-container"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      borderBottom: "1px solid var(--color-line)",
+                      padding: "10px 0",
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <WordListItem word={word} />
+                    </div>
+                    {user?.role === "ADMIN" && (
+                      <Link
+                        to={`/words/${word.id}/edit`}
+                        style={{
+                          padding: "6px 12px",
+                          background: "#e2e8f0",
+                          borderRadius: "4px",
+                          textDecoration: "none",
+                          color: "var(--color-ink)",
+                          fontSize: "14px",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Sửa
+                      </Link>
+                    )}
+                  </div>
                 ))}
               </div>
             )
