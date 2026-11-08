@@ -22,6 +22,50 @@ const kanjiListSelect = {
   createdAt: true,
 } as const;
 
+const kanjiDetailSelect = {
+  id: true,
+  character: true,
+  strokeCount: true,
+  radical: true,
+  jlpt: true,
+  grade: true,
+  createdAt: true,
+  wordKanjis: {
+    select: {
+      word: {
+        select: {
+          id: true,
+          text: true,
+          jlpt: true,
+          readings: {
+            select: { kana: true, isPrimary: true },
+            orderBy: [{ isPrimary: "desc" }, { id: "asc" }],
+          },
+          senses: {
+            select: {
+              glosses: {
+                where: { lang: "vi" },
+                select: { text: true },
+                orderBy: { id: "asc" },
+              },
+            },
+            orderBy: [{ position: "asc" }, { id: "asc" }],
+          },
+        },
+      },
+    },
+    orderBy: [
+      { word: { text: "asc" } },
+      { wordId: "asc" },
+      { position: "asc" },
+    ],
+  },
+} satisfies Prisma.KanjiSelect;
+
+type KanjiDetailRecord = Prisma.KanjiGetPayload<{
+  select: typeof kanjiDetailSelect;
+}>;
+
 function isPrismaError(error: unknown, code: string) {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError && error.code === code
@@ -64,14 +108,47 @@ export async function listKanji({ page, pageSize, keyword }: KanjiListQuery) {
 export async function getKanjiById(id: number) {
   const kanji = await prisma.kanji.findUnique({
     where: { id },
-    select: kanjiListSelect,
+    select: kanjiDetailSelect,
   });
 
   if (!kanji) {
     throw notFound(KANJI_NOT_FOUND_MESSAGE);
   }
 
-  return kanji;
+  return toKanjiDetail(kanji);
+}
+
+function toKanjiDetail(kanji: KanjiDetailRecord) {
+  const wordsById = new Map<
+    number,
+    {
+      id: number;
+      text: string;
+      jlpt: number | null;
+      readings: string[];
+      meanings: string[];
+    }
+  >();
+
+  for (const { word } of kanji.wordKanjis) {
+    if (wordsById.has(word.id)) continue;
+
+    wordsById.set(word.id, {
+      id: word.id,
+      text: word.text,
+      jlpt: word.jlpt,
+      readings: word.readings.map((reading) => reading.kana),
+      meanings: word.senses.flatMap((sense) =>
+        sense.glosses.map((gloss) => gloss.text),
+      ),
+    });
+  }
+
+  const { wordKanjis: _wordKanjis, ...detail } = kanji;
+  return {
+    ...detail,
+    words: [...wordsById.values()],
+  };
 }
 
 export async function createKanji(data: KanjiData) {

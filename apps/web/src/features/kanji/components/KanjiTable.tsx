@@ -49,7 +49,13 @@ function KanjiTable({
           <tr key={item.id}>
             <td>{item.id}</td>
             <td className="kanji-character" lang="ja">
-              {item.character}
+              <Link
+                to={`/kanji/${item.id}`}
+                state={{ page }}
+                aria-label={`Xem chi tiết Kanji ${item.character}`}
+              >
+                {item.character}
+              </Link>
             </td>
             <td>{item.strokeCount ?? "—"}</td>
             <td lang="ja">{item.radical ?? "—"}</td>

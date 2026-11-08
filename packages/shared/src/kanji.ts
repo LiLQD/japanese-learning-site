@@ -77,3 +77,21 @@ export type KanjiInput = z.input<typeof kanjiInputSchema>;
 export type KanjiResponse = {
   kanji: KanjiListItem;
 };
+
+export type KanjiDetailWord = {
+  id: number;
+  text: string;
+  jlpt: number | null;
+  readings: string[];
+  meanings: string[];
+};
+
+export type KanjiDetail = Omit<KanjiListItem, "createdAt"> & {
+  grade: number | null;
+  createdAt: string;
+  words: KanjiDetailWord[];
+};
+
+export type KanjiDetailResponse = {
+  kanji: KanjiDetail;
+};
