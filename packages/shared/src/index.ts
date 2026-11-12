@@ -6,6 +6,7 @@ export * from "./profile.js";
 export * from "./notifications.js";
 export * from "./kanji.js";
 export * from "./words.js";
+export * from "./grammar.js";
 
 export const healthResponseSchema = z.object({ status: z.literal("ok") });
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
