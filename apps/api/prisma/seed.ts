@@ -485,6 +485,136 @@ const KANJI: SeedKanji[] = [
   { character: "会", strokeCount: 6, radical: "人", jlpt: 4 },
 ];
 
+type SeedGrammar = {
+  title: string;
+  pattern: string;
+  meaning: string;
+  jlpt: number;
+};
+
+const GRAMMARS: SeedGrammar[] = [
+  {
+    title: "Câu khẳng định cơ bản",
+    pattern: "〜は〜です",
+    meaning: "A là B",
+    jlpt: 5,
+  },
+  {
+    title: "Câu phủ định danh từ",
+    pattern: "〜は〜ではありません",
+    meaning: "A không phải là B",
+    jlpt: 5,
+  },
+  {
+    title: "Câu hỏi",
+    pattern: "〜か",
+    meaning: "Trợ từ cuối câu để tạo câu hỏi",
+    jlpt: 5,
+  },
+  {
+    title: "Sở hữu, bổ nghĩa danh từ",
+    pattern: "〜の〜",
+    meaning: "B của A; A bổ nghĩa cho B",
+    jlpt: 5,
+  },
+  {
+    title: "Tồn tại (vật)",
+    pattern: "〜があります",
+    meaning: "Có (đồ vật, sự việc)",
+    jlpt: 5,
+  },
+  {
+    title: "Tồn tại (người, động vật)",
+    pattern: "〜がいます",
+    meaning: "Có (người, động vật)",
+    jlpt: 5,
+  },
+  {
+    title: "Diễn tả mong muốn",
+    pattern: "〜たいです",
+    meaning: "Muốn làm gì đó",
+    jlpt: 5,
+  },
+  {
+    title: "Mời rủ",
+    pattern: "〜ましょう",
+    meaning: "Cùng làm ~ nào",
+    jlpt: 5,
+  },
+  {
+    title: "Mời rủ lịch sự",
+    pattern: "〜ませんか",
+    meaning: "Anh/chị có muốn cùng làm ~ không?",
+    jlpt: 5,
+  },
+  {
+    title: "Nhờ vả, yêu cầu",
+    pattern: "〜てください",
+    meaning: "Hãy làm ~ (cho tôi)",
+    jlpt: 5,
+  },
+  {
+    title: "Hành động đang diễn ra",
+    pattern: "〜ています",
+    meaning: "Đang làm ~; trạng thái kéo dài",
+    jlpt: 5,
+  },
+  {
+    title: "Thứ tự hành động",
+    pattern: "〜てから",
+    meaning: "Sau khi làm ~ thì ...",
+    jlpt: 5,
+  },
+  {
+    title: "Đưa ra lý do",
+    pattern: "〜から",
+    meaning: "Vì ~ nên ...",
+    jlpt: 5,
+  },
+  {
+    title: "So sánh hơn",
+    pattern: "〜より〜のほうが",
+    meaning: "B ~ hơn A",
+    jlpt: 5,
+  },
+  {
+    title: "Xin phép, cho phép",
+    pattern: "〜てもいいです",
+    meaning: "Làm ~ cũng được",
+    jlpt: 4,
+  },
+  {
+    title: "Cấm đoán",
+    pattern: "〜てはいけません",
+    meaning: "Không được làm ~",
+    jlpt: 4,
+  },
+  {
+    title: "Nghĩa vụ",
+    pattern: "〜なければなりません",
+    meaning: "Phải làm ~",
+    jlpt: 4,
+  },
+  {
+    title: "Kinh nghiệm",
+    pattern: "〜たことがあります",
+    meaning: "Đã từng làm ~",
+    jlpt: 4,
+  },
+  {
+    title: "Khả năng",
+    pattern: "〜ことができます",
+    meaning: "Có thể làm ~",
+    jlpt: 4,
+  },
+  {
+    title: "Lời khuyên",
+    pattern: "〜たほうがいいです",
+    meaning: "Nên làm ~ thì hơn",
+    jlpt: 4,
+  },
+];
+
 async function seedUsers(): Promise<void> {
   const adminHash = await hash(ADMIN_PASSWORD, 10);
   const userHash = await hash(USER_PASSWORD, 10);
@@ -570,6 +700,21 @@ async function seedKanji(): Promise<void> {
   }
 }
 
+// grammars.pattern has no unique constraint, so look it up before creating
+// to keep the seed safe to re-run.
+async function seedGrammars(): Promise<void> {
+  for (const g of GRAMMARS) {
+    const existing = await prisma.grammar.findFirst({
+      where: { pattern: g.pattern },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      await prisma.grammar.create({ data: g });
+    }
+  }
+}
+
 async function main(): Promise<void> {
   console.log("Seeding users...");
   await seedUsers();
@@ -579,6 +724,9 @@ async function main(): Promise<void> {
 
   console.log(`Seeding ${KANJI.length} kanji...`);
   await seedKanji();
+
+  console.log(`Seeding ${GRAMMARS.length} grammars...`);
+  await seedGrammars();
 
   console.log("Done.");
   console.log(`  admin: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
