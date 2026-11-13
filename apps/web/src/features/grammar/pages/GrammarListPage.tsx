@@ -5,25 +5,29 @@ import type { GrammarListResponse } from "@app/shared";
 import { fetchGrammarList, GRAMMAR_PAGE_SIZE as PAGE_SIZE } from "../api";
 import GrammarCard from "../components/GrammarCard";
 
-// Public page: guests and users can browse the grammar list.
 function GrammarListPage() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<GrammarListResponse | null>(null);
   const [loadedPage, setLoadedPage] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const isLoading = loadedPage !== page;
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+
+  // Derive current page to prevent out-of-bounds pagination
+  const currentPage = Math.min(page, totalPages);
+
+  const isLoading = loadedPage !== currentPage;
 
   useEffect(() => {
     let cancelled = false;
 
-    fetchGrammarList(page, PAGE_SIZE)
+    fetchGrammarList(currentPage, PAGE_SIZE)
       .then((result) => {
         if (cancelled) return;
 
         setData(result);
         setErrorMessage("");
-        setLoadedPage(page);
+        setLoadedPage(currentPage);
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -33,15 +37,13 @@ function GrammarListPage() {
             ? error.message
             : "Không thể tải danh sách ngữ pháp.",
         );
-        setLoadedPage(page);
+        setLoadedPage(currentPage);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [page]);
-
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+  }, [currentPage]);
 
   return (
     <div className="grammar-layout">
@@ -90,20 +92,20 @@ function GrammarListPage() {
           <nav className="grammar-pagination" aria-label="Phân trang">
             <button
               type="button"
-              onClick={() => setPage((p) => p - 1)}
-              disabled={page <= 1 || isLoading}
+              onClick={() => setPage(currentPage - 1)}
+              disabled={currentPage <= 1 || isLoading}
             >
               Trang trước
             </button>
 
             <span>
-              Trang {page} / {totalPages}
+              Trang {currentPage} / {totalPages}
             </span>
 
             <button
               type="button"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page >= totalPages || isLoading}
+              onClick={() => setPage(currentPage + 1)}
+              disabled={currentPage >= totalPages || isLoading}
             >
               Trang sau
             </button>
