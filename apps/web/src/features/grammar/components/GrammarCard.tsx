@@ -1,12 +1,23 @@
+import { Link } from "react-router";
 import type { GrammarListItem } from "@app/shared";
+
+// Remembered by the detail page so "Quay lại danh sách" restores the list.
+export type GrammarListLocationState = {
+  page?: number;
+};
 
 type GrammarCardProps = {
   grammar: GrammarListItem;
+  listState?: GrammarListLocationState;
 };
 
-function GrammarCard({ grammar }: GrammarCardProps) {
+function GrammarCard({ grammar, listState }: GrammarCardProps) {
   return (
-    <article className="grammar-card">
+    <Link
+      to={`/grammar/${grammar.id}`}
+      state={listState}
+      className="grammar-card"
+    >
       <div className="grammar-card-top">
         <h2 className="grammar-pattern" lang="ja">
           {grammar.pattern}
@@ -19,7 +30,7 @@ function GrammarCard({ grammar }: GrammarCardProps) {
       </div>
       <p className="grammar-title">{grammar.title}</p>
       <p className="grammar-meaning">{grammar.meaning}</p>
-    </article>
+    </Link>
   );
 }
 

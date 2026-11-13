@@ -1,5 +1,8 @@
 import type { GrammarListQuery } from "@app/shared";
+import { notFound } from "../../errors.js";
 import { prisma } from "../../lib/prisma.js";
+
+const GRAMMAR_NOT_FOUND_MESSAGE = "Không tìm thấy ngữ pháp này!";
 
 const grammarListSelect = {
   id: true,
@@ -22,4 +25,17 @@ export async function listGrammars({ page, pageSize }: GrammarListQuery) {
   ]);
 
   return { grammars, total, page, pageSize };
+}
+
+export async function getGrammarById(id: number) {
+  const grammar = await prisma.grammar.findUnique({
+    where: { id },
+    select: grammarListSelect,
+  });
+
+  if (!grammar) {
+    throw notFound(GRAMMAR_NOT_FOUND_MESSAGE);
+  }
+
+  return grammar;
 }

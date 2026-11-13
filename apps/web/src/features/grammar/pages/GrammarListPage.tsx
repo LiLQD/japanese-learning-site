@@ -1,20 +1,26 @@
 import Navbar from "../../../components/Navbar";
 import "./GrammarListPage.css";
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import type { GrammarListResponse } from "@app/shared";
 import { fetchGrammarList, GRAMMAR_PAGE_SIZE as PAGE_SIZE } from "../api";
-import GrammarCard from "../components/GrammarCard";
+import GrammarCard, {
+  type GrammarListLocationState,
+} from "../components/GrammarCard";
 
 function GrammarListPage() {
-  const [page, setPage] = useState(1);
+  // Coming back from a detail page restores the page the user was on.
+  const backState = useLocation().state as GrammarListLocationState | null;
+  const [page, setPage] = useState(backState?.page ?? 1);
   const [data, setData] = useState<GrammarListResponse | null>(null);
   const [loadedPage, setLoadedPage] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
-  // Derive current page to prevent out-of-bounds pagination
-  const currentPage = Math.min(page, totalPages);
+  // Derive current page to prevent out-of-bounds pagination. Before the first
+  // response the total is unknown, so keep the requested (e.g. restored) page.
+  const currentPage = data ? Math.min(page, totalPages) : page;
 
   const isLoading = loadedPage !== currentPage;
 
@@ -82,7 +88,11 @@ function GrammarListPage() {
           ) : (
             <div className="grammar-list">
               {data.grammars.map((grammar) => (
-                <GrammarCard key={grammar.id} grammar={grammar} />
+                <GrammarCard
+                  key={grammar.id}
+                  grammar={grammar}
+                  listState={{ page: currentPage }}
+                />
               ))}
             </div>
           ))

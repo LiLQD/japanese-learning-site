@@ -3,16 +3,20 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthUser } from "../../types.js";
 
-const { findManyMock, countMock, transactionMock } = vi.hoisted(() => ({
-  findManyMock: vi.fn(),
-  countMock: vi.fn(),
-  transactionMock: vi.fn(),
-}));
+const { findManyMock, findUniqueMock, countMock, transactionMock } = vi.hoisted(
+  () => ({
+    findManyMock: vi.fn(),
+    findUniqueMock: vi.fn(),
+    countMock: vi.fn(),
+    transactionMock: vi.fn(),
+  }),
+);
 
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     grammar: {
       findMany: findManyMock,
+      findUnique: findUniqueMock,
       count: countMock,
     },
     $transaction: transactionMock,
@@ -134,6 +138,56 @@ describe("GET /api/grammar", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     const res = await request(makeApp()).get("/api/grammar");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe("INTERNAL");
+  });
+});
+
+describe("GET /api/grammar/:id", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    findUniqueMock.mockResolvedValue(sampleGrammars[0]);
+  });
+
+  it("is public and returns the grammar", async () => {
+    const res = await request(makeApp()).get("/api/grammar/1");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ grammar: sampleGrammars[0] });
+    expect(findUniqueMock).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 1 } }),
+    );
+  });
+
+  it("returns 404 when the grammar does not exist", async () => {
+    findUniqueMock.mockResolvedValue(null);
+
+    const res = await request(makeApp()).get("/api/grammar/9999");
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toEqual({
+      code: "NOT_FOUND",
+      message: "Không tìm thấy ngữ pháp này!",
+    });
+  });
+
+  it.each(["abc", "0", "-1", "1.5"])(
+    "returns 400 for invalid id %s",
+    async (id) => {
+      const res = await request(makeApp()).get(`/api/grammar/${id}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("BAD_REQUEST");
+      expect(findUniqueMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("returns 500 when the database is unreachable", async () => {
+    findUniqueMock.mockRejectedValue(new Error("connect ECONNREFUSED"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await request(makeApp()).get("/api/grammar/1");
 
     expect(res.status).toBe(500);
     expect(res.body.error.code).toBe("INTERNAL");
