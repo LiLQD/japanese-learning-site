@@ -200,3 +200,49 @@
     transition: none;
   }
 }
+
+/* Vietnamese translation */
+.reading-detail-translation {
+  margin-top: 24px;
+  padding: 26px 30px;
+  border: 1px solid #e3e8fb;
+  border-radius: 16px;
+  background: #f7f8ff;
+}
+
+.reading-detail-translation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e3e8fb;
+  color: #4655a5;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.reading-detail-translation-heading span:last-child {
+  color: #9299b5;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.reading-detail-translation-text {
+  padding: 22px 4px 8px;
+  color: #424969;
+  font-size: 16px;
+  line-height: 2;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.reading-detail-translation-empty {
+  margin: 20px 4px 8px;
+  color: #9299b5;
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.8;
+}

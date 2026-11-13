@@ -137,6 +137,7 @@ describe("GET /api/reading/:id", () => {
         id: true,
         title: true,
         content: true,
+        translation: true,
         jlpt: true,
       },
     });

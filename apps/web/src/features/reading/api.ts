@@ -37,6 +37,7 @@ export async function fetchReadingList(): Promise<ReadingListResponse> {
 
 export interface ReadingPassageDetail extends ReadingPassage {
   content: string;
+  translation: string | null;
 }
 
 export interface ReadingDetailResponse {

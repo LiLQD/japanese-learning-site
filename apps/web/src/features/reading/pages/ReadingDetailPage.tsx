@@ -127,7 +127,25 @@ export default function ReadingDetailPage() {
               <article className="reading-detail-text" lang="ja">
                 {passage.content}
               </article>
+              <section className="reading-detail-translation">
+                <div className="reading-detail-translation-heading">
+                  <span>BẢN DỊCH TIẾNG VIỆT</span>
+                  <span>Vietnamese Translation</span>
+                </div>
 
+                {passage.translation?.trim() ? (
+                  <article
+                    className="reading-detail-translation-text"
+                    lang="vi"
+                  >
+                    {passage.translation}
+                  </article>
+                ) : (
+                  <p className="reading-detail-translation-empty">
+                    Bản dịch tiếng Việt hiện chưa được cập nhật.
+                  </p>
+                )}
+              </section>
               <div className="reading-detail-footer">
                 <Link to="/reading">← Chọn bài đọc khác</Link>
               </div>

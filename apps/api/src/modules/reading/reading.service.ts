@@ -20,6 +20,7 @@ export async function getReadingPassageById(id: number) {
       id: true,
       title: true,
       content: true,
+      translation: true,
       jlpt: true,
     },
   });
