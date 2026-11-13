@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import Navbar from "../../../components/Navbar";
 import { fetchReadingList, type ReadingPassage } from "../api";
 import "./ReadingListPage.css";
@@ -98,7 +99,11 @@ export default function ReadingListPage() {
           {!loading && !error && passages.length > 0 && (
             <div className="reading-grid">
               {passages.map((passage) => (
-                <article className="reading-card" key={passage.id}>
+                <Link
+                  to={`/reading/${passage.id}`}
+                  className="reading-card"
+                  key={passage.id}
+                >
                   <div className="reading-card-top">
                     <span className="reading-card-label">BÀI ĐỌC</span>
 
@@ -114,7 +119,7 @@ export default function ReadingListPage() {
                   <div className="reading-card-footer">
                     <span>Mã bài đọc: #{passage.id}</span>
                   </div>
-                </article>
+                </Link>
               ))}
             </div>
           )}
