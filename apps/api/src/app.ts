@@ -4,6 +4,7 @@ import usersRouter from "./modules/users/users.routes.js";
 import profileRouter from "./modules/profile/profile.routes.js";
 import notificationsRouter from "./modules/notifications/notifications.routes.js";
 import kanjiRouter from "./modules/kanji/kanji.routes.js";
+import readingRouter from "./modules/reading/reading.routes.js";
 import wordsRouter from "./modules/words/words.routes.js";
 
 import express from "express";
@@ -34,6 +35,7 @@ export function createApp() {
   app.use("/api/auth", authRouter);
   app.use("/api/admin/users", usersRouter);
   app.use("/api/kanji", kanjiRouter);
+  app.use("/api/reading", readingRouter);
   app.use("/api/words", wordsRouter);
   app.use("/api/users/me", profileRouter);
   app.use("/api/notifications", notificationsRouter);

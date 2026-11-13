@@ -570,6 +570,131 @@ async function seedKanji(): Promise<void> {
   }
 }
 
+type SeedReadingPassage = {
+  title: string;
+  content: string;
+  jlpt: number;
+  questions: {
+    question: string;
+    options: string[];
+    correctIndex: number;
+    position: number;
+  }[];
+};
+
+const READING_PASSAGES: SeedReadingPassage[] = [
+  {
+    title: "わたしの一日",
+    content:
+      "わたしは田中さくらです。毎朝七時に起きます。朝ごはんを食べて、八時に学校へ行きます。学校で日本語と英語を勉強します。午後四時に家へ帰ります。夜は宿題をして、十一時に寝ます。",
+    jlpt: 5,
+    questions: [
+      {
+        question: "さくらさんは何時に起きますか。",
+        options: ["六時", "七時", "八時", "九時"],
+        correctIndex: 1,
+        position: 1,
+      },
+      {
+        question: "何時に家へ帰りますか。",
+        options: ["二時", "三時", "四時", "五時"],
+        correctIndex: 2,
+        position: 2,
+      },
+    ],
+  },
+  {
+    title: "週末の買い物",
+    content:
+      "土曜日、わたしは母とスーパーへ行きました。スーパーで野菜や肉、牛乳を買いました。母は新しいかばんも買いました。買い物のあと、近くのレストランで昼ごはんを食べました。とても楽しい一日でした。",
+    jlpt: 5,
+    questions: [
+      {
+        question: "だれとスーパーへ行きましたか。",
+        options: ["父", "母", "友だち", "先生"],
+        correctIndex: 1,
+        position: 1,
+      },
+      {
+        question: "お母さんは何を買いましたか。",
+        options: ["くつ", "本", "かばん", "服"],
+        correctIndex: 2,
+        position: 2,
+      },
+    ],
+  },
+  {
+    title: "京都への旅行",
+    content:
+      "先月、わたしは友だちと京都へ旅行に行きました。京都には古いお寺や美しい庭がたくさんあります。朝、ホテルを出て、有名なお寺を見に行きました。そのあと、近くの店で抹茶のお菓子を食べました。午後はバスに乗って町を見学しました。少し疲れましたが、とてもいい思い出になりました。また京都へ行きたいです。",
+    jlpt: 4,
+    questions: [
+      {
+        question: "いつ京都へ行きましたか。",
+        options: ["先週", "先月", "去年", "先週末"],
+        correctIndex: 1,
+        position: 1,
+      },
+      {
+        question: "午後、何をしましたか。",
+        options: [
+          "バスで町を見学した",
+          "ホテルで寝た",
+          "買い物をした",
+          "映画を見た",
+        ],
+        correctIndex: 0,
+        position: 2,
+      },
+    ],
+  },
+];
+
+async function seedReadingPassages(): Promise<void> {
+  let added = 0;
+  let skipped = 0;
+
+  for (const passage of READING_PASSAGES) {
+    const existing = await prisma.readingPassage.findFirst({
+      where: { title: passage.title },
+      select: {
+        id: true,
+        questions: { select: { id: true } },
+      },
+    });
+
+    if (existing) {
+      if (existing.questions.length === 0) {
+        await prisma.readingQuestion.createMany({
+          data: passage.questions.map((question) => ({
+            ...question,
+            passageId: existing.id,
+          })),
+        });
+      }
+
+      skipped += 1;
+      continue;
+    }
+
+    await prisma.readingPassage.create({
+      data: {
+        title: passage.title,
+        content: passage.content,
+        jlpt: passage.jlpt,
+        questions: {
+          create: passage.questions,
+        },
+      },
+    });
+
+    added += 1;
+  }
+
+  console.log(`Reading passages added: ${added}`);
+  console.log(`Reading passages already existed: ${skipped}`);
+}
+
 async function main(): Promise<void> {
   console.log("Seeding users...");
   await seedUsers();
@@ -579,6 +704,10 @@ async function main(): Promise<void> {
 
   console.log(`Seeding ${KANJI.length} kanji...`);
   await seedKanji();
+
+  // THÊM 2 DÒNG NÀY
+  console.log(`Seeding ${READING_PASSAGES.length} reading passages...`);
+  await seedReadingPassages();
 
   console.log("Done.");
   console.log(`  admin: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
