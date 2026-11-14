@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import type { GrammarListItem } from "@app/shared";
 import { fetchGrammar, GRAMMAR_NOT_FOUND } from "../api";
-import type { GrammarListLocationState } from "../components/GrammarCard";
+import type { GrammarListLocationState } from "./GrammarListPage";
 
 function parseId(value: string | undefined) {
   const id = Number(value);

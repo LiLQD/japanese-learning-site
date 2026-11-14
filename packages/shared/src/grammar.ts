@@ -1,6 +1,20 @@
 import { z } from "zod";
 
+export const GRAMMAR_KEYWORD_MAX_LENGTH = 100;
+
 export const grammarListQuerySchema = z.object({
+  // Matches title, pattern or meaning (case-insensitive). Empty = no filter.
+  keyword: z
+    .string()
+    .trim()
+    .max(GRAMMAR_KEYWORD_MAX_LENGTH, "Từ khóa tối đa 100 ký tự")
+    .optional(),
+  jlpt: z.coerce
+    .number()
+    .int("Cấp độ JLPT không hợp lệ")
+    .min(1, "Cấp độ JLPT không hợp lệ")
+    .max(5, "Cấp độ JLPT không hợp lệ")
+    .optional(),
   page: z.coerce
     .number()
     .int("Số trang phải là số nguyên")
