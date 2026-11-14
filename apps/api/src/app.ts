@@ -6,6 +6,7 @@ import notificationsRouter from "./modules/notifications/notifications.routes.js
 import kanjiRouter from "./modules/kanji/kanji.routes.js";
 import readingRouter from "./modules/reading/reading.routes.js";
 import wordsRouter from "./modules/words/words.routes.js";
+import grammarRouter from "./modules/grammar/grammar.routes.js";
 
 import express from "express";
 import helmet from "helmet";
@@ -37,6 +38,7 @@ export function createApp() {
   app.use("/api/kanji", kanjiRouter);
   app.use("/api/reading", readingRouter);
   app.use("/api/words", wordsRouter);
+  app.use("/api/grammar", grammarRouter);
   app.use("/api/users/me", profileRouter);
   app.use("/api/notifications", notificationsRouter);
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
