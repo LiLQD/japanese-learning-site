@@ -57,3 +57,22 @@ export const grammarIdParamSchema = z.object({
 export type GrammarDetailResponse = {
   grammar: GrammarListItem;
 };
+
+export const grammarExampleInputSchema = z.object({
+  japanese: z.string().trim().min(1, "Vui lòng nhập câu tiếng Nhật"),
+  vietnamese: z.string().trim().min(1, "Vui lòng nhập bản dịch tiếng Việt"),
+});
+
+export const grammarCreateInputSchema = z.object({
+  title: z.string().trim().min(1, "Vui lòng nhập tên ngữ pháp"),
+  pattern: z.string().trim().min(1, "Vui lòng nhập cấu trúc ngữ pháp"),
+  meaning: z.string().trim().min(1, "Vui lòng nhập ý nghĩa"),
+  jlpt: z.number().int("Cấp độ JLPT không hợp lệ").min(1).max(5),
+  examples: z.array(grammarExampleInputSchema).default([]),
+});
+
+export type GrammarCreateInput = z.input<typeof grammarCreateInputSchema>;
+
+export type GrammarCreateResponse = {
+  grammar: GrammarListItem;
+};

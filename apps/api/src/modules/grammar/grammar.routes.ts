@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { getGrammarByIdHandler, getGrammarList } from "./grammar.controller.js";
+import { requireRole } from "../../middleware/auth.js";
+import {
+  createGrammarHandler,
+  getGrammarByIdHandler,
+  getGrammarList,
+} from "./grammar.controller.js";
 
 const router = Router();
 
@@ -7,5 +12,6 @@ const router = Router();
 // must be guarded with requireRole("ADMIN").
 router.get("/", getGrammarList);
 router.get("/:id", getGrammarByIdHandler);
+router.post("/", requireRole("ADMIN"), createGrammarHandler);
 
 export default router;

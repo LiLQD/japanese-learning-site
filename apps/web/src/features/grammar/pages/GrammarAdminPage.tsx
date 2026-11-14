@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import type { GrammarListResponse } from "@app/shared";
 import Navbar from "../../../components/Navbar";
 import { useAuth } from "../../../contexts/auth-context";
@@ -10,11 +10,29 @@ import "./GrammarAdminPage.css";
 function GrammarAdminPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const isAdmin = user?.role === "ADMIN";
+  const location = useLocation();
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [data, setData] = useState<GrammarListResponse | null>(null);
   const [loadedPage, setLoadedPage] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage] = useState(() => {
+    const state = location.state as { successMessage?: unknown } | null;
+    return typeof state?.successMessage === "string"
+      ? state.successMessage
+      : "";
+  });
   const isLoading = loadedPage !== page;
+
+  useEffect(() => {
+    const state = location.state as { successMessage?: unknown } | null;
+    if (typeof state?.successMessage !== "string") return;
+
+    void navigate(`${location.pathname}${location.search}${location.hash}`, {
+      replace: true,
+      state: null,
+    });
+  }, [location, navigate]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -87,9 +105,20 @@ function GrammarAdminPage() {
             <span>Tổng số ngữ pháp</span>
             <strong>{data?.total ?? 0}</strong>
           </div>
+          <Link
+            to="/admin/grammar/create"
+            className="grammar-admin-add-button"
+          >
+            Thêm ngữ pháp
+          </Link>
         </header>
 
         {errorMessage && <p role="alert">{errorMessage}</p>}
+        {successMessage && (
+          <p className="grammar-admin-success" role="status">
+            {successMessage}
+          </p>
+        )}
         {isLoading && !data ? (
           <p role="status">Đang tải danh sách...</p>
         ) : (

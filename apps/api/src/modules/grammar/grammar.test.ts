@@ -1,16 +1,25 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthUser } from "../../types.js";
+import { Prisma } from "../../../generated/prisma/client.js";
 
-const { findManyMock, findUniqueMock, countMock, transactionMock } = vi.hoisted(
-  () => ({
+const {
+  findManyMock,
+  findUniqueMock,
+  countMock,
+  createMock,
+  sessionFindFirstMock,
+  transactionMock,
+} = vi.hoisted(() => ({
     findManyMock: vi.fn(),
     findUniqueMock: vi.fn(),
     countMock: vi.fn(),
+    createMock: vi.fn(),
+    sessionFindFirstMock: vi.fn(),
     transactionMock: vi.fn(),
-  }),
-);
+  }));
 
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
@@ -18,22 +27,29 @@ vi.mock("../../lib/prisma.js", () => ({
       findMany: findManyMock,
       findUnique: findUniqueMock,
       count: countMock,
+      create: createMock,
     },
+    session: { findFirst: sessionFindFirstMock },
     $transaction: transactionMock,
   },
 }));
 
+import { loadSession } from "../../middleware/load-session.js";
 import grammarRouter from "./grammar.routes.js";
 import grammarAdminRouter from "./grammar-admin.routes.js";
 import { errorHandler, notFoundHandler } from "../../middleware/error.js";
 
-function makeApp(user?: AuthUser) {
+function makeApp(user?: AuthUser, withSessionMiddleware = false) {
   const app = express();
   app.use(express.json());
-  app.use((req, _res, next) => {
-    if (user) req.user = user;
-    next();
-  });
+  app.use(cookieParser());
+  if (withSessionMiddleware) app.use(loadSession);
+  else {
+    app.use((req, _res, next) => {
+      if (user) req.user = user;
+      next();
+    });
+  }
   app.use("/api/grammar", grammarRouter);
   app.use("/api/admin/grammar", grammarAdminRouter);
   app.use(notFoundHandler);
@@ -50,6 +66,220 @@ const sampleGrammars = [
     jlpt: 5,
   },
 ];
+
+describe("POST /api/grammar", () => {
+  const input = {
+    title: "Te form",
+    pattern: "Vてください",
+    meaning: "Xin hãy làm gì",
+    jlpt: 5,
+    examples: [
+      { japanese: "座ってください", vietnamese: "Xin hãy ngồi xuống" },
+      { japanese: "見てください", vietnamese: "Xin hãy xem" },
+    ],
+  };
+
+  const createdGrammar = {
+    id: 7,
+    title: input.title,
+    pattern: input.pattern,
+    meaning: input.meaning,
+    jlpt: input.jlpt,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    createMock.mockResolvedValue(createdGrammar);
+  });
+
+  it("creates grammar and multiple examples for an admin", async () => {
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .post("/api/grammar")
+      .send(input);
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ grammar: createdGrammar });
+    expect(createMock).toHaveBeenCalledWith({
+      data: {
+        title: input.title,
+        pattern: input.pattern,
+        meaning: input.meaning,
+        jlpt: input.jlpt,
+        examples: {
+          create: [
+            { japanese: "座ってください", english: "Xin hãy ngồi xuống", position: 1 },
+            { japanese: "見てください", english: "Xin hãy xem", position: 2 },
+          ],
+        },
+      },
+      select: { id: true, title: true, pattern: true, meaning: true, jlpt: true },
+    });
+  });
+
+  it("creates grammar with one example", async () => {
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .post("/api/grammar")
+      .send({ ...input, examples: [input.examples[0]] });
+
+    expect(res.status).toBe(201);
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          examples: {
+            create: [
+              {
+                japanese: input.examples[0].japanese,
+                english: input.examples[0].vietnamese,
+                position: 1,
+              },
+            ],
+          },
+        }),
+      }),
+    );
+  });
+
+  it.each([
+    ["when examples is omitted", undefined],
+    ["when examples is empty", []],
+  ])("creates grammar without examples %s", async (_label, examples) => {
+    const body = { ...input, examples };
+    if (examples === undefined) delete (body as { examples?: unknown }).examples;
+
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .post("/api/grammar")
+      .send(body);
+
+    expect(res.status).toBe(201);
+    expect(createMock).toHaveBeenCalledWith({
+      data: {
+        title: input.title,
+        pattern: input.pattern,
+        meaning: input.meaning,
+        jlpt: input.jlpt,
+      },
+      select: { id: true, title: true, pattern: true, meaning: true, jlpt: true },
+    });
+  });
+
+  it("rejects guests", async () => {
+    const res = await request(makeApp()).post("/api/grammar").send(input);
+
+    expect(res.status).toBe(401);
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-admin users", async () => {
+    const res = await request(makeApp({ id: 2, role: "USER" }))
+      .post("/api/grammar")
+      .send(input);
+
+    expect(res.status).toBe(403);
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["missing title", { ...input, title: undefined }],
+    ["empty title", { ...input, title: " " }],
+    ["missing pattern", { ...input, pattern: undefined }],
+    ["empty pattern", { ...input, pattern: " " }],
+    ["missing meaning", { ...input, meaning: undefined }],
+    ["empty meaning", { ...input, meaning: " " }],
+    ["missing JLPT", { ...input, jlpt: undefined }],
+    ["string JLPT", { ...input, jlpt: "5" }],
+    ["fractional JLPT", { ...input, jlpt: 2.5 }],
+    ["JLPT below range", { ...input, jlpt: 0 }],
+    ["JLPT above range", { ...input, jlpt: 6 }],
+    ["missing Japanese example", { ...input, examples: [{ vietnamese: "Dịch" }] }],
+    ["empty Japanese example", { ...input, examples: [{ japanese: " ", vietnamese: "Dịch" }] }],
+    ["missing Vietnamese translation", { ...input, examples: [{ japanese: "例" }] }],
+    ["empty Vietnamese translation", { ...input, examples: [{ japanese: "例", vietnamese: " " }] }],
+  ])("rejects %s", async (_label, body) => {
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .post("/api/grammar")
+      .send(body);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("BAD_REQUEST");
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 when loadSession cannot connect to the database", async () => {
+    sessionFindFirstMock.mockRejectedValue(
+      Object.assign(new Error("session query failed"), { code: "ECONNREFUSED" }),
+    );
+
+    const res = await request(makeApp(undefined, true))
+      .post("/api/grammar")
+      .set("Cookie", "yume_session=valid-session")
+      .send(input);
+
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe("DATABASE_UNAVAILABLE");
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 for a recognized database connection error in the service", async () => {
+    createMock.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Database unavailable", {
+        code: "P1002",
+        clientVersion: "test",
+      }),
+    );
+
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .post("/api/grammar")
+      .send(input);
+
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe("DATABASE_UNAVAILABLE");
+  });
+
+  it("returns 503 for Prisma P1017 when the server closes the connection", async () => {
+    createMock.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Server closed the connection", {
+        code: "P1017",
+        clientVersion: "test",
+      }),
+    );
+
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .post("/api/grammar")
+      .send(input);
+
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe("DATABASE_UNAVAILABLE");
+  });
+
+  it("does not classify P1000 as a connection error", async () => {
+    createMock.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Authentication failed", {
+        code: "P1000",
+        clientVersion: "test",
+      }),
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .post("/api/grammar")
+      .send(input);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe("INTERNAL");
+  });
+
+  it("returns the internal error for unrelated database errors", async () => {
+    createMock.mockRejectedValue(new Error("query failed"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .post("/api/grammar")
+      .send(input);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe("INTERNAL");
+  });
+});
 
 describe("GET /api/grammar", () => {
   beforeEach(() => {

@@ -58,6 +58,31 @@
   font-size: 30px;
 }
 
+.grammar-admin-add-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  color: white;
+  background: var(--color-brand);
+  border-radius: 10px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.grammar-admin-add-button:hover {
+  filter: brightness(0.94);
+}
+
+.grammar-admin-success {
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  color: #176b3a;
+  background: rgba(23, 107, 58, 0.08);
+  border-radius: 10px;
+}
+
 .grammar-admin-table-wrapper {
   overflow-x: auto;
   background: var(--color-surface);
