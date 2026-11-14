@@ -45,3 +45,15 @@ export type GrammarListResponse = {
   page: number;
   pageSize: number;
 };
+
+// Validates the :id route param of /api/grammar/:id.
+export const grammarIdParamSchema = z.object({
+  id: z.coerce
+    .number({ error: "ID ngữ pháp không hợp lệ" })
+    .int("ID ngữ pháp không hợp lệ")
+    .positive("ID ngữ pháp không hợp lệ"),
+});
+
+export type GrammarDetailResponse = {
+  grammar: GrammarListItem;
+};

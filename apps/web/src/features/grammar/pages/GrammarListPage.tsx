@@ -1,80 +1,66 @@
-import Navbar from "../../../components/Navbar";
-import "./GrammarListPage.css";
 import { useEffect, useState } from "react";
-import {
-  GRAMMAR_KEYWORD_MAX_LENGTH,
-  type GrammarListResponse,
-} from "@app/shared";
+import { useLocation } from "react-router";
+import type { GrammarListResponse } from "@app/shared";
+import Navbar from "../../../components/Navbar";
 import { fetchGrammarList, GRAMMAR_PAGE_SIZE as PAGE_SIZE } from "../api";
 import GrammarCard from "../components/GrammarCard";
+import "./GrammarListPage.css";
 
-// Wait for the user to stop typing before searching.
-const SEARCH_DELAY_MS = 300;
-const JLPT_OPTIONS = [5, 4, 3, 2, 1];
-
+export type GrammarListLocationState = { page?: number };
 function GrammarListPage() {
-  const [page, setPage] = useState(1);
-  const [keywordInput, setKeywordInput] = useState("");
-  const [keyword, setKeyword] = useState("");
-  const [jlpt, setJlpt] = useState<number | undefined>(undefined);
+  const location = useLocation();
+  const listState = location.state as GrammarListLocationState | null;
+  const initialPage =
+    listState?.page && listState.page > 0 ? listState.page : 1;
+
+  const [page, setPage] = useState(initialPage);
   const [data, setData] = useState<GrammarListResponse | null>(null);
-  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const [loadedPage, setLoadedPage] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const isFiltering = Boolean(keyword || jlpt);
+  // Search states from PR #66
+  const [input, setInput] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [jlpt, setJlpt] = useState("");
+
+  // Debounce logic from PR #66
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setKeyword(input.trim());
+      setPage(1); // Reset page when search changes
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [input]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
-
-  // Derive current page to prevent out-of-bounds pagination
   const currentPage = Math.min(page, totalPages);
-
-  const requestKey = `${currentPage}:${keyword}:${jlpt ?? ""}`;
-  const isLoading = loadedKey !== requestKey;
-
-  // Apply the typed keyword after a short pause.
-  useEffect(() => {
-    const trimmed = keywordInput.trim();
-    if (trimmed === keyword) return;
-
-    const timer = setTimeout(() => {
-      setKeyword(trimmed);
-      setPage(1);
-    }, SEARCH_DELAY_MS);
-
-    return () => clearTimeout(timer);
-  }, [keywordInput, keyword]);
+  const isLoading = loadedPage !== currentPage;
 
   useEffect(() => {
     let cancelled = false;
+    const jlptNumber = jlpt ? Number(jlpt) : undefined;
 
-    fetchGrammarList(currentPage, PAGE_SIZE, { keyword, jlpt })
+    fetchGrammarList(currentPage, PAGE_SIZE, keyword, jlptNumber)
       .then((result) => {
         if (cancelled) return;
-
         setData(result);
         setErrorMessage("");
-        setLoadedKey(requestKey);
+        setLoadedPage(currentPage);
       })
       .catch((error: unknown) => {
         if (cancelled) return;
-
         setErrorMessage(
           error instanceof Error
             ? error.message
             : "Không thể tải danh sách ngữ pháp.",
         );
-        setLoadedKey(requestKey);
+        setLoadedPage(currentPage);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [currentPage, keyword, jlpt, requestKey]);
-
-  function handleJlptChange(value: string) {
-    setJlpt(value ? Number(value) : undefined);
-    setPage(1);
-  }
+  }, [currentPage, keyword, jlpt]);
 
   return (
     <div className="grammar-layout">
@@ -91,32 +77,34 @@ function GrammarListPage() {
           </div>
 
           <div className="grammar-total-card">
-            <span>{isFiltering ? "Kết quả tìm kiếm" : "Tổng số ngữ pháp"}</span>
+            <span>Tổng số ngữ pháp</span>
             <strong>{data?.total ?? 0}</strong>
           </div>
         </div>
 
-        <div className="grammar-search" role="search">
+        {/* Search & Filter UI from PR #66 */}
+        <div className="grammar-filters">
           <input
             type="search"
-            value={keywordInput}
-            onChange={(event) => setKeywordInput(event.target.value)}
-            placeholder="Tìm theo mẫu ngữ pháp, tên hoặc ý nghĩa..."
-            aria-label="Tìm kiếm ngữ pháp"
-            maxLength={GRAMMAR_KEYWORD_MAX_LENGTH}
+            className="grammar-search-input"
+            placeholder="Tìm theo tên, cấu trúc, ý nghĩa..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
           />
-
           <select
-            value={jlpt ?? ""}
-            onChange={(event) => handleJlptChange(event.target.value)}
-            aria-label="Lọc theo cấp độ JLPT"
+            className="grammar-jlpt-select"
+            value={jlpt}
+            onChange={(e) => {
+              setJlpt(e.target.value);
+              setPage(1);
+            }}
           >
             <option value="">Tất cả cấp độ</option>
-            {JLPT_OPTIONS.map((level) => (
-              <option key={level} value={level}>
-                N{level}
-              </option>
-            ))}
+            <option value="5">N5</option>
+            <option value="4">N4</option>
+            <option value="3">N3</option>
+            <option value="2">N2</option>
+            <option value="1">N1</option>
           </select>
         </div>
 
@@ -130,17 +118,20 @@ function GrammarListPage() {
           <p className="grammar-note">Đang tải danh sách...</p>
         ) : (
           data &&
-          !errorMessage &&
           (data.grammars.length === 0 ? (
-            <p className="grammar-note" role="status">
-              {isFiltering
-                ? "Không tìm thấy ngữ pháp phù hợp"
+            <p className="grammar-note">
+              {keyword || jlpt
+                ? "Không tìm thấy ngữ pháp phù hợp với bộ lọc."
                 : "Chưa có dữ liệu ngữ pháp nào trong hệ thống"}
             </p>
           ) : (
             <div className="grammar-list">
               {data.grammars.map((grammar) => (
-                <GrammarCard key={grammar.id} grammar={grammar} />
+                <GrammarCard
+                  key={grammar.id}
+                  grammar={grammar}
+                  state={{ page: currentPage }} // Pass state from PR #67
+                />
               ))}
             </div>
           ))
