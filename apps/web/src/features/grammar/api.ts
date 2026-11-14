@@ -77,3 +77,35 @@ export async function fetchGrammar(id: number): Promise<GrammarDetailResponse> {
 
   return (await response.json()) as GrammarDetailResponse;
 }
+
+export async function fetchAdminGrammarList(
+  page: number,
+  pageSize: number,
+): Promise<GrammarListResponse> {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+
+  let response: Response;
+  try {
+    response = await fetch(`/api/admin/grammar?${params}`, {
+      credentials: "include",
+    });
+  } catch {
+    throw new Error(CONNECTION_ERROR);
+  }
+
+  if (!response.ok) {
+    const data = (await response
+      .json()
+      .catch(() => null)) as ErrorResponse | null;
+    const message = data?.error?.message;
+    if (message === CONNECTION_ERROR) {
+      throw new Error(CONNECTION_ERROR);
+    }
+    throw new Error(message ?? "Không thể tải danh sách ngữ pháp.");
+  }
+
+  return (await response.json()) as GrammarListResponse;
+}

@@ -11,7 +11,33 @@ export const notFoundHandler: RequestHandler = (_req, res) => {
   );
 };
 
-export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+const DATABASE_CONNECTION_ERROR_CODES = new Set([
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "ETIMEDOUT",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
+  "ENOTFOUND",
+  "P1001",
+]);
+
+function isDatabaseConnectionError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+
+  const candidate = error as { code?: unknown; cause?: unknown };
+  if (
+    typeof candidate.code === "string" &&
+    DATABASE_CONNECTION_ERROR_CODES.has(candidate.code)
+  ) {
+    return true;
+  }
+
+  return (
+    candidate.cause !== error && isDatabaseConnectionError(candidate.cause)
+  );
+}
+
+export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   if (err instanceof AppError) {
     res.status(err.status).json(
       errorResponseSchema.parse({
@@ -26,6 +52,18 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     res.status(400).json(
       errorResponseSchema.parse({
         error: { code: "BAD_REQUEST", message },
+      }),
+    );
+    return;
+  }
+
+  if (
+    req.originalUrl.startsWith("/api/admin/grammar") &&
+    isDatabaseConnectionError(err)
+  ) {
+    res.status(500).json(
+      errorResponseSchema.parse({
+        error: { code: "INTERNAL", message: "Lỗi kết nối!" },
       }),
     );
     return;
