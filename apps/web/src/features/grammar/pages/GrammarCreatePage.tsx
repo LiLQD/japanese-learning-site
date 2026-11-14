@@ -1,9 +1,6 @@
 import { useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
-import {
-  grammarCreateInputSchema,
-  type GrammarCreateInput,
-} from "@app/shared";
+import { grammarCreateInputSchema, type GrammarCreateInput } from "@app/shared";
 import Navbar from "../../../components/Navbar";
 import { useAuth } from "../../../contexts/auth-context";
 import { createGrammar } from "../api";
@@ -175,20 +172,28 @@ function GrammarCreatePage() {
           noValidate
         >
           <label className="grammar-create-field">
-            <span>Tên ngữ pháp <em>*</em></span>
+            <span>
+              Tên ngữ pháp <em>*</em>
+            </span>
             <input
               value={values.title}
-              onChange={(event) => handleValueChange("title", event.target.value)}
+              onChange={(event) =>
+                handleValueChange("title", event.target.value)
+              }
               aria-invalid={Boolean(fieldErrors.title)}
             />
             {fieldErrors.title && <small>{fieldErrors.title}</small>}
           </label>
 
           <label className="grammar-create-field">
-            <span>Cấu trúc ngữ pháp <em>*</em></span>
+            <span>
+              Cấu trúc ngữ pháp <em>*</em>
+            </span>
             <textarea
               value={values.pattern}
-              onChange={(event) => handleValueChange("pattern", event.target.value)}
+              onChange={(event) =>
+                handleValueChange("pattern", event.target.value)
+              }
               lang="ja"
               aria-invalid={Boolean(fieldErrors.pattern)}
             />
@@ -196,20 +201,28 @@ function GrammarCreatePage() {
           </label>
 
           <label className="grammar-create-field">
-            <span>Ý nghĩa <em>*</em></span>
+            <span>
+              Ý nghĩa <em>*</em>
+            </span>
             <textarea
               value={values.meaning}
-              onChange={(event) => handleValueChange("meaning", event.target.value)}
+              onChange={(event) =>
+                handleValueChange("meaning", event.target.value)
+              }
               aria-invalid={Boolean(fieldErrors.meaning)}
             />
             {fieldErrors.meaning && <small>{fieldErrors.meaning}</small>}
           </label>
 
           <label className="grammar-create-field">
-            <span>Trình độ JLPT <em>*</em></span>
+            <span>
+              Trình độ JLPT <em>*</em>
+            </span>
             <select
               value={values.jlpt}
-              onChange={(event) => handleValueChange("jlpt", event.target.value)}
+              onChange={(event) =>
+                handleValueChange("jlpt", event.target.value)
+              }
               aria-invalid={Boolean(fieldErrors.jlpt)}
             >
               <option value="">-- Chọn trình độ --</option>
@@ -222,7 +235,10 @@ function GrammarCreatePage() {
             {fieldErrors.jlpt && <small>{fieldErrors.jlpt}</small>}
           </label>
 
-          <section className="grammar-create-examples" aria-labelledby="examples-title">
+          <section
+            className="grammar-create-examples"
+            aria-labelledby="examples-title"
+          >
             <div className="grammar-create-examples-heading">
               <div>
                 <h2 id="examples-title">Ví dụ minh họa</h2>
@@ -242,14 +258,18 @@ function GrammarCreatePage() {
               <fieldset className="grammar-create-example" key={example.key}>
                 <legend>Ví dụ {index + 1}</legend>
                 <label className="grammar-create-field">
-                  <span>Câu tiếng Nhật <em>*</em></span>
+                  <span>
+                    Câu tiếng Nhật <em>*</em>
+                  </span>
                   <textarea
                     value={example.japanese}
                     onChange={(event) =>
                       updateExample(example.key, "japanese", event.target.value)
                     }
                     lang="ja"
-                    aria-invalid={Boolean(fieldErrors[`examples.${index}.japanese`])}
+                    aria-invalid={Boolean(
+                      fieldErrors[`examples.${index}.japanese`],
+                    )}
                   />
                   {fieldErrors[`examples.${index}.japanese`] && (
                     <small>{fieldErrors[`examples.${index}.japanese`]}</small>
@@ -257,13 +277,21 @@ function GrammarCreatePage() {
                 </label>
 
                 <label className="grammar-create-field">
-                  <span>Bản dịch tiếng Việt <em>*</em></span>
+                  <span>
+                    Bản dịch tiếng Việt <em>*</em>
+                  </span>
                   <textarea
                     value={example.vietnamese}
                     onChange={(event) =>
-                      updateExample(example.key, "vietnamese", event.target.value)
+                      updateExample(
+                        example.key,
+                        "vietnamese",
+                        event.target.value,
+                      )
                     }
-                    aria-invalid={Boolean(fieldErrors[`examples.${index}.vietnamese`])}
+                    aria-invalid={Boolean(
+                      fieldErrors[`examples.${index}.vietnamese`],
+                    )}
                   />
                   {fieldErrors[`examples.${index}.vietnamese`] && (
                     <small>{fieldErrors[`examples.${index}.vietnamese`]}</small>

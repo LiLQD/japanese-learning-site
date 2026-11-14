@@ -105,10 +105,7 @@ function GrammarAdminPage() {
             <span>Tổng số ngữ pháp</span>
             <strong>{data?.total ?? 0}</strong>
           </div>
-          <Link
-            to="/admin/grammar/create"
-            className="grammar-admin-add-button"
-          >
+          <Link to="/admin/grammar/create" className="grammar-admin-add-button">
             Thêm ngữ pháp
           </Link>
         </header>

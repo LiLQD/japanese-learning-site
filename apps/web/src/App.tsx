@@ -36,10 +36,7 @@ function App() {
           <Route path="/admin/dashboard" element={<DashboardPage />} />
           <Route path="/admin/users/:id" element={<UserDetailPage />} />
           <Route path="/admin/grammar" element={<GrammarAdminPage />} />
-          <Route
-            path="/admin/grammar/create"
-            element={<GrammarCreatePage />}
-          />
+          <Route path="/admin/grammar/create" element={<GrammarCreatePage />} />
           <Route path="/kanji" element={<KanjiListPage />} />
           <Route path="/kanji/new" element={<KanjiCreatePage />} />
           <Route path="/kanji/:id/edit" element={<KanjiEditPage />} />

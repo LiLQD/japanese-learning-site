@@ -13,13 +13,13 @@ const {
   sessionFindFirstMock,
   transactionMock,
 } = vi.hoisted(() => ({
-    findManyMock: vi.fn(),
-    findUniqueMock: vi.fn(),
-    countMock: vi.fn(),
-    createMock: vi.fn(),
-    sessionFindFirstMock: vi.fn(),
-    transactionMock: vi.fn(),
-  }));
+  findManyMock: vi.fn(),
+  findUniqueMock: vi.fn(),
+  countMock: vi.fn(),
+  createMock: vi.fn(),
+  sessionFindFirstMock: vi.fn(),
+  transactionMock: vi.fn(),
+}));
 
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
@@ -107,12 +107,22 @@ describe("POST /api/grammar", () => {
         jlpt: input.jlpt,
         examples: {
           create: [
-            { japanese: "座ってください", english: "Xin hãy ngồi xuống", position: 1 },
+            {
+              japanese: "座ってください",
+              english: "Xin hãy ngồi xuống",
+              position: 1,
+            },
             { japanese: "見てください", english: "Xin hãy xem", position: 2 },
           ],
         },
       },
-      select: { id: true, title: true, pattern: true, meaning: true, jlpt: true },
+      select: {
+        id: true,
+        title: true,
+        pattern: true,
+        meaning: true,
+        jlpt: true,
+      },
     });
   });
 
@@ -144,7 +154,8 @@ describe("POST /api/grammar", () => {
     ["when examples is empty", []],
   ])("creates grammar without examples %s", async (_label, examples) => {
     const body = { ...input, examples };
-    if (examples === undefined) delete (body as { examples?: unknown }).examples;
+    if (examples === undefined)
+      delete (body as { examples?: unknown }).examples;
 
     const res = await request(makeApp({ id: 1, role: "ADMIN" }))
       .post("/api/grammar")
@@ -158,7 +169,13 @@ describe("POST /api/grammar", () => {
         meaning: input.meaning,
         jlpt: input.jlpt,
       },
-      select: { id: true, title: true, pattern: true, meaning: true, jlpt: true },
+      select: {
+        id: true,
+        title: true,
+        pattern: true,
+        meaning: true,
+        jlpt: true,
+      },
     });
   });
 
@@ -190,10 +207,22 @@ describe("POST /api/grammar", () => {
     ["fractional JLPT", { ...input, jlpt: 2.5 }],
     ["JLPT below range", { ...input, jlpt: 0 }],
     ["JLPT above range", { ...input, jlpt: 6 }],
-    ["missing Japanese example", { ...input, examples: [{ vietnamese: "Dịch" }] }],
-    ["empty Japanese example", { ...input, examples: [{ japanese: " ", vietnamese: "Dịch" }] }],
-    ["missing Vietnamese translation", { ...input, examples: [{ japanese: "例" }] }],
-    ["empty Vietnamese translation", { ...input, examples: [{ japanese: "例", vietnamese: " " }] }],
+    [
+      "missing Japanese example",
+      { ...input, examples: [{ vietnamese: "Dịch" }] },
+    ],
+    [
+      "empty Japanese example",
+      { ...input, examples: [{ japanese: " ", vietnamese: "Dịch" }] },
+    ],
+    [
+      "missing Vietnamese translation",
+      { ...input, examples: [{ japanese: "例" }] },
+    ],
+    [
+      "empty Vietnamese translation",
+      { ...input, examples: [{ japanese: "例", vietnamese: " " }] },
+    ],
   ])("rejects %s", async (_label, body) => {
     const res = await request(makeApp({ id: 1, role: "ADMIN" }))
       .post("/api/grammar")
@@ -206,7 +235,9 @@ describe("POST /api/grammar", () => {
 
   it("returns 503 when loadSession cannot connect to the database", async () => {
     sessionFindFirstMock.mockRejectedValue(
-      Object.assign(new Error("session query failed"), { code: "ECONNREFUSED" }),
+      Object.assign(new Error("session query failed"), {
+        code: "ECONNREFUSED",
+      }),
     );
 
     const res = await request(makeApp(undefined, true))
