@@ -3,14 +3,24 @@ import type { ErrorResponse, GrammarListResponse } from "@app/shared";
 export const CONNECTION_ERROR = "Lỗi kết nối!";
 export const GRAMMAR_PAGE_SIZE = 20;
 
+export type GrammarFilters = {
+  keyword?: string;
+  // 1 = N1 … 5 = N5; undefined = every level.
+  jlpt?: number;
+};
+
 export async function fetchGrammarList(
   page: number,
   pageSize: number,
+  { keyword, jlpt }: GrammarFilters = {},
 ): Promise<GrammarListResponse> {
   const params = new URLSearchParams({
     page: String(page),
     pageSize: String(pageSize),
   });
+
+  if (keyword?.trim()) params.set("keyword", keyword.trim());
+  if (jlpt) params.set("jlpt", String(jlpt));
 
   let response: Response;
 
