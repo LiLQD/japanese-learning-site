@@ -4,6 +4,7 @@ import {
   getReadingPassageById,
   listReadingPassages,
   getReadingQuestionsByPassageId,
+  getReadingResultById,
   submitReadingQuiz,
 } from "./reading.service.js";
 
@@ -132,6 +133,31 @@ export const submitReading: RequestHandler = async (req, res, next) => {
       return;
     }
 
+    next(error);
+  }
+};
+
+export const getReadingResult: RequestHandler = async (req, res, next) => {
+  try {
+    const resultId = Number(req.params.resultId);
+
+    if (!Number.isInteger(resultId) || resultId <= 0) {
+      next(badRequest("Mã kết quả bài đọc không hợp lệ."));
+      return;
+    }
+
+    const result = await getReadingResultById(resultId, req.user!.id);
+
+    if (!result) {
+      next(notFound("Không tìm thấy kết quả bài đọc."));
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
     next(error);
   }
 };

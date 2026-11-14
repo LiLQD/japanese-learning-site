@@ -5,10 +5,11 @@ import {
   getReadingPassageList,
   getReadingQuestions,
   submitReading,
+  getReadingResult,
 } from "./reading.controller.js";
 
 const router = Router();
-
+router.get("/results/:resultId", requireAuth, getReadingResult);
 router.get("/", getReadingPassageList);
 router.get("/:id", getReadingPassageDetail);
 router.get("/:id/questions", getReadingQuestions);

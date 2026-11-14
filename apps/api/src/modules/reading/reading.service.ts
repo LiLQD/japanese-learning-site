@@ -119,3 +119,53 @@ export async function submitReadingQuiz(
     details: detailsData,
   };
 }
+
+export async function getReadingResultById(resultId: number, userId: number) {
+  const result = await prisma.readingResult.findFirst({
+    where: {
+      id: resultId,
+      userId,
+    },
+    select: {
+      id: true,
+      score: true,
+      correctCount: true,
+      totalCount: true,
+      timeSpent: true,
+      createdAt: true,
+
+      passage: {
+        select: {
+          id: true,
+          title: true,
+          jlpt: true,
+        },
+      },
+
+      details: {
+        select: {
+          id: true,
+          selectedOption: true,
+          isCorrect: true,
+
+          question: {
+            select: {
+              id: true,
+              question: true,
+              options: true,
+              correctIndex: true,
+              position: true,
+            },
+          },
+        },
+        orderBy: {
+          question: {
+            position: "asc",
+          },
+        },
+      },
+    },
+  });
+
+  return result;
+}
