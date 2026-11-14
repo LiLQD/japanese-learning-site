@@ -1,8 +1,12 @@
 import { Router } from "express";
-import { getReadingPassageList } from "./reading.controller.js";
+import {
+  getReadingPassageDetail,
+  getReadingPassageList,
+} from "./reading.controller.js";
 
 const router = Router();
 
 router.get("/", getReadingPassageList);
+router.get("/:id", getReadingPassageDetail);
 
 export default router;

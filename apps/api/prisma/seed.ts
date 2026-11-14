@@ -485,6 +485,136 @@ const KANJI: SeedKanji[] = [
   { character: "会", strokeCount: 6, radical: "人", jlpt: 4 },
 ];
 
+type SeedGrammar = {
+  title: string;
+  pattern: string;
+  meaning: string;
+  jlpt: number;
+};
+
+const GRAMMARS: SeedGrammar[] = [
+  {
+    title: "Câu khẳng định cơ bản",
+    pattern: "〜は〜です",
+    meaning: "A là B",
+    jlpt: 5,
+  },
+  {
+    title: "Câu phủ định danh từ",
+    pattern: "〜は〜ではありません",
+    meaning: "A không phải là B",
+    jlpt: 5,
+  },
+  {
+    title: "Câu hỏi",
+    pattern: "〜か",
+    meaning: "Trợ từ cuối câu để tạo câu hỏi",
+    jlpt: 5,
+  },
+  {
+    title: "Sở hữu, bổ nghĩa danh từ",
+    pattern: "〜の〜",
+    meaning: "B của A; A bổ nghĩa cho B",
+    jlpt: 5,
+  },
+  {
+    title: "Tồn tại (vật)",
+    pattern: "〜があります",
+    meaning: "Có (đồ vật, sự việc)",
+    jlpt: 5,
+  },
+  {
+    title: "Tồn tại (người, động vật)",
+    pattern: "〜がいます",
+    meaning: "Có (người, động vật)",
+    jlpt: 5,
+  },
+  {
+    title: "Diễn tả mong muốn",
+    pattern: "〜たいです",
+    meaning: "Muốn làm gì đó",
+    jlpt: 5,
+  },
+  {
+    title: "Mời rủ",
+    pattern: "〜ましょう",
+    meaning: "Cùng làm ~ nào",
+    jlpt: 5,
+  },
+  {
+    title: "Mời rủ lịch sự",
+    pattern: "〜ませんか",
+    meaning: "Anh/chị có muốn cùng làm ~ không?",
+    jlpt: 5,
+  },
+  {
+    title: "Nhờ vả, yêu cầu",
+    pattern: "〜てください",
+    meaning: "Hãy làm ~ (cho tôi)",
+    jlpt: 5,
+  },
+  {
+    title: "Hành động đang diễn ra",
+    pattern: "〜ています",
+    meaning: "Đang làm ~; trạng thái kéo dài",
+    jlpt: 5,
+  },
+  {
+    title: "Thứ tự hành động",
+    pattern: "〜てから",
+    meaning: "Sau khi làm ~ thì ...",
+    jlpt: 5,
+  },
+  {
+    title: "Đưa ra lý do",
+    pattern: "〜から",
+    meaning: "Vì ~ nên ...",
+    jlpt: 5,
+  },
+  {
+    title: "So sánh hơn",
+    pattern: "〜より〜のほうが",
+    meaning: "B ~ hơn A",
+    jlpt: 5,
+  },
+  {
+    title: "Xin phép, cho phép",
+    pattern: "〜てもいいです",
+    meaning: "Làm ~ cũng được",
+    jlpt: 4,
+  },
+  {
+    title: "Cấm đoán",
+    pattern: "〜てはいけません",
+    meaning: "Không được làm ~",
+    jlpt: 4,
+  },
+  {
+    title: "Nghĩa vụ",
+    pattern: "〜なければなりません",
+    meaning: "Phải làm ~",
+    jlpt: 4,
+  },
+  {
+    title: "Kinh nghiệm",
+    pattern: "〜たことがあります",
+    meaning: "Đã từng làm ~",
+    jlpt: 4,
+  },
+  {
+    title: "Khả năng",
+    pattern: "〜ことができます",
+    meaning: "Có thể làm ~",
+    jlpt: 4,
+  },
+  {
+    title: "Lời khuyên",
+    pattern: "〜たほうがいいです",
+    meaning: "Nên làm ~ thì hơn",
+    jlpt: 4,
+  },
+];
+
 async function seedUsers(): Promise<void> {
   const adminHash = await hash(ADMIN_PASSWORD, 10);
   const userHash = await hash(USER_PASSWORD, 10);
@@ -573,6 +703,7 @@ async function seedKanji(): Promise<void> {
 type SeedReadingPassage = {
   title: string;
   content: string;
+  translation: string;
   jlpt: number;
   questions: {
     question: string;
@@ -587,6 +718,8 @@ const READING_PASSAGES: SeedReadingPassage[] = [
     title: "わたしの一日",
     content:
       "わたしは田中さくらです。毎朝七時に起きます。朝ごはんを食べて、八時に学校へ行きます。学校で日本語と英語を勉強します。午後四時に家へ帰ります。夜は宿題をして、十一時に寝ます。",
+    translation:
+      "Tôi là Tanaka Sakura. Mỗi sáng tôi thức dậy lúc 7 giờ. Sau khi ăn sáng, tôi đến trường lúc 8 giờ. Ở trường, tôi học tiếng Nhật và tiếng Anh. Tôi trở về nhà lúc 4 giờ chiều. Buổi tối, tôi làm bài tập về nhà và đi ngủ lúc 11 giờ.",
     jlpt: 5,
     questions: [
       {
@@ -607,6 +740,8 @@ const READING_PASSAGES: SeedReadingPassage[] = [
     title: "週末の買い物",
     content:
       "土曜日、わたしは母とスーパーへ行きました。スーパーで野菜や肉、牛乳を買いました。母は新しいかばんも買いました。買い物のあと、近くのレストランで昼ごはんを食べました。とても楽しい一日でした。",
+    translation:
+      "Thứ Bảy, tôi đã đi siêu thị cùng mẹ. Ở siêu thị, chúng tôi đã mua rau, thịt và sữa. Mẹ tôi cũng đã mua một chiếc túi mới. Sau khi mua sắm, chúng tôi ăn trưa tại một nhà hàng gần đó. Đó là một ngày vô cùng vui vẻ.",
     jlpt: 5,
     questions: [
       {
@@ -627,6 +762,8 @@ const READING_PASSAGES: SeedReadingPassage[] = [
     title: "京都への旅行",
     content:
       "先月、わたしは友だちと京都へ旅行に行きました。京都には古いお寺や美しい庭がたくさんあります。朝、ホテルを出て、有名なお寺を見に行きました。そのあと、近くの店で抹茶のお菓子を食べました。午後はバスに乗って町を見学しました。少し疲れましたが、とてもいい思い出になりました。また京都へ行きたいです。",
+    translation:
+      "Tháng trước, tôi đã đi du lịch Kyoto cùng bạn. Kyoto có rất nhiều ngôi chùa cổ và những khu vườn xinh đẹp. Buổi sáng, chúng tôi rời khách sạn và đi tham quan một ngôi chùa nổi tiếng. Sau đó, chúng tôi ăn bánh kẹo vị trà xanh matcha tại một cửa hàng gần đó. Buổi chiều, chúng tôi đi xe buýt tham quan thành phố. Tôi hơi mệt nhưng đã có một kỷ niệm vô cùng đẹp. Tôi muốn đến Kyoto một lần nữa.",
     jlpt: 4,
     questions: [
       {
@@ -652,7 +789,7 @@ const READING_PASSAGES: SeedReadingPassage[] = [
 
 async function seedReadingPassages(): Promise<void> {
   let added = 0;
-  let skipped = 0;
+  let updated = 0;
 
   for (const passage of READING_PASSAGES) {
     const existing = await prisma.readingPassage.findFirst({
@@ -664,6 +801,15 @@ async function seedReadingPassages(): Promise<void> {
     });
 
     if (existing) {
+      // Cập nhật bản dịch cho bài đọc đã tồn tại
+      await prisma.readingPassage.update({
+        where: { id: existing.id },
+        data: {
+          translation: passage.translation,
+        },
+      });
+
+      // Bổ sung câu hỏi nếu bài đọc chưa có câu hỏi
       if (existing.questions.length === 0) {
         await prisma.readingQuestion.createMany({
           data: passage.questions.map((question) => ({
@@ -673,14 +819,16 @@ async function seedReadingPassages(): Promise<void> {
         });
       }
 
-      skipped += 1;
+      updated += 1;
       continue;
     }
 
+    // Tạo bài đọc mới
     await prisma.readingPassage.create({
       data: {
         title: passage.title,
         content: passage.content,
+        translation: passage.translation,
         jlpt: passage.jlpt,
         questions: {
           create: passage.questions,
@@ -692,7 +840,21 @@ async function seedReadingPassages(): Promise<void> {
   }
 
   console.log(`Reading passages added: ${added}`);
-  console.log(`Reading passages already existed: ${skipped}`);
+  console.log(`Reading passages updated: ${updated}`);
+}
+// grammars.pattern has no unique constraint, so look it up before creating
+// to keep the seed safe to re-run.
+async function seedGrammars(): Promise<void> {
+  for (const g of GRAMMARS) {
+    const existing = await prisma.grammar.findFirst({
+      where: { pattern: g.pattern },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      await prisma.grammar.create({ data: g });
+    }
+  }
 }
 
 async function main(): Promise<void> {
@@ -705,9 +867,10 @@ async function main(): Promise<void> {
   console.log(`Seeding ${KANJI.length} kanji...`);
   await seedKanji();
 
-  // THÊM 2 DÒNG NÀY
   console.log(`Seeding ${READING_PASSAGES.length} reading passages...`);
   await seedReadingPassages();
+  console.log(`Seeding ${GRAMMARS.length} grammars...`);
+  await seedGrammars();
 
   console.log("Done.");
   console.log(`  admin: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);

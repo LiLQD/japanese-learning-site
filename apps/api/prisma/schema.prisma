@@ -225,13 +225,14 @@ model GrammarExample {
 // ============================================================
 
 model ReadingPassage {
-  id        Int               @id @default(autoincrement())
-  title     String
-  content   String
-  jlpt      Int?
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  questions ReadingQuestion[]
+  id          Int               @id @default(autoincrement())
+  title       String
+  content     String
+  translation String?
+  jlpt        Int?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  questions   ReadingQuestion[]
 
   @@index([jlpt])
   @@map("reading_passages")

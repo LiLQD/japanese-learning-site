@@ -12,3 +12,16 @@ export async function listReadingPassages() {
 
   return { passages };
 }
+
+export async function getReadingPassageById(id: number) {
+  return prisma.readingPassage.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      translation: true,
+      jlpt: true,
+    },
+  });
+}
