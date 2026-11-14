@@ -19,7 +19,7 @@ export default function ReadingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadPassage = async () => {
+  async function loadPassage() {
     setLoading(true);
     setError("");
 
@@ -33,16 +33,12 @@ export default function ReadingDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   useEffect(() => {
-    let isMounted = true;
+    if (invalidId) return;
 
-    if (invalidId) {
-      return () => {
-        isMounted = false;
-      };
-    }
+    let isMounted = true;
 
     fetchReadingDetail(passageId)
       .then((data) => {
@@ -115,7 +111,7 @@ export default function ReadingDetailPage() {
               </span>
 
               <h1 lang="ja">{passage.title}</h1>
-              <p>Hãy đọc kỹ nội dung tiếng Nhật bên dưới.</p>
+              <p>Hãy đọc kỹ nội dung tiếng Nhật và bản dịch bên dưới.</p>
             </section>
 
             <section className="reading-detail-content">
@@ -127,6 +123,7 @@ export default function ReadingDetailPage() {
               <article className="reading-detail-text" lang="ja">
                 {passage.content}
               </article>
+
               <section className="reading-detail-translation">
                 <div className="reading-detail-translation-heading">
                   <span>BẢN DỊCH TIẾNG VIỆT</span>
@@ -146,7 +143,27 @@ export default function ReadingDetailPage() {
                   </p>
                 )}
               </section>
-              <div className="reading-detail-footer">
+
+              <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-blue-900">
+                    Kiểm tra khả năng đọc hiểu
+                  </h3>
+                  <p className="text-sm text-blue-700">
+                    Thực hiện các câu hỏi trắc nghiệm để củng cố kiến thức bài
+                    đọc này.
+                  </p>
+                </div>
+
+                <Link
+                  to={`/reading/${passageId}/questions`}
+                  className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition"
+                >
+                  Làm câu hỏi đọc hiểu →
+                </Link>
+              </div>
+
+              <div className="reading-detail-footer mt-6">
                 <Link to="/reading">← Chọn bài đọc khác</Link>
               </div>
             </section>

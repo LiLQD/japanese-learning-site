@@ -41,7 +41,7 @@ model User {
   notifications   Notification[]
   favoriteWords   FavoriteWord[]
   flashcardDecks  FlashcardDeck[]
-
+  readingResults ReadingResult[]
   @@map("users")
 }
 
@@ -233,7 +233,7 @@ model ReadingPassage {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   questions   ReadingQuestion[]
-
+  readingResults ReadingResult[]
   @@index([jlpt])
   @@map("reading_passages")
 }
@@ -246,7 +246,7 @@ model ReadingQuestion {
   correctIndex Int
   position     Int
   passage      ReadingPassage @relation(fields: [passageId], references: [id], onDelete: Cascade)
-
+  resultDetails ReadingResultDetail[]
   @@index([passageId])
   @@map("reading_questions")
 }
@@ -281,4 +281,42 @@ model Flashcard {
 
   @@index([deckId])
   @@map("flashcards")
+}
+
+// ============================================================
+// Sprint 2: Reading Results (US-36)
+// ============================================================
+
+model ReadingResult {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  passageId    Int
+  score        Float
+  correctCount Int
+  totalCount   Int
+  timeSpent    Int      // Thời gian làm bài (tính bằng giây)
+  createdAt    DateTime @default(now())
+
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  passage    ReadingPassage   @relation(fields: [passageId], references: [id], onDelete: Cascade)
+  details    ReadingResultDetail[]
+
+  @@index([userId])
+  @@index([passageId])
+  @@map("reading_results")
+}
+
+model ReadingResultDetail {
+  id             Int      @id @default(autoincrement())
+  resultId       Int
+  questionId     Int
+  selectedOption Int      // Lưu index phương án người dùng chọn
+  isCorrect      Boolean
+
+  result         ReadingResult   @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  question       ReadingQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([resultId])
+  @@index([questionId])
+  @@map("reading_result_details")
 }
