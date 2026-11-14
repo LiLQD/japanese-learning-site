@@ -3,16 +3,20 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthUser } from "../../types.js";
 
-const { findManyMock, countMock, transactionMock } = vi.hoisted(() => ({
-  findManyMock: vi.fn(),
-  countMock: vi.fn(),
-  transactionMock: vi.fn(),
-}));
+const { findManyMock, findUniqueMock, countMock, transactionMock } = vi.hoisted(
+  () => ({
+    findManyMock: vi.fn(),
+    findUniqueMock: vi.fn(),
+    countMock: vi.fn(),
+    transactionMock: vi.fn(),
+  }),
+);
 
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     grammar: {
       findMany: findManyMock,
+      findUnique: findUniqueMock,
       count: countMock,
     },
     $transaction: transactionMock,
@@ -131,6 +135,99 @@ describe("GET /api/grammar", () => {
     },
   );
 
+  it("does not filter when no keyword or jlpt is given", async () => {
+    await request(makeApp()).get("/api/grammar");
+
+    expect(findManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ where: {} }),
+    );
+    expect(countMock).toHaveBeenCalledWith({ where: {} });
+  });
+
+  it("searches title, pattern and meaning case-insensitively", async () => {
+    const res = await request(makeApp()).get(
+      `/api/grammar?keyword=${encodeURIComponent("  Mong muốn ")}`,
+    );
+
+    const where = {
+      OR: [
+        { title: { contains: "Mong muốn", mode: "insensitive" } },
+        { pattern: { contains: "Mong muốn", mode: "insensitive" } },
+        { meaning: { contains: "Mong muốn", mode: "insensitive" } },
+      ],
+    };
+
+    expect(res.status).toBe(200);
+    expect(findManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ where }),
+    );
+    expect(countMock).toHaveBeenCalledWith({ where });
+  });
+
+  it("searches Japanese patterns", async () => {
+    await request(makeApp()).get(
+      `/api/grammar?keyword=${encodeURIComponent("たい")}`,
+    );
+
+    expect(findManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([
+            { pattern: { contains: "たい", mode: "insensitive" } },
+          ]),
+        }),
+      }),
+    );
+  });
+
+  it("filters by JLPT level", async () => {
+    await request(makeApp()).get("/api/grammar?jlpt=4");
+
+    expect(findManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { jlpt: 4 } }),
+    );
+    expect(countMock).toHaveBeenCalledWith({ where: { jlpt: 4 } });
+  });
+
+  it("combines keyword and JLPT level", async () => {
+    await request(makeApp()).get("/api/grammar?keyword=te&jlpt=4&page=2");
+
+    expect(findManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ jlpt: 4, OR: expect.any(Array) }),
+        skip: 20,
+      }),
+    );
+  });
+
+  it("ignores a blank keyword", async () => {
+    await request(makeApp()).get("/api/grammar?keyword=%20%20");
+
+    expect(findManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ where: {} }),
+    );
+  });
+
+  it("returns 400 when the keyword is longer than 100 characters", async () => {
+    const res = await request(makeApp()).get(
+      `/api/grammar?keyword=${"a".repeat(101)}`,
+    );
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toBe("Từ khóa tối đa 100 ký tự");
+    expect(findManyMock).not.toHaveBeenCalled();
+  });
+
+  it.each(["jlpt=0", "jlpt=6", "jlpt=N5", "jlpt=2.5"])(
+    "returns 400 for invalid level %s",
+    async (query) => {
+      const res = await request(makeApp()).get(`/api/grammar?${query}`);
+
+      expect(res.status).toBe(400);
+      expect(findManyMock).not.toHaveBeenCalled();
+    },
+  );
+
   it("returns 500 when the database is unreachable", async () => {
     findManyMock.mockRejectedValue(new Error("connect ECONNREFUSED"));
     vi.spyOn(console, "error").mockImplementation(() => {});
@@ -214,5 +311,55 @@ describe("GET /api/admin/grammar", () => {
       code: "INTERNAL",
       message: "L\u1ed7i k\u1ebft n\u1ed1i!",
     });
+  });
+});
+
+describe("GET /api/grammar/:id", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    findUniqueMock.mockResolvedValue(sampleGrammars[0]);
+  });
+
+  it("is public and returns the grammar", async () => {
+    const res = await request(makeApp()).get("/api/grammar/1");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ grammar: sampleGrammars[0] });
+    expect(findUniqueMock).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 1 } }),
+    );
+  });
+
+  it("returns 404 when the grammar does not exist", async () => {
+    findUniqueMock.mockResolvedValue(null);
+
+    const res = await request(makeApp()).get("/api/grammar/9999");
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toEqual({
+      code: "NOT_FOUND",
+      message: "Không tìm thấy ngữ pháp",
+    });
+  });
+
+  it.each(["abc", "0", "-1", "1.5"])(
+    "returns 400 for invalid id %s",
+    async (id) => {
+      const res = await request(makeApp()).get(`/api/grammar/${id}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("BAD_REQUEST");
+      expect(findUniqueMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("returns 500 when the database is unreachable", async () => {
+    findUniqueMock.mockRejectedValue(new Error("connect ECONNREFUSED"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await request(makeApp()).get("/api/grammar/1");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe("INTERNAL");
   });
 });

@@ -76,7 +76,10 @@
 }
 
 .grammar-card {
+  display: block;
   padding: 20px 24px;
+  color: inherit;
+  text-decoration: none;
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
@@ -86,7 +89,8 @@
     transform 0.2s;
 }
 
-.grammar-card:hover {
+.grammar-card:hover,
+.grammar-card:focus-visible {
   border-color: var(--color-brand);
   transform: translateY(-2px);
 }
@@ -205,5 +209,47 @@
 
   .grammar-pattern {
     font-size: 20px;
+  }
+}
+
+.grammar-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.grammar-search input,
+.grammar-search select {
+  box-sizing: border-box;
+  height: 46px;
+  padding: 0 16px;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  font: inherit;
+}
+
+.grammar-search input {
+  flex: 1;
+  min-width: 0;
+}
+
+.grammar-search input:focus,
+.grammar-search select:focus {
+  border-color: var(--color-brand);
+  outline: 2px solid rgba(47, 62, 158, 0.12);
+}
+
+.grammar-search select {
+  min-width: 160px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .grammar-search {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

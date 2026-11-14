@@ -10,6 +10,7 @@ export default function Navbar() {
   const pathname = useLocation().pathname;
   const isKanjiPage = pathname.startsWith("/kanji");
   const isWordsPage = pathname.startsWith("/words");
+  const isReadingPage = pathname.startsWith("/reading");
   const isGrammarPage = pathname.startsWith("/grammar");
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -108,6 +109,9 @@ export default function Navbar() {
             </Link>
             <Link to="/kanji" className={isKanjiPage ? "active" : ""}>
               Hán tự
+            </Link>
+            <Link to="/reading" className={isReadingPage ? "active" : ""}>
+              Bài đọc
             </Link>
             <Link to="/forum">Diễn đàn</Link>
           </nav>

@@ -9,6 +9,7 @@ import UserDetailPage from "./features/users/pages/UserDetailPage";
 import GrammarAdminPage from "./features/grammar/pages/GrammarAdminPage";
 import ProfilePage from "./pages/ProfilePage";
 import GrammarListPage from "./features/grammar/pages/GrammarListPage";
+import GrammarDetailPage from "./features/grammar/pages/GrammarDetailPage";
 import KanjiListPage from "./features/kanji/pages/KanjiListPage";
 import KanjiCreatePage from "./features/kanji/pages/KanjiCreatePage";
 import KanjiEditPage from "./features/kanji/pages/KanjiEditPage";
@@ -17,6 +18,8 @@ import WordLookupPage from "./features/words/pages/WordLookupPage";
 import WordDetailPage from "./features/words/pages/WordDetailPage";
 import WordEditPage from "./features/words/pages/WordEditPage";
 import WordAuthGuard from "./features/words/components/WordAuthGuard";
+import ReadingListPage from "./features/reading/pages/ReadingListPage";
+import ReadingDetailPage from "./features/reading/pages/ReadingDetailPage";
 import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
@@ -36,12 +39,15 @@ function App() {
           <Route path="/kanji/new" element={<KanjiCreatePage />} />
           <Route path="/kanji/:id/edit" element={<KanjiEditPage />} />
           <Route path="/kanji/:id" element={<KanjiDetailPage />} />
+          <Route path="/reading" element={<ReadingListPage />} />
+          <Route path="/reading/:id" element={<ReadingDetailPage />} />
           <Route element={<WordAuthGuard />}>
             <Route path="/words" element={<WordLookupPage />} />
             <Route path="/words/:id" element={<WordDetailPage />} />
             <Route path="/words/:id/edit" element={<WordEditPage />} />
           </Route>
           <Route path="/grammar" element={<GrammarListPage />} />
+          <Route path="/grammar/:id" element={<GrammarDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
