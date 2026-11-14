@@ -867,7 +867,6 @@ async function main(): Promise<void> {
   console.log(`Seeding ${KANJI.length} kanji...`);
   await seedKanji();
 
-  // THÊM 2 DÒNG NÀY
   console.log(`Seeding ${READING_PASSAGES.length} reading passages...`);
   await seedReadingPassages();
   console.log(`Seeding ${GRAMMARS.length} grammars...`);
