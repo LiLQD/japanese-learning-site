@@ -20,6 +20,7 @@ vi.mock("../../lib/prisma.js", () => ({
 }));
 
 import grammarRouter from "./grammar.routes.js";
+import grammarAdminRouter from "./grammar-admin.routes.js";
 import { errorHandler, notFoundHandler } from "../../middleware/error.js";
 
 function makeApp(user?: AuthUser) {
@@ -30,6 +31,7 @@ function makeApp(user?: AuthUser) {
     next();
   });
   app.use("/api/grammar", grammarRouter);
+  app.use("/api/admin/grammar", grammarAdminRouter);
   app.use(notFoundHandler);
   app.use(errorHandler);
   return app;
@@ -137,5 +139,80 @@ describe("GET /api/grammar", () => {
 
     expect(res.status).toBe(500);
     expect(res.body.error.code).toBe("INTERNAL");
+  });
+});
+
+describe("GET /api/admin/grammar", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    findManyMock.mockResolvedValue(sampleGrammars);
+    countMock.mockResolvedValue(1);
+    transactionMock.mockImplementation((queries: Promise<unknown>[]) =>
+      Promise.all(queries),
+    );
+  });
+
+  it("allows admins and returns grammar fields including the stored JLPT value", async () => {
+    const res = await request(makeApp({ id: 1, role: "ADMIN" })).get(
+      "/api/admin/grammar",
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.grammars).toEqual(sampleGrammars);
+  });
+
+  it.each([
+    ["guest", undefined],
+    ["regular user", { id: 2, role: "USER" } satisfies AuthUser],
+  ])("rejects %s", async (_actor, user) => {
+    const res = await request(makeApp(user)).get("/api/admin/grammar");
+
+    expect(res.status).toBe(user ? 403 : 401);
+    expect(findManyMock).not.toHaveBeenCalled();
+  });
+
+  it("returns an empty list when no grammar exists", async () => {
+    findManyMock.mockResolvedValue([]);
+    countMock.mockResolvedValue(0);
+
+    const res = await request(makeApp({ id: 1, role: "ADMIN" })).get(
+      "/api/admin/grammar",
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.grammars).toEqual([]);
+    expect(res.body.total).toBe(0);
+  });
+
+  it("uses the common internal error response for other server failures", async () => {
+    findManyMock.mockRejectedValue(new Error("query failed"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await request(makeApp({ id: 1, role: "ADMIN" })).get(
+      "/api/admin/grammar",
+    );
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toEqual({
+      code: "INTERNAL",
+      message: "Internal server error",
+    });
+  });
+
+  it("reports known database connection failures with the connection message", async () => {
+    findManyMock.mockRejectedValue(
+      Object.assign(new Error("connection refused"), { code: "ECONNREFUSED" }),
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await request(makeApp({ id: 1, role: "ADMIN" })).get(
+      "/api/admin/grammar",
+    );
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toEqual({
+      code: "INTERNAL",
+      message: "L\u1ed7i k\u1ebft n\u1ed1i!",
+    });
   });
 });

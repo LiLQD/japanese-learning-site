@@ -16,6 +16,8 @@ export default function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
+  const adminMenuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
     await logout();
@@ -60,6 +62,22 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (user?.role !== "ADMIN") return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        adminMenuRef.current &&
+        !adminMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsAdminMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [user?.role]);
+
   const handleRead = async (id: number) => {
     await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
     // Cập nhật state ngay lập tức để UI mượt mà
@@ -80,44 +98,70 @@ export default function Navbar() {
         </Link>
 
         <div className="nav-center">
-          <nav className="nav-links">
+          <nav className="nav-links" aria-label="Điều hướng chính">
             <Link to="/">Trang chủ</Link>
+            <Link to="/words" className={isWordsPage ? "active" : ""}>
+              Từ vựng
+            </Link>
+            <Link to="/grammar" className={isGrammarPage ? "active" : ""}>
+              Ngữ pháp
+            </Link>
+            <Link to="/kanji" className={isKanjiPage ? "active" : ""}>
+              Hán tự
+            </Link>
             <Link to="/forum">Diễn đàn</Link>
           </nav>
-
-          <div className="nav-search-wrapper">
-            <input
-              type="text"
-              className="nav-search"
-              placeholder="Tìm từ vựng, hán tự, ngữ pháp..."
-            />
-            <div className="nav-tabs">
-              <Link to="/words" className={isWordsPage ? "active" : ""}>
-                Từ vựng
-              </Link>
-              <Link to="/kanji" className={isKanjiPage ? "active" : ""}>
-                Hán tự
-              </Link>
-              <Link to="/grammar" className={isGrammarPage ? "active" : ""}>
-                Ngữ pháp
-              </Link>
-              <span>Bài đọc</span>
-            </div>
-          </div>
+          <input
+            type="search"
+            className="nav-search"
+            placeholder="Tìm từ vựng, hán tự, ngữ pháp..."
+            aria-label="Tìm kiếm"
+          />
         </div>
 
         <div className="nav-actions">
           {user ? (
             <>
               {user.role === "ADMIN" && (
-                <>
-                  <Link to="/admin/dashboard" className="nav-link-admin">
-                    Dashboard
-                  </Link>
-                  <Link to="/admin/users" className="nav-link-admin">
-                    Quản lý
-                  </Link>
-                </>
+                <div className="admin-menu" ref={adminMenuRef}>
+                  <button
+                    type="button"
+                    className="admin-menu-trigger"
+                    aria-haspopup="menu"
+                    aria-expanded={isAdminMenuOpen}
+                    onClick={() => setIsAdminMenuOpen((open) => !open)}
+                  >
+                    Quản trị
+                    <span className="admin-menu-chevron" aria-hidden="true">
+                      ▾
+                    </span>
+                  </button>
+                  {isAdminMenuOpen && (
+                    <div className="admin-menu-dropdown" role="menu">
+                      <Link
+                        to="/admin/dashboard"
+                        role="menuitem"
+                        onClick={() => setIsAdminMenuOpen(false)}
+                      >
+                        Dashboard
+                      </Link>
+                      <Link
+                        to="/admin/users"
+                        role="menuitem"
+                        onClick={() => setIsAdminMenuOpen(false)}
+                      >
+                        Quản lý người dùng
+                      </Link>
+                      <Link
+                        to="/admin/grammar"
+                        role="menuitem"
+                        onClick={() => setIsAdminMenuOpen(false)}
+                      >
+                        Quản lý ngữ pháp
+                      </Link>
+                    </div>
+                  )}
+                </div>
               )}
 
               <Link

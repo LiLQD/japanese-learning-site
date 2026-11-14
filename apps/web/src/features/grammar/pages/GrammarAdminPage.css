@@ -1,0 +1,128 @@
+.grammar-admin-layout {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.grammar-admin-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+}
+
+.grammar-admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.grammar-admin-header h1 {
+  margin: 0 0 12px;
+  font-size: 32px;
+}
+
+.grammar-admin-header p {
+  color: var(--color-muted);
+}
+
+.grammar-admin-eyebrow {
+  margin: 0 0 8px;
+  color: var(--color-brand);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.grammar-admin-total {
+  min-width: 170px;
+  padding: 20px 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+}
+
+.grammar-admin-total span,
+.grammar-admin-total strong {
+  display: block;
+}
+
+.grammar-admin-total span {
+  margin-bottom: 8px;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.grammar-admin-total strong {
+  color: var(--color-brand);
+  font-size: 30px;
+}
+
+.grammar-admin-table-wrapper {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+}
+
+.grammar-admin-table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.grammar-admin-table-wrapper th,
+.grammar-admin-table-wrapper td {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-line);
+  vertical-align: top;
+}
+
+.grammar-admin-table-wrapper th {
+  color: var(--color-muted);
+  background: #f2f0ea;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.grammar-admin-table-wrapper tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.grammar-admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.grammar-admin-pagination button {
+  padding: 10px 16px;
+  color: white;
+  background: var(--color-brand);
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.grammar-admin-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (max-width: 768px) {
+  .grammar-admin-main {
+    padding: 28px 16px 40px;
+  }
+
+  .grammar-admin-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .grammar-admin-header h1 {
+    font-size: 26px;
+  }
+}
