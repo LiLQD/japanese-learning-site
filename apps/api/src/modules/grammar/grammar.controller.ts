@@ -1,7 +1,31 @@
 import type { RequestHandler } from "express";
-import { grammarIdParamSchema, grammarListQuerySchema } from "@app/shared";
+import {
+  grammarCreateInputSchema,
+  grammarIdParamSchema,
+  grammarListQuerySchema,
+} from "@app/shared";
 import { badRequest } from "../../errors.js";
-import { getGrammarById, listGrammars } from "./grammar.service.js";
+import {
+  createGrammar,
+  getGrammarById,
+  listGrammars,
+} from "./grammar.service.js";
+
+export const createGrammarHandler: RequestHandler = async (req, res, next) => {
+  try {
+    const result = grammarCreateInputSchema.safeParse(req.body);
+
+    if (!result.success) {
+      const message = result.error.issues.map((i) => i.message).join(", ");
+      next(badRequest(message));
+      return;
+    }
+
+    res.status(201).json({ grammar: await createGrammar(result.data) });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const getGrammarList: RequestHandler = async (req, res, next) => {
   try {

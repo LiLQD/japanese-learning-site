@@ -7,6 +7,7 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 import UserListPage from "./features/users/pages/UserListPage";
 import UserDetailPage from "./features/users/pages/UserDetailPage";
 import GrammarAdminPage from "./features/grammar/pages/GrammarAdminPage";
+import GrammarCreatePage from "./features/grammar/pages/GrammarCreatePage";
 import ProfilePage from "./pages/ProfilePage";
 import GrammarListPage from "./features/grammar/pages/GrammarListPage";
 import GrammarDetailPage from "./features/grammar/pages/GrammarDetailPage";
@@ -35,6 +36,7 @@ function App() {
           <Route path="/admin/dashboard" element={<DashboardPage />} />
           <Route path="/admin/users/:id" element={<UserDetailPage />} />
           <Route path="/admin/grammar" element={<GrammarAdminPage />} />
+          <Route path="/admin/grammar/create" element={<GrammarCreatePage />} />
           <Route path="/kanji" element={<KanjiListPage />} />
           <Route path="/kanji/new" element={<KanjiCreatePage />} />
           <Route path="/kanji/:id/edit" element={<KanjiEditPage />} />
