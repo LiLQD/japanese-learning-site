@@ -10,6 +10,11 @@ const {
   findUniqueMock,
   countMock,
   createMock,
+  updateMock,
+  deleteMock,
+  exampleUpdateMock,
+  exampleCreateMock,
+  exampleDeleteManyMock,
   sessionFindFirstMock,
   transactionMock,
 } = vi.hoisted(() => ({
@@ -17,6 +22,11 @@ const {
   findUniqueMock: vi.fn(),
   countMock: vi.fn(),
   createMock: vi.fn(),
+  updateMock: vi.fn(),
+  deleteMock: vi.fn(),
+  exampleUpdateMock: vi.fn(),
+  exampleCreateMock: vi.fn(),
+  exampleDeleteManyMock: vi.fn(),
   sessionFindFirstMock: vi.fn(),
   transactionMock: vi.fn(),
 }));
@@ -28,6 +38,13 @@ vi.mock("../../lib/prisma.js", () => ({
       findUnique: findUniqueMock,
       count: countMock,
       create: createMock,
+      update: updateMock,
+      delete: deleteMock,
+    },
+    grammarExample: {
+      update: exampleUpdateMock,
+      create: exampleCreateMock,
+      deleteMany: exampleDeleteManyMock,
     },
     session: { findFirst: sessionFindFirstMock },
     $transaction: transactionMock,
@@ -309,6 +326,417 @@ describe("POST /api/grammar", () => {
 
     expect(res.status).toBe(500);
     expect(res.body.error.code).toBe("INTERNAL");
+  });
+});
+
+describe("GET and PATCH /api/admin/grammar/:id", () => {
+  const current = {
+    id: 12,
+    title: "Thể て",
+    pattern: "Vてください",
+    meaning: "Xin hãy làm gì",
+    jlpt: 5,
+    examples: [
+      {
+        id: 21,
+        japanese: "座ってください",
+        reading: null,
+        english: "Xin hãy ngồi xuống",
+        position: 1,
+      },
+      {
+        id: 22,
+        japanese: "見てください",
+        reading: "みてください",
+        english: "Xin hãy xem",
+        position: 2,
+      },
+    ],
+  };
+
+  type ExampleFields = {
+    japanese: string;
+    english: string;
+    position: number;
+  };
+  type UpdateData = Partial<
+    Pick<typeof current, "title" | "pattern" | "meaning" | "jlpt">
+  > & {
+    examples?: {
+      deleteMany: { id?: { notIn: number[] } };
+      update: Array<{ where: { id: number }; data: ExampleFields }>;
+      create: ExampleFields[];
+    };
+  };
+
+  function makeUpdatedGrammar(data: UpdateData) {
+    let examples = [...current.examples];
+    if (data.examples) {
+      const retainedIds = data.examples.deleteMany.id?.notIn;
+      examples = retainedIds
+        ? examples.filter((example) => retainedIds.includes(example.id))
+        : [];
+      examples = examples.map((example) => {
+        const update = data.examples?.update.find(
+          ({ where }) => where.id === example.id,
+        );
+        return update ? { ...example, ...update.data } : example;
+      });
+      const nextId = Math.max(0, ...current.examples.map(({ id }) => id)) + 1;
+      examples.push(
+        ...data.examples.create.map((example, index) => ({
+          id: nextId + index,
+          ...example,
+          reading: null,
+        })),
+      );
+      examples.sort((left, right) => left.position - right.position);
+    }
+
+    return {
+      ...current,
+      ...data,
+      ...(data.examples === undefined ? {} : { examples }),
+    };
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    findUniqueMock.mockResolvedValue({
+      id: current.id,
+      examples: current.examples.map(({ id }) => ({ id })),
+    });
+    updateMock.mockImplementation(({ data }: { data: UpdateData }) =>
+      Promise.resolve(makeUpdatedGrammar(data)),
+    );
+    transactionMock.mockImplementation(async (callback) =>
+      callback({ grammar: { findUnique: findUniqueMock, update: updateMock } }),
+    );
+  });
+
+  it("loads the existing grammar and examples for an admin", async () => {
+    findUniqueMock.mockResolvedValue(current);
+    const res = await request(makeApp({ id: 1, role: "ADMIN" })).get(
+      "/api/admin/grammar/12",
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.grammar).toEqual({
+      id: 12,
+      title: "Thể て",
+      pattern: "Vてください",
+      meaning: "Xin hãy làm gì",
+      jlpt: 5,
+      examples: [
+        {
+          id: 21,
+          japanese: "座ってください",
+          vietnamese: "Xin hãy ngồi xuống",
+          reading: null,
+          position: 1,
+        },
+        {
+          id: 22,
+          japanese: "見てください",
+          vietnamese: "Xin hãy xem",
+          reading: "みてください",
+          position: 2,
+        },
+      ],
+    });
+    expect(findUniqueMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({
+          examples: expect.objectContaining({
+            select: expect.objectContaining({ reading: true }),
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("rejects guests and regular users from the update routes", async () => {
+    const guest = await request(makeApp())
+      .patch("/api/admin/grammar/12")
+      .send({ title: "更新" });
+    const user = await request(makeApp({ id: 2, role: "USER" }))
+      .patch("/api/admin/grammar/12")
+      .send({ title: "更新" });
+
+    expect(guest.status).toBe(401);
+    expect(user.status).toBe(403);
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  it("protects the admin detail endpoint from guests and regular users", async () => {
+    const guest = await request(makeApp()).get("/api/admin/grammar/12");
+    const user = await request(makeApp({ id: 2, role: "USER" })).get(
+      "/api/admin/grammar/12",
+    );
+
+    expect(guest.status).toBe(401);
+    expect(user.status).toBe(403);
+    expect(findUniqueMock).not.toHaveBeenCalled();
+  });
+
+  it("updates fields and synchronizes existing, new, and removed examples atomically", async () => {
+    const updated = {
+      title: "Tên mới",
+      pattern: "Vてください",
+      meaning: "Ý nghĩa mới",
+      jlpt: 3,
+      examples: [
+        { id: 22, japanese: "見てください", vietnamese: "Hãy xem nhé" },
+        { japanese: "読んでください", vietnamese: "Xin hãy đọc" },
+      ],
+    };
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/12")
+      .send(updated);
+
+    expect(res.status).toBe(200);
+    expect(res.body.grammar.examples).toEqual([
+      {
+        id: 22,
+        japanese: "見てください",
+        vietnamese: "Hãy xem nhé",
+        reading: "みてください",
+        position: 1,
+      },
+      {
+        id: 23,
+        japanese: "読んでください",
+        vietnamese: "Xin hãy đọc",
+        reading: null,
+        position: 2,
+      },
+    ]);
+    expect(res.body.grammar).toMatchObject({
+      title: "Tên mới",
+      pattern: "Vてください",
+      meaning: "Ý nghĩa mới",
+      jlpt: 3,
+    });
+    expect(transactionMock).toHaveBeenCalledOnce();
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { id: 12 },
+      data: {
+        title: "Tên mới",
+        pattern: "Vてください",
+        meaning: "Ý nghĩa mới",
+        jlpt: 3,
+        examples: {
+          deleteMany: { id: { notIn: [22] } },
+          update: [
+            {
+              where: { id: 22 },
+              data: {
+                japanese: "見てください",
+                english: "Hãy xem nhé",
+                position: 1,
+              },
+            },
+          ],
+          create: [
+            { japanese: "読んでください", english: "Xin hãy đọc", position: 2 },
+          ],
+        },
+      },
+      select: expect.any(Object),
+    });
+  });
+
+  it("sets JLPT to null when explicitly requested", async () => {
+    await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/12")
+      .send({ jlpt: null });
+
+    expect(updateMock.mock.calls[0]?.[0].data).toEqual({ jlpt: null });
+  });
+
+  it("leaves JLPT out of the update when it was not submitted", async () => {
+    await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/12")
+      .send({ title: "Tên mới" });
+
+    expect(updateMock.mock.calls[0]?.[0].data).toEqual({ title: "Tên mới" });
+  });
+
+  it("leaves examples unchanged when examples are omitted", async () => {
+    await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/12")
+      .send({ title: "Tên mới" });
+
+    expect(updateMock.mock.calls[0]?.[0].data).toEqual({ title: "Tên mới" });
+  });
+
+  it("deletes all examples only when an empty array is submitted", async () => {
+    await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/12")
+      .send({ examples: [] });
+
+    expect(updateMock.mock.calls[0]?.[0].data.examples).toEqual({
+      deleteMany: {},
+      update: [],
+      create: [],
+    });
+  });
+
+  it("rejects example IDs that belong to another grammar", async () => {
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/12")
+      .send({
+        examples: [{ id: 999, japanese: "例", vietnamese: "Ví dụ" }],
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("BAD_REQUEST");
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 for an unknown grammar ID", async () => {
+    findUniqueMock.mockResolvedValue(null);
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/999")
+      .send({ title: "Tên mới" });
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe("NOT_FOUND");
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["empty body", {}],
+    ["blank title", { title: "  " }],
+    ["invalid JLPT", { jlpt: 6 }],
+    ["non-integer JLPT", { jlpt: 2.5 }],
+    [
+      "blank example translation",
+      { examples: [{ japanese: "例", vietnamese: " " }] },
+    ],
+    [
+      "duplicate example IDs",
+      {
+        examples: [
+          { id: 21, japanese: "例1", vietnamese: "Ví dụ 1" },
+          { id: 21, japanese: "例2", vietnamese: "Ví dụ 2" },
+        ],
+      },
+    ],
+  ])("rejects invalid update payload: %s", async (_name, body) => {
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/12")
+      .send(body);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("BAD_REQUEST");
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  it("returns a server error when the transactional update fails", async () => {
+    updateMock.mockRejectedValue(new Error("database write failed"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/12")
+      .send({ title: "Tên mới" });
+
+    expect(res.status).toBe(500);
+    expect(transactionMock).toHaveBeenCalledOnce();
+  });
+
+  it("uses the existing connection error response for admin database failures", async () => {
+    updateMock.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Database unavailable", {
+        code: "P1002",
+        clientVersion: "test",
+      }),
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/12")
+      .send({ title: "Tên mới" });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toEqual({
+      code: "INTERNAL",
+      message: "Lỗi kết nối!",
+    });
+  });
+});
+
+describe("DELETE /api/admin/grammar/:id", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    findUniqueMock.mockResolvedValue({ id: 12 });
+    deleteMock.mockResolvedValue({ id: 12 });
+  });
+
+  it("allows an admin to delete a grammar", async () => {
+    const res = await request(makeApp({ id: 1, role: "ADMIN" })).delete(
+      "/api/admin/grammar/12",
+    );
+
+    expect(res.status).toBe(204);
+    expect(findUniqueMock).toHaveBeenCalledWith({
+      where: { id: 12 },
+      select: { id: true },
+    });
+    expect(deleteMock).toHaveBeenCalledWith({ where: { id: 12 } });
+  });
+
+  it.each([
+    ["guest", undefined, 401],
+    ["regular user", { id: 2, role: "USER" } satisfies AuthUser, 403],
+  ])("rejects %s from deleting a grammar", async (_actor, user, status) => {
+    const res = await request(makeApp(user)).delete("/api/admin/grammar/12");
+
+    expect(res.status).toBe(status);
+    expect(findUniqueMock).not.toHaveBeenCalled();
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+
+  it.each(["abc", "0", "-1", "1.5"])(
+    "rejects an invalid grammar ID: %s",
+    async (id) => {
+      const res = await request(makeApp({ id: 1, role: "ADMIN" })).delete(
+        `/api/admin/grammar/${id}`,
+      );
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("BAD_REQUEST");
+      expect(findUniqueMock).not.toHaveBeenCalled();
+      expect(deleteMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("returns not found when the grammar does not exist", async () => {
+    findUniqueMock.mockResolvedValue(null);
+    const res = await request(makeApp({ id: 1, role: "ADMIN" })).delete(
+      "/api/admin/grammar/999",
+    );
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe("NOT_FOUND");
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+
+  it("uses the existing database connection error response", async () => {
+    deleteMock.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Database unavailable", {
+        code: "P1002",
+        clientVersion: "test",
+      }),
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await request(makeApp({ id: 1, role: "ADMIN" })).delete(
+      "/api/admin/grammar/12",
+    );
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toEqual({
+      code: "INTERNAL",
+      message: "Lỗi kết nối!",
+    });
   });
 });
 

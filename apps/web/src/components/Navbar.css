@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: clamp(8px, 0.8vw, 12px);
 }
 
 .nav-brand {
@@ -42,19 +42,20 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 20px;
+  justify-content: flex-start;
+  gap: clamp(6px, 0.6vw, 10px);
 }
 
 .nav-links {
   display: flex;
   align-items: center;
-  gap: clamp(12px, 1.8vw, 24px);
-  min-width: 0;
+  flex: 0 0 auto;
+  gap: clamp(6px, 0.7vw, 12px);
   white-space: nowrap;
 }
 
 .nav-links a {
+  flex: 0 0 auto;
   color: var(--color-ink);
   text-decoration: none;
   font-weight: 500;
@@ -74,8 +75,10 @@
 }
 
 .nav-search {
-  flex: 0 1 220px;
-  min-width: 150px;
+  box-sizing: border-box;
+  flex: 0 1 140px;
+  width: clamp(100px, 10vw, 140px);
+  min-width: 100px;
   padding: 10px 14px;
   border: 1px solid var(--color-line);
   border-radius: var(--radius-pill);
@@ -99,68 +102,43 @@
   white-space: nowrap;
 }
 
-.admin-menu {
-  position: relative;
-}
-
-.admin-menu-trigger {
-  display: inline-flex;
+.nav-mobile-toggle {
+  display: none;
   align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
   color: var(--color-brand);
   background: var(--color-surface);
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-pill);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
+  border-radius: 10px;
+  font-size: 22px;
   cursor: pointer;
 }
 
-.admin-menu-trigger:hover,
-.admin-menu-trigger[aria-expanded="true"] {
-  border-color: var(--color-brand);
-  background: var(--accent-bg);
-}
-
-.admin-menu-chevron {
-  font-size: 12px;
-}
-
-.admin-menu-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 210;
-  min-width: 210px;
-  padding: 6px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-}
-
-.admin-menu-dropdown a {
-  display: block;
-  padding: 10px 12px;
-  color: var(--color-ink);
-  border-radius: 8px;
-  font-size: 14px;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.admin-menu-dropdown a:hover {
-  color: var(--color-brand);
-  background: var(--color-bg);
-}
-
 .nav-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
   font-weight: 600;
   color: var(--color-ink);
+}
+
+.nav-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.nav-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  background: var(--color-brand);
+  font-size: 14px;
 }
 
 /* Nút bấm tổng thể */
@@ -203,9 +181,10 @@
   box-shadow: 0 6px 16px rgba(47, 62, 158, 0.3);
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1200px) {
   .nav-container {
     flex-wrap: wrap;
+    position: relative;
     gap: 10px 16px;
     padding: 12px 20px;
   }
@@ -219,6 +198,13 @@
     order: 3;
     flex: 0 0 100%;
     justify-content: flex-start;
+    display: none;
+    align-items: stretch;
+    padding-top: 10px;
+  }
+
+  .nav-center.nav-center-open {
+    display: flex;
   }
 
   .nav-search {
@@ -227,13 +213,21 @@
 
   .nav-links {
     width: 100%;
-    gap: 22px;
-    overflow-x: auto;
-    scrollbar-width: none;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0;
+    overflow: visible;
+    white-space: normal;
   }
 
-  .nav-links::-webkit-scrollbar {
-    display: none;
+  .nav-links a {
+    width: 100%;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .nav-links a.active {
+    padding-bottom: 12px;
   }
 
   .nav-actions {
@@ -242,6 +236,16 @@
     flex-wrap: wrap;
     justify-content: flex-end;
   }
+
+  .nav-mobile-toggle {
+    display: inline-flex;
+    order: 1;
+    margin-left: auto;
+  }
+
+  .nav-actions {
+    order: 2;
+  }
 }
 
 @media (max-width: 480px) {
@@ -249,12 +253,16 @@
     padding: 10px 14px;
   }
 
-  .nav-links {
-    gap: 18px;
-  }
-
   .nav-user span {
     display: none;
+  }
+
+  .nav-user > .nav-avatar-fallback {
+    display: inline-flex;
+  }
+
+  .nav-user-admin > span:last-child {
+    display: inline;
   }
 
   .nav-actions {

@@ -76,3 +76,61 @@ export type GrammarCreateInput = z.input<typeof grammarCreateInputSchema>;
 export type GrammarCreateResponse = {
   grammar: GrammarListItem;
 };
+
+export const grammarUpdateExampleInputSchema = grammarExampleInputSchema.extend(
+  {
+    id: z.number().int().positive().optional(),
+  },
+);
+
+export const grammarUpdateInputSchema = z
+  .object({
+    title: z.string().trim().min(1, "Vui lòng nhập tên ngữ pháp").optional(),
+    pattern: z
+      .string()
+      .trim()
+      .min(1, "Vui lòng nhập cấu trúc ngữ pháp")
+      .optional(),
+    meaning: z.string().trim().min(1, "Vui lòng nhập ý nghĩa").optional(),
+    jlpt: z
+      .number()
+      .int("Cấp độ JLPT không hợp lệ")
+      .min(1)
+      .max(5)
+      .nullable()
+      .optional(),
+    examples: z.array(grammarUpdateExampleInputSchema).optional(),
+  })
+  .refine((input) => Object.keys(input).length > 0, {
+    message: "Cần cung cấp ít nhất một trường để cập nhật",
+  })
+  .superRefine((input, context) => {
+    const ids = (input.examples ?? [])
+      .map((example) => example.id)
+      .filter((id): id is number => id !== undefined);
+    if (new Set(ids).size !== ids.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["examples"],
+        message: "Ví dụ bị trùng mã",
+      });
+    }
+  });
+
+export type GrammarUpdateInput = z.input<typeof grammarUpdateInputSchema>;
+
+export type GrammarAdminExample = {
+  id: number;
+  japanese: string;
+  reading: string | null;
+  vietnamese: string;
+  position: number;
+};
+
+export type GrammarAdminDetail = GrammarListItem & {
+  examples: GrammarAdminExample[];
+};
+
+export type GrammarAdminDetailResponse = {
+  grammar: GrammarAdminDetail;
+};
