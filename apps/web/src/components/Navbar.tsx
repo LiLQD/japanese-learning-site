@@ -1,26 +1,22 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import type { NotificationItem, NotificationListResponse } from "@app/shared";
 import { useAuth } from "../contexts/auth-context";
+import type { NotificationListResponse, NotificationItem } from "@app/shared";
 import "./Navbar.css";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const pathname = useLocation().pathname;
-  const isAdmin = user?.role === "ADMIN";
   const isKanjiPage = pathname.startsWith("/kanji");
   const isWordsPage = pathname.startsWith("/words");
   const isReadingPage = pathname.startsWith("/reading");
-  const isGrammarPage = isAdmin
-    ? pathname.startsWith("/admin/grammar")
-    : pathname.startsWith("/grammar");
+  const isGrammarPage = pathname.startsWith("/grammar");
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const notificationRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
   const adminMenuRef = useRef<HTMLDivElement>(null);
 
@@ -29,14 +25,17 @@ export default function Navbar() {
     void navigate("/login");
   };
 
+  // Fetch thông báo và tự động cập nhật mỗi 30s
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     const fetchNotifications = async () => {
       try {
-        const response = await fetch("/api/notifications");
-        if (response.ok) {
-          const data: NotificationListResponse = await response.json();
+        const res = await fetch("/api/notifications");
+        if (res.ok) {
+          const data: NotificationListResponse = await res.json();
           setNotifications(data.notifications);
           setUnreadCount(data.unreadCount);
         }
@@ -50,103 +49,71 @@ export default function Navbar() {
     return () => clearInterval(interval);
   }, [user]);
 
+  // Đóng dropdown khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
       ) {
-        setIsNotificationsOpen(false);
+        setIsOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+  useEffect(() => {
+    if (user?.role !== "ADMIN") return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        adminMenuRef.current &&
+        !adminMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsAdminMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [user?.role]);
 
   const handleRead = async (id: number) => {
     await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
-    setNotifications((previous) =>
-      previous.map((notification) =>
-        notification.id === id
-          ? { ...notification, readAt: new Date().toISOString() }
-          : notification,
+    // Cập nhật state ngay lập tức để UI mượt mà
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.id === id ? { ...n, readAt: new Date().toISOString() } : n,
       ),
     );
-    setUnreadCount((previous) => Math.max(0, previous - 1));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
   };
 
   return (
     <header className="navbar">
       <div className="nav-container">
-        <Link to="/" className="nav-brand" onClick={closeMobileMenu}>
+        <Link to="/" className="nav-brand">
           <img src="/logo.png" alt="YUME Logo" className="brand-logo" />
           <span className="brand-text">YUME</span>
         </Link>
 
-        <button
-          type="button"
-          className="nav-mobile-toggle"
-          aria-label={
-            isMobileMenuOpen ? "Đóng menu điều hướng" : "Mở menu điều hướng"
-          }
-          aria-controls="primary-navigation"
-          aria-expanded={isMobileMenuOpen}
-          onClick={() => setIsMobileMenuOpen((open) => !open)}
-        >
-          <span aria-hidden="true">{isMobileMenuOpen ? "×" : "☰"}</span>
-        </button>
-
-        <div
-          className={`nav-center ${isMobileMenuOpen ? "nav-center-open" : ""}`}
-        >
-          <nav
-            id="primary-navigation"
-            className="nav-links"
-            aria-label="Điều hướng chính"
-          >
-            <Link to="/" onClick={closeMobileMenu}>
-              Trang chủ
-            </Link>
-            <Link
-              to="/words"
-              className={isWordsPage ? "active" : ""}
-              onClick={closeMobileMenu}
-            >
+        <div className="nav-center">
+          <nav className="nav-links" aria-label="Điều hướng chính">
+            <Link to="/">Trang chủ</Link>
+            <Link to="/words" className={isWordsPage ? "active" : ""}>
               Từ vựng
             </Link>
-            <Link
-              to={isAdmin ? "/admin/grammar" : "/grammar"}
-              className={isGrammarPage ? "active" : ""}
-              onClick={closeMobileMenu}
-            >
+            <Link to="/grammar" className={isGrammarPage ? "active" : ""}>
               Ngữ pháp
             </Link>
-            <Link
-              to="/kanji"
-              className={isKanjiPage ? "active" : ""}
-              onClick={closeMobileMenu}
-            >
+            <Link to="/kanji" className={isKanjiPage ? "active" : ""}>
               Hán tự
             </Link>
-            <Link
-              to="/reading"
-              className={isReadingPage ? "active" : ""}
-              onClick={closeMobileMenu}
-            >
+            <Link to="/reading" className={isReadingPage ? "active" : ""}>
               Bài đọc
             </Link>
-            {isAdmin && (
-              <>
-                <Link to="/admin/dashboard" onClick={closeMobileMenu}>
-                  Dashboard
-                </Link>
-                <Link to="/admin/users" onClick={closeMobileMenu}>
-                  Quản lý người dùng
-                </Link>
-              </>
-            )}
+            <Link to="/forum">Diễn đàn</Link>
           </nav>
           <input
             type="search"
@@ -204,32 +171,50 @@ export default function Navbar() {
 
               <Link
                 to="/profile"
-                className={`nav-user ${isAdmin ? "nav-user-admin" : ""}`}
+                className="nav-user"
+                style={{
+                  textDecoration: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
               >
                 {user.avatarKey ? (
                   <img
                     src={`/uploads/${user.avatarKey}`}
                     alt="Avatar"
-                    className="nav-avatar"
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
                   />
                 ) : (
-                  <span
-                    className="nav-avatar nav-avatar-fallback"
-                    aria-hidden="true"
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: "50%",
+                      background: "var(--color-brand)",
+                      color: "white",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 14,
+                    }}
                   >
                     {user.displayName[0]}
-                  </span>
+                  </div>
                 )}
-                <span>{isAdmin ? "Tài khoản" : user.displayName}</span>
+                <span>{user.displayName}</span>
               </Link>
 
-              <div className="notification-wrapper" ref={notificationRef}>
+              {/* CHUÔNG THÔNG BÁO */}
+              <div className="notification-wrapper" ref={dropdownRef}>
                 <button
-                  type="button"
                   className="notification-bell"
-                  aria-label="Thông báo"
-                  aria-expanded={isNotificationsOpen}
-                  onClick={() => setIsNotificationsOpen((open) => !open)}
+                  onClick={() => setIsOpen(!isOpen)}
                 >
                   🔔
                   {unreadCount > 0 && (
@@ -237,7 +222,7 @@ export default function Navbar() {
                   )}
                 </button>
 
-                {isNotificationsOpen && (
+                {isOpen && (
                   <div className="notification-dropdown">
                     <div className="notification-header">Thông báo</div>
                     {notifications.length === 0 ? (
@@ -246,23 +231,17 @@ export default function Navbar() {
                       </div>
                     ) : (
                       <ul className="notification-list">
-                        {notifications.map((notification) => (
+                        {notifications.map((n) => (
                           <li
-                            key={notification.id}
-                            className={`notification-item ${!notification.readAt ? "unread" : ""}`}
-                            onClick={() =>
-                              !notification.readAt &&
-                              handleRead(notification.id)
-                            }
+                            key={n.id}
+                            className={`notification-item ${!n.readAt ? "unread" : ""}`}
+                            onClick={() => !n.readAt && handleRead(n.id)}
                           >
                             <p>
-                              {notification.payload?.message ||
-                                "Bạn có thông báo mới."}
+                              {n.payload?.message || "Bạn có thông báo mới."}
                             </p>
                             <span className="notification-time">
-                              {new Date(notification.createdAt).toLocaleString(
-                                "vi-VN",
-                              )}
+                              {new Date(n.createdAt).toLocaleString("vi-VN")}
                             </span>
                           </li>
                         ))}
