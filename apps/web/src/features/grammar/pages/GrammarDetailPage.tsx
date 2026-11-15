@@ -1,7 +1,7 @@
 import Navbar from "../../../components/Navbar";
 import "./GrammarListPage.css";
 import "./GrammarDetailPage.css";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import type { GrammarExampleItem, GrammarListItem } from "@app/shared";
 import { fetchGrammar, fetchGrammarExamples, GRAMMAR_NOT_FOUND } from "../api";
@@ -28,6 +28,26 @@ function GrammarDetailPage() {
   const [examplesFor, setExamplesFor] = useState<number | null>(null);
   const [isLoadingExamples, setIsLoadingExamples] = useState(false);
   const [examplesError, setExamplesError] = useState("");
+
+  // Tracks the route's current grammar id so a stale async example response
+  // that resolves after the user navigates away is discarded.
+  const activeIdRef = useRef(id);
+
+  // Reset example state during render when the route changes, so stale
+  // errors and cached examples from a previous grammar do not leak into the
+  // new page. React allows this pattern for resetting state on prop change.
+  const [examplesOwnerId, setExamplesOwnerId] = useState(id);
+  if (examplesOwnerId !== id) {
+    setExamplesOwnerId(id);
+    setExamples(null);
+    setExamplesFor(null);
+    setExamplesError("");
+    setIsLoadingExamples(false);
+  }
+
+  useEffect(() => {
+    activeIdRef.current = id;
+  }, [id]);
 
   useEffect(() => {
     if (id === null) return;
@@ -60,19 +80,22 @@ function GrammarDetailPage() {
   async function handleShowExamples() {
     if (id === null || isLoadingExamples) return;
 
+    const requestId = id;
     setIsLoadingExamples(true);
     setExamplesError("");
 
     try {
       const result = await fetchGrammarExamples(id);
+      if (activeIdRef.current !== requestId) return;
       setExamples(result.examples);
       setExamplesFor(id);
     } catch (error: unknown) {
+      if (activeIdRef.current !== requestId) return;
       setExamplesError(
         error instanceof Error ? error.message : "Không thể tải ví dụ.",
       );
     } finally {
-      setIsLoadingExamples(false);
+      if (activeIdRef.current === requestId) setIsLoadingExamples(false);
     }
   }
 
