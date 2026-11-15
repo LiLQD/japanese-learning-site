@@ -53,6 +53,7 @@ function DashboardPage() {
     return () => {
       cancelled = true;
     };
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies
   }, [isAdmin, refreshKey]);
 
   if (isAuthLoading) {
