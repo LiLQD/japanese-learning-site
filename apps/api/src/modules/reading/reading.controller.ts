@@ -9,6 +9,7 @@ import {
   createReading,
   updateReading,
   deleteReading,
+  getReadingResultById,
 } from "./reading.service.js";
 
 export const getReadingPassageList: RequestHandler = async (
@@ -31,47 +32,34 @@ export const getReadingPassageDetail: RequestHandler = async (
 ) => {
   try {
     const id = Number(req.params.id);
-
     if (!Number.isInteger(id) || id <= 0) {
       next(badRequest("Mã bài đọc không hợp lệ."));
       return;
     }
-
     const passage = await getReadingPassageById(id);
-
     if (!passage) {
       next(notFound("Không tìm thấy bài đọc."));
       return;
     }
-
     res.status(200).json({ passage });
   } catch (error) {
     next(error);
   }
 };
 
-// --- Quiz Controllers (Từ nhánh của bạn) ---
-
 export const getReadingQuestions: RequestHandler = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-
     if (!Number.isInteger(id) || id <= 0) {
       next(badRequest("Mã bài đọc không hợp lệ."));
       return;
     }
-
     const questions = await getReadingQuestionsByPassageId(id);
-
     if (!questions) {
       next(notFound("Không tìm thấy bài đọc."));
       return;
     }
-
-    res.status(200).json({
-      success: true,
-      questions,
-    });
+    res.status(200).json({ success: true, questions });
   } catch (error) {
     next(error);
   }
@@ -80,9 +68,7 @@ export const getReadingQuestions: RequestHandler = async (req, res, next) => {
 export const submitReading: RequestHandler = async (req, res, next) => {
   try {
     const userId = req.user!.id;
-
     const { passageId, timeSpent, answers } = req.body ?? {};
-
     const parsedPassageId = Number(passageId);
     const parsedTimeSpent = Number(timeSpent ?? 0);
 
@@ -90,12 +76,10 @@ export const submitReading: RequestHandler = async (req, res, next) => {
       next(badRequest("Mã bài đọc không hợp lệ."));
       return;
     }
-
     if (!Number.isFinite(parsedTimeSpent) || parsedTimeSpent < 0) {
       next(badRequest("Thời gian làm bài không hợp lệ."));
       return;
     }
-
     if (!Array.isArray(answers)) {
       next(badRequest("Danh sách câu trả lời không hợp lệ."));
       return;
@@ -125,10 +109,7 @@ export const submitReading: RequestHandler = async (req, res, next) => {
       })),
     );
 
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
     if (
       error instanceof Error &&
@@ -141,7 +122,23 @@ export const submitReading: RequestHandler = async (req, res, next) => {
   }
 };
 
-// --- Admin Controllers (Từ nhánh main) ---
+export const getReadingResultHandler: RequestHandler = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      next(badRequest("Mã kết quả không hợp lệ."));
+      return;
+    }
+    const result = await getReadingResultById(id, req.user!.id);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const postReading: RequestHandler = async (req, res, next) => {
   try {
@@ -151,7 +148,6 @@ export const postReading: RequestHandler = async (req, res, next) => {
         badRequest(result.error.issues.map((i) => i.message).join(", ")),
       );
     }
-
     const reading = await createReading(result.data);
     res.status(201).json({ reading });
   } catch (error) {
@@ -166,13 +162,11 @@ export const putReading: RequestHandler = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const result = readingInputSchema.safeParse(req.body);
-
     if (!result.success) {
       return next(
         badRequest(result.error.issues.map((i) => i.message).join(", ")),
       );
     }
-
     const reading = await updateReading(id, result.data);
     res.status(200).json({ reading });
   } catch (error) {

@@ -47,9 +47,30 @@ export interface ReadingResult {
 }
 
 export interface ReadingResultDetail {
+  id: number;
   questionId: number;
   selectedOption: number;
   isCorrect: boolean;
+  question: {
+    id: number;
+    question: string;
+    options: string[];
+    correctIndex: number;
+    position: number;
+  };
+}
+
+export interface ReadingResultDetailResponse {
+  success: boolean;
+  data: ReadingResult & {
+    createdAt: string;
+    passage: {
+      id: number;
+      title: string;
+      jlpt: number | null;
+    };
+    details: ReadingResultDetail[];
+  };
 }
 
 export interface ReadingSubmitResponse {
@@ -162,9 +183,6 @@ export async function fetchReadingQuestions(
 /**
  * Nộp bài đọc hiểu.
  * POST /api/reading/submit
- *
- * userId được backend lấy từ phiên đăng nhập,
- * frontend không gửi userId.
  */
 export async function submitReadingQuiz(
   passageId: number,
@@ -204,7 +222,40 @@ export async function submitReadingQuiz(
   return (await response.json()) as ReadingSubmitResponse;
 }
 
-// ADMIN
+/**
+ * Lấy chi tiết kết quả bài đọc.
+ * GET /api/reading/results/:resultId
+ */
+export async function fetchReadingResult(
+  resultId: number,
+): Promise<ReadingResultDetailResponse> {
+  let response: Response;
+
+  try {
+    response = await fetch(`/api/reading/results/${resultId}`, {
+      method: "GET",
+      credentials: "include",
+    });
+  } catch {
+    throw new Error("Không thể kết nối đến máy chủ.");
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      await getApiErrorMessage(
+        response,
+        response.status === 404
+          ? "Không tìm thấy kết quả bài đọc."
+          : "Không thể tải kết quả bài đọc.",
+      ),
+    );
+  }
+
+  return (await response.json()) as ReadingResultDetailResponse;
+}
+
+// ADMIN (Từ nhánh main)
+
 export async function createReading(data: ReadingInput): Promise<void> {
   const res = await fetch("/api/reading", {
     method: "POST",

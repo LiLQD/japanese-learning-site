@@ -1,0 +1,261 @@
+.reading-result-page {
+  min-height: 100vh;
+  padding: 40px 20px 70px;
+  background: #f5f7fb;
+}
+
+.reading-result-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.reading-result-back {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: #0c5776;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.reading-result-summary {
+  padding: 36px;
+  text-align: center;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 5px 24px rgb(0 0 0 / 5%);
+}
+
+.reading-result-eyebrow {
+  color: #2d99ae;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.reading-result-summary h1 {
+  margin: 12px 0;
+  color: #001c44;
+  font-size: 28px;
+}
+
+.reading-result-summary h2 {
+  margin-bottom: 20px;
+  color: #526174;
+  font-size: 18px;
+}
+
+.reading-result-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin: 24px 0;
+  color: #0c5776;
+}
+
+.reading-result-score strong {
+  font-size: 64px;
+  line-height: 1;
+}
+
+.reading-result-score span {
+  color: #68778b;
+  font-size: 18px;
+}
+
+.reading-result-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.reading-result-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 12px;
+  background: #f2f8fa;
+  border-radius: 12px;
+}
+
+.reading-result-stats strong {
+  color: #001c44;
+  font-size: 21px;
+}
+
+.reading-result-stats span {
+  color: #68778b;
+  font-size: 14px;
+}
+
+.reading-result-date {
+  margin-top: 24px;
+  color: #8490a0;
+  font-size: 13px;
+}
+
+.reading-result-review {
+  margin-top: 32px;
+}
+
+.reading-result-review > h2 {
+  color: #001c44;
+  font-size: 23px;
+}
+
+.reading-result-review > p {
+  margin: 8px 0 24px;
+  color: #68778b;
+}
+
+.reading-result-question {
+  margin-bottom: 20px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e4e9f0;
+  border-radius: 14px;
+}
+
+.reading-result-question-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.reading-result-question-heading strong {
+  color: #001c44;
+  font-size: 16px;
+}
+
+.reading-result-question-heading span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.reading-result-question.correct .reading-result-question-heading span {
+  color: #16834a;
+}
+
+.reading-result-question.incorrect .reading-result-question-heading span {
+  color: #c0392b;
+}
+
+.reading-result-question h3 {
+  margin-bottom: 18px;
+  color: #26364a;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.reading-result-options {
+  display: grid;
+  gap: 10px;
+}
+
+.reading-result-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 15px;
+  background: #f7f9fc;
+  border: 1px solid #e5eaf1;
+  border-radius: 9px;
+  color: #465569;
+}
+
+.reading-result-option.selected {
+  border-color: #d99b36;
+  background: #fff9ed;
+}
+
+.reading-result-option.answer {
+  border-color: #36a36b;
+  background: #effaf3;
+}
+
+.reading-result-option > span:first-child {
+  font-weight: 700;
+}
+
+.reading-result-option strong {
+  margin-left: auto;
+  color: #16834a;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.reading-result-option.selected:not(.answer) strong {
+  color: #b7791f;
+}
+
+.reading-result-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 32px;
+}
+
+.reading-result-actions a {
+  padding: 13px 22px;
+  color: #fff;
+  background: #0c5776;
+  border-radius: 9px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.reading-result-actions a:hover {
+  background: #001c44;
+}
+
+.reading-result-message {
+  padding: 40px;
+  text-align: center;
+  color: #526174;
+  background: #fff;
+  border-radius: 14px;
+}
+
+.reading-result-message.error {
+  color: #c0392b;
+}
+
+@media (max-width: 640px) {
+  .reading-result-page {
+    padding: 24px 14px 50px;
+  }
+
+  .reading-result-summary {
+    padding: 24px 16px;
+  }
+
+  .reading-result-summary h1 {
+    font-size: 23px;
+  }
+
+  .reading-result-score strong {
+    font-size: 52px;
+  }
+
+  .reading-result-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .reading-result-question {
+    padding: 18px 14px;
+  }
+
+  .reading-result-option {
+    flex-wrap: wrap;
+  }
+
+  .reading-result-option strong {
+    width: 100%;
+    margin-left: 28px;
+  }
+}

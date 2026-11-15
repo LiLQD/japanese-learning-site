@@ -4,14 +4,9 @@ import type { ReadingInput } from "@app/shared";
 
 export async function listReadingPassages() {
   const passages = await prisma.readingPassage.findMany({
-    select: {
-      id: true,
-      title: true,
-      jlpt: true,
-    },
+    select: { id: true, title: true, jlpt: true },
     orderBy: [{ jlpt: "asc" }, { title: "asc" }, { id: "asc" }],
   });
-
   return { passages };
 }
 
@@ -28,30 +23,19 @@ export async function getReadingPassageById(id: number) {
   });
 }
 
-// --- Quiz Services (Từ nhánh của bạn) ---
-
+// --- Quiz Services ---
 export async function getReadingQuestionsByPassageId(passageId: number) {
   const passage = await prisma.readingPassage.findUnique({
     where: { id: passageId },
     select: { id: true },
   });
+  if (!passage) return null;
 
-  if (!passage) {
-    return null;
-  }
-
-  const questions = await prisma.readingQuestion.findMany({
+  return prisma.readingQuestion.findMany({
     where: { passageId },
-    select: {
-      id: true,
-      question: true,
-      options: true,
-      position: true,
-    },
+    select: { id: true, question: true, options: true, position: true },
     orderBy: { position: "asc" },
   });
-
-  return questions;
 }
 
 export async function submitReadingQuiz(
@@ -63,26 +47,19 @@ export async function submitReadingQuiz(
   const questions = await prisma.readingQuestion.findMany({
     where: { passageId },
   });
-
-  if (questions.length === 0) {
-    throw notFound("Bài đọc chưa có câu hỏi.");
-  }
+  if (questions.length === 0) throw notFound("Bài đọc chưa có câu hỏi.");
 
   const totalCount = questions.length;
-
-  if (answers.length !== totalCount) {
+  if (answers.length !== totalCount)
     throw badRequest(`Vui lòng trả lời đủ ${totalCount} câu hỏi.`);
-  }
 
   const uniqueIds = new Set(answers.map((a) => a.questionId));
-  if (uniqueIds.size !== totalCount) {
+  if (uniqueIds.size !== totalCount)
     throw badRequest("Dữ liệu câu trả lời bị trùng lặp.");
-  }
 
   const answerMap = new Map(
     answers.map((a) => [a.questionId, a.selectedOption]),
   );
-
   let correctCount = 0;
   const detailsData: {
     questionId: number;
@@ -92,33 +69,21 @@ export async function submitReadingQuiz(
 
   for (const q of questions) {
     const selectedOption = answerMap.get(q.id);
-
-    if (selectedOption === undefined) {
+    if (selectedOption === undefined)
       throw badRequest("Danh sách câu trả lời không khớp với bài đọc.");
-    }
+    if (selectedOption < 0 || selectedOption >= q.options.length)
+      throw badRequest("Lựa chọn câu trả lời không hợp lệ.");
 
     const isCorrect = q.correctIndex === selectedOption;
     if (isCorrect) correctCount++;
-
-    detailsData.push({
-      questionId: q.id,
-      selectedOption,
-      isCorrect,
-    });
+    detailsData.push({ questionId: q.id, selectedOption, isCorrect });
   }
 
   const score = Number(((correctCount / totalCount) * 10).toFixed(2));
 
   const result = await prisma.$transaction(async (tx) => {
     const readingResult = await tx.readingResult.create({
-      data: {
-        userId,
-        passageId,
-        score,
-        correctCount,
-        totalCount,
-        timeSpent,
-      },
+      data: { userId, passageId, score, correctCount, totalCount, timeSpent },
     });
 
     await tx.readingResultDetail.createMany({
@@ -133,21 +98,42 @@ export async function submitReadingQuiz(
     return readingResult;
   });
 
-  return {
-    result,
-    details: detailsData,
-  };
+  return { result, details: detailsData };
 }
 
-// --- Admin Services (Từ nhánh main) ---
+export async function getReadingResultById(resultId: number, userId: number) {
+  const result = await prisma.readingResult.findUnique({
+    where: { id: resultId },
+    include: {
+      passage: { select: { id: true, title: true, jlpt: true } },
+      details: {
+        include: {
+          question: {
+            select: {
+              id: true,
+              question: true,
+              options: true,
+              correctIndex: true,
+              position: true,
+            },
+          },
+        },
+        orderBy: { question: { position: "asc" } },
+      },
+    },
+  });
 
+  if (!result) throw notFound("Không tìm thấy kết quả.");
+  if (result.userId !== userId) throw notFound("Không tìm thấy kết quả.");
+  return result;
+}
+
+// --- Admin Services ---
 export async function createReading(data: ReadingInput) {
   const existing = await prisma.readingPassage.findFirst({
     where: { title: data.title },
   });
-  if (existing) {
-    throw new Error("Bài đọc đã tồn tại");
-  }
+  if (existing) throw new Error("Bài đọc đã tồn tại");
 
   return prisma.readingPassage.create({
     data: {

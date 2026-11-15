@@ -131,6 +131,10 @@ function ReadingQuizContent({ id }: { id: string | undefined }) {
         answersPayload,
       );
 
+      setSubmitted(true);
+      setNotice("Nộp bài thành công!");
+
+      window.location.href = `/reading/results/${response.data.result.id}`;
       setQuizResult(response.data);
       setSubmitted(true);
       setNotice("Nộp bài thành công!");
