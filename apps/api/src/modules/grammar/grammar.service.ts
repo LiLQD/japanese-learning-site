@@ -128,12 +128,18 @@ export async function updateGrammar(id: number, input: GrammarUpdateInput) {
   return prisma.$transaction(async (tx) => {
     const current = await tx.grammar.findUnique({
       where: { id },
-      select: { id: true, examples: { select: { id: true } } },
+      select: {
+        id: true,
+        examples: { select: { id: true, japanese: true, reading: true } },
+      },
     });
-
     if (!current) {
       throw notFound(GRAMMAR_NOT_FOUND_MESSAGE);
     }
+
+    const currentById = new Map(
+      current.examples.map((example) => [example.id, example]),
+    );
 
     const currentExampleIds = new Set(
       current.examples.map((example) => example.id),
@@ -161,21 +167,34 @@ export async function updateGrammar(id: number, input: GrammarUpdateInput) {
             submittedExistingIds.length > 0
               ? { id: { notIn: submittedExistingIds } }
               : {},
-          update: input.examples.flatMap((example, position) =>
-            example.id === undefined
-              ? []
-              : [
-                  {
-                    where: { id: example.id },
-                    data: {
-                      japanese: example.japanese,
-                      reading: example.reading ?? null,
-                      english: example.vietnamese,
-                      position: position + 1,
-                    },
-                  },
-                ],
-          ),
+          update: input.examples.flatMap((example, position) => {
+            if (example.id === undefined) return [];
+
+            const original = currentById.get(example.id)!;
+            const japaneseChanged = original.japanese !== example.japanese;
+            const originalReading = original.reading ?? null;
+
+            const readingUpdate =
+              example.reading === undefined
+                ? japaneseChanged
+                  ? null
+                  : undefined
+                : japaneseChanged && example.reading === originalReading
+                  ? null
+                  : example.reading;
+
+            return [
+              {
+                where: { id: example.id },
+                data: {
+                  japanese: example.japanese,
+                  reading: readingUpdate,
+                  english: example.vietnamese,
+                  position: position + 1,
+                },
+              },
+            ];
+          }),
           create: input.examples.flatMap((example, position) =>
             example.id !== undefined
               ? []

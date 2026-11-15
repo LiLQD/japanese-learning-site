@@ -423,7 +423,11 @@ describe("GET and PATCH /api/admin/grammar/:id", () => {
     vi.clearAllMocks();
     findUniqueMock.mockResolvedValue({
       id: current.id,
-      examples: current.examples.map(({ id }) => ({ id })),
+      examples: current.examples.map(({ id, japanese, reading }) => ({
+        id,
+        japanese,
+        reading,
+      })),
     });
     updateMock.mockImplementation(({ data }: { data: UpdateData }) =>
       Promise.resolve(makeUpdatedGrammar(data)),
@@ -716,6 +720,79 @@ describe("GET and PATCH /api/admin/grammar/:id", () => {
       code: "INTERNAL",
       message: "Lỗi kết nối!",
     });
+  });
+
+  it("clears the reading when japanese changes but reading is kept unchanged", async () => {
+    findUniqueMock.mockResolvedValue({
+      id: 12,
+      examples: [
+        { id: 21, japanese: "座ってください", reading: "すわってください" },
+      ],
+    });
+
+    await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/12")
+      .send({
+        examples: [
+          {
+            id: 21,
+            japanese: "立ってください",
+            reading: "すわってください",
+            vietnamese: "Xin hãy đứng",
+          },
+        ],
+      });
+
+    const updateData = updateMock.mock.calls[0]?.[0].data;
+    expect(updateData.examples.update[0].data.reading).toBeNull();
+  });
+
+  it("keeps the new reading when japanese and reading both change", async () => {
+    findUniqueMock.mockResolvedValue({
+      id: 12,
+      examples: [
+        { id: 21, japanese: "座ってください", reading: "すわってください" },
+      ],
+    });
+
+    await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/12")
+      .send({
+        examples: [
+          {
+            id: 21,
+            japanese: "立ってください",
+            reading: "たってください",
+            vietnamese: "Xin hãy đứng",
+          },
+        ],
+      });
+
+    const updateData = updateMock.mock.calls[0]?.[0].data;
+    expect(updateData.examples.update[0].data.reading).toBe("たってください");
+  });
+
+  it("stores an empty reading as null", async () => {
+    findUniqueMock.mockResolvedValue({
+      id: 12,
+      examples: [{ id: 21, japanese: "座ってください", reading: "すわって" }],
+    });
+
+    await request(makeApp({ id: 1, role: "ADMIN" }))
+      .patch("/api/admin/grammar/12")
+      .send({
+        examples: [
+          {
+            id: 21,
+            japanese: "座ってください",
+            reading: "",
+            vietnamese: "Xin hãy ngồi",
+          },
+        ],
+      });
+
+    const updateData = updateMock.mock.calls[0]?.[0].data;
+    expect(updateData.examples.update[0].data.reading).toBeNull();
   });
 });
 
