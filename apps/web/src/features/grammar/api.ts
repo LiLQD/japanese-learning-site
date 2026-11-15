@@ -1,5 +1,7 @@
 import type {
   ErrorResponse,
+  GrammarCreateInput,
+  GrammarCreateResponse,
   GrammarDetailResponse,
   GrammarListResponse,
 } from "@app/shared";
@@ -108,4 +110,47 @@ export async function fetchAdminGrammarList(
   }
 
   return (await response.json()) as GrammarListResponse;
+}
+
+export async function createGrammar(
+  input: GrammarCreateInput,
+): Promise<GrammarCreateResponse> {
+  let response: Response;
+
+  try {
+    response = await fetch("/api/grammar", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+  } catch {
+    throw new Error("Không thể kết nối máy chủ. Vui lòng thử lại.");
+  }
+
+  const data = (await response.json().catch(() => null)) as
+    | GrammarCreateResponse
+    | ErrorResponse
+    | null;
+
+  if (!response.ok) {
+    const error = data && "error" in data ? data.error : null;
+
+    switch (error?.code) {
+      case "BAD_REQUEST":
+        throw new Error(error.message || "Dữ liệu ngữ pháp chưa hợp lệ.");
+      case "UNAUTHORIZED":
+        throw new Error("Vui lòng đăng nhập để tiếp tục.");
+      case "FORBIDDEN":
+        throw new Error("Bạn không có quyền thực hiện thao tác này.");
+      case "DATABASE_UNAVAILABLE":
+        throw new Error("Lỗi kết nối!");
+      case "INTERNAL":
+        throw new Error("Không thể lưu dữ liệu ngữ pháp. Vui lòng thử lại.");
+      default:
+        throw new Error(error?.message ?? "Không thể thêm dữ liệu ngữ pháp.");
+    }
+  }
+
+  return data as GrammarCreateResponse;
 }

@@ -1,6 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { notFound } from "../../errors.js";
-import type { GrammarListQuery } from "@app/shared";
+import type { GrammarCreateInput, GrammarListQuery } from "@app/shared";
 import type { Prisma } from "../../../generated/prisma/client.js";
 
 const GRAMMAR_NOT_FOUND_MESSAGE = "Không tìm thấy ngữ pháp";
@@ -12,6 +12,29 @@ const grammarListSelect = {
   meaning: true,
   jlpt: true,
 } satisfies Prisma.GrammarSelect;
+
+export async function createGrammar(data: GrammarCreateInput) {
+  const examples = data.examples ?? [];
+
+  return prisma.grammar.create({
+    data: {
+      title: data.title,
+      pattern: data.pattern,
+      meaning: data.meaning,
+      jlpt: data.jlpt,
+      ...(examples.length > 0 && {
+        examples: {
+          create: examples.map((example, index) => ({
+            japanese: example.japanese,
+            english: example.vietnamese,
+            position: index + 1,
+          })),
+        },
+      }),
+    },
+    select: grammarListSelect,
+  });
+}
 
 function buildWhere({
   keyword,

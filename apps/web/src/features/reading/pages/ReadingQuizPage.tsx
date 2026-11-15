@@ -7,6 +7,7 @@ import {
   submitReadingQuiz,
   type ReadingPassageDetail,
   type ReadingQuestion,
+  type ReadingSubmitResponse,
 } from "../api";
 import "./ReadingDetailPage.css";
 
@@ -36,6 +37,10 @@ function ReadingQuizContent({ id }: { id: string | undefined }) {
 
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const [quizResult, setQuizResult] = useState<
+    ReadingSubmitResponse["data"] | null
+  >(null);
 
   const startTimeRef = useRef<number | null>(null);
 
@@ -130,6 +135,9 @@ function ReadingQuizContent({ id }: { id: string | undefined }) {
       setNotice("Nộp bài thành công!");
 
       window.location.href = `/reading/results/${response.data.result.id}`;
+      setQuizResult(response.data);
+      setSubmitted(true);
+      setNotice("Nộp bài thành công!");
     } catch (err: unknown) {
       setNotice(
         err instanceof Error
@@ -245,6 +253,27 @@ function ReadingQuizContent({ id }: { id: string | undefined }) {
                       style={{ width: `${progress}%` }}
                     />
                   </div>
+
+                  {submitted && quizResult && (
+                    <div className="mb-6 p-6 bg-green-50 border border-green-200 rounded-lg text-center">
+                      <h3 className="text-xl font-bold text-green-700 mb-2">
+                        Kết quả bài làm của bạn
+                      </h3>
+
+                      <p className="text-lg">
+                        Điểm số: <strong>{quizResult.result.score}</strong>
+                      </p>
+
+                      <p>
+                        Số câu đúng: {quizResult.result.correctCount}/
+                        {quizResult.result.totalCount}
+                      </p>
+
+                      <p>
+                        Thời gian làm bài: {quizResult.result.timeSpent} giây
+                      </p>
+                    </div>
+                  )}
 
                   <div className="reading-quiz-questions">
                     {questions.map((question, index) => (

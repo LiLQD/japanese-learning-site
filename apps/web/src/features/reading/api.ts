@@ -1,3 +1,5 @@
+import type { ReadingInput } from "@app/shared";
+
 export interface ReadingPassage {
   id: number;
   title: string;
@@ -88,7 +90,6 @@ async function getApiErrorMessage(
 ): Promise<string> {
   try {
     const data = await response.json();
-
     return data?.message || data?.error?.message || fallback;
   } catch {
     return fallback;
@@ -182,9 +183,6 @@ export async function fetchReadingQuestions(
 /**
  * Nộp bài đọc hiểu.
  * POST /api/reading/submit
- *
- * userId được backend lấy từ phiên đăng nhập,
- * frontend không gửi userId.
  */
 export async function submitReadingQuiz(
   passageId: number,
@@ -254,4 +252,41 @@ export async function fetchReadingResult(
   }
 
   return (await response.json()) as ReadingResultDetailResponse;
+}
+
+// ADMIN (Từ nhánh main)
+
+export async function createReading(data: ReadingInput): Promise<void> {
+  const res = await fetch("/api/reading", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.error?.message || "Thêm bài đọc thất bại.");
+  }
+}
+
+export async function updateReading(
+  id: number,
+  data: ReadingInput,
+): Promise<void> {
+  const res = await fetch(`/api/reading/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.error?.message || "Cập nhật bài đọc thất bại.");
+  }
+}
+
+export async function deleteReading(id: number): Promise<void> {
+  const res = await fetch(`/api/reading/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.error?.message || "Xóa bài đọc thất bại.");
+  }
 }
