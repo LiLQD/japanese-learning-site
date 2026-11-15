@@ -1,13 +1,25 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import Navbar from "../../../components/Navbar";
-import { fetchReadingList, type ReadingPassage } from "../api";
+import ConfirmDialog from "../../kanji/components/ConfirmDialog";
+import { useAuth } from "../../../contexts/auth-context";
+import { fetchReadingList, deleteReading, type ReadingPassage } from "../api";
 import "./ReadingListPage.css";
 
 export default function ReadingListPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
+
   const [passages, setPassages] = useState<ReadingPassage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // State cho việc xóa
+  const [pendingDelete, setPendingDelete] = useState<ReadingPassage | null>(
+    null,
+  );
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -55,6 +67,25 @@ export default function ReadingListPage() {
     }
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!pendingDelete) return;
+    setIsDeleting(true);
+    setDeleteError("");
+
+    try {
+      await deleteReading(pendingDelete.id);
+      setPendingDelete(null);
+      // Load lại danh sách sau khi xóa thành công
+      await handleRetry();
+    } catch (err: unknown) {
+      setDeleteError(
+        err instanceof Error ? err.message : "Lỗi khi xóa bài đọc.",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="reading-page">
       <Navbar />
@@ -76,7 +107,25 @@ export default function ReadingListPage() {
               <p>Chọn nội dung phù hợp với trình độ tiếng Nhật của bạn.</p>
             </div>
 
-            <span className="reading-count">{passages.length} bài đọc</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <span className="reading-count">{passages.length} bài đọc</span>
+              {isAdmin && (
+                <Link
+                  to="/reading/new"
+                  style={{
+                    padding: "8px 16px",
+                    background: "var(--color-brand)",
+                    color: "white",
+                    textDecoration: "none",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                  }}
+                >
+                  + Thêm bài đọc
+                </Link>
+              )}
+            </div>
           </div>
 
           {loading && (
@@ -99,32 +148,108 @@ export default function ReadingListPage() {
           {!loading && !error && passages.length > 0 && (
             <div className="reading-grid">
               {passages.map((passage) => (
-                <Link
-                  to={`/reading/${passage.id}`}
+                <div
                   className="reading-card"
                   key={passage.id}
+                  style={{ display: "flex", flexDirection: "column" }}
                 >
-                  <div className="reading-card-top">
-                    <span className="reading-card-label">BÀI ĐỌC</span>
+                  {/* Bọc nội dung vào Link, không bọc nút Admin vào trong */}
+                  <Link
+                    to={`/reading/${passage.id}`}
+                    style={{
+                      textDecoration: "none",
+                      color: "inherit",
+                      flex: 1,
+                    }}
+                  >
+                    <div className="reading-card-top">
+                      <span className="reading-card-label">BÀI ĐỌC</span>
+                      <span className="reading-level">
+                        {passage.jlpt !== null
+                          ? `JLPT N${passage.jlpt}`
+                          : "Chưa phân cấp"}
+                      </span>
+                    </div>
 
-                    <span className="reading-level">
-                      {passage.jlpt !== null
-                        ? `JLPT N${passage.jlpt}`
-                        : "Chưa phân cấp"}
-                    </span>
-                  </div>
+                    <h3>{passage.title}</h3>
 
-                  <h3>{passage.title}</h3>
+                    <div className="reading-card-footer">
+                      <span>Mã bài đọc: #{passage.id}</span>
+                    </div>
+                  </Link>
 
-                  <div className="reading-card-footer">
-                    <span>Mã bài đọc: #{passage.id}</span>
-                  </div>
-                </Link>
+                  {/* Các nút Admin nằm ngoài Link */}
+                  {isAdmin && (
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "8px",
+                        marginTop: "12px",
+                        paddingTop: "12px",
+                        borderTop: "1px solid var(--color-line)",
+                      }}
+                    >
+                      <Link
+                        to={`/reading/${passage.id}/edit`}
+                        style={{
+                          flex: 1,
+                          textAlign: "center",
+                          padding: "6px 0",
+                          background: "#e2e8f0",
+                          borderRadius: "6px",
+                          textDecoration: "none",
+                          color: "var(--color-ink)",
+                          fontSize: "13px",
+                          fontWeight: "500",
+                        }}
+                      >
+                        Sửa
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDelete(passage)}
+                        style={{
+                          flex: 1,
+                          padding: "6px 0",
+                          background: "#fee2e2",
+                          color: "#b91c1c",
+                          border: "none",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          fontSize: "13px",
+                          fontWeight: "500",
+                        }}
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
         </section>
       </main>
+
+      {/* Hộp thoại xác nhận xóa */}
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Xóa bài đọc"
+          confirmLabel="Xóa"
+          busyLabel="Đang xóa..."
+          isBusy={isDeleting}
+          errorMessage={deleteError}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => {
+            setPendingDelete(null);
+            setDeleteError("");
+          }}
+        >
+          Bạn có chắc chắn muốn xóa bài đọc{" "}
+          <strong>{pendingDelete.title}</strong> không? Hành động này không thể
+          hoàn tác.
+        </ConfirmDialog>
+      )}
     </div>
   );
 }

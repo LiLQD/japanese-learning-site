@@ -6,6 +6,7 @@ export const errorCodes = [
   "FORBIDDEN",
   "NOT_FOUND",
   "CONFLICT",
+  "DATABASE_UNAVAILABLE",
   "INTERNAL",
 ] as const;
 

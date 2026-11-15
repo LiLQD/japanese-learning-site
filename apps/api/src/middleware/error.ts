@@ -1,7 +1,7 @@
 import type { ErrorRequestHandler, RequestHandler } from "express";
 import { ZodError } from "zod";
 import { errorResponseSchema } from "@app/shared";
-import { AppError } from "../errors.js";
+import { AppError, databaseUnavailable } from "../errors.js";
 
 export const notFoundHandler: RequestHandler = (_req, res) => {
   res.status(404).json(
@@ -19,6 +19,8 @@ const DATABASE_CONNECTION_ERROR_CODES = new Set([
   "ENETUNREACH",
   "ENOTFOUND",
   "P1001",
+  "P1002",
+  "P1017",
 ]);
 
 function isDatabaseConnectionError(error: unknown): boolean {
@@ -52,6 +54,20 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     res.status(400).json(
       errorResponseSchema.parse({
         error: { code: "BAD_REQUEST", message },
+      }),
+    );
+    return;
+  }
+
+  if (
+    req.method === "POST" &&
+    req.path === "/api/grammar" &&
+    isDatabaseConnectionError(err)
+  ) {
+    const error = databaseUnavailable();
+    res.status(error.status).json(
+      errorResponseSchema.parse({
+        error: { code: error.code, message: error.message },
       }),
     );
     return;

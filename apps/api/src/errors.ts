@@ -26,3 +26,6 @@ export const notFound = (message = "Not found") =>
 
 export const conflict = (message: string) =>
   new AppError(409, "CONFLICT", message);
+
+export const databaseUnavailable = () =>
+  new AppError(503, "DATABASE_UNAVAILABLE", "Database connection unavailable");

@@ -7,6 +7,7 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 import UserListPage from "./features/users/pages/UserListPage";
 import UserDetailPage from "./features/users/pages/UserDetailPage";
 import GrammarAdminPage from "./features/grammar/pages/GrammarAdminPage";
+import GrammarCreatePage from "./features/grammar/pages/GrammarCreatePage";
 import ProfilePage from "./pages/ProfilePage";
 import GrammarListPage from "./features/grammar/pages/GrammarListPage";
 import GrammarDetailPage from "./features/grammar/pages/GrammarDetailPage";
@@ -21,6 +22,8 @@ import WordAuthGuard from "./features/words/components/WordAuthGuard";
 import ReadingListPage from "./features/reading/pages/ReadingListPage";
 import ReadingDetailPage from "./features/reading/pages/ReadingDetailPage";
 import ReadingQuizPage from "./features/reading/pages/ReadingQuizPage";
+import ReadingCreatePage from "./features/reading/pages/ReadingCreatePage";
+import ReadingEditPage from "./features/reading/pages/ReadingEditPage";
 import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
@@ -36,6 +39,7 @@ function App() {
           <Route path="/admin/dashboard" element={<DashboardPage />} />
           <Route path="/admin/users/:id" element={<UserDetailPage />} />
           <Route path="/admin/grammar" element={<GrammarAdminPage />} />
+          <Route path="/admin/grammar/create" element={<GrammarCreatePage />} />
           <Route path="/kanji" element={<KanjiListPage />} />
           <Route path="/kanji/new" element={<KanjiCreatePage />} />
           <Route path="/kanji/:id/edit" element={<KanjiEditPage />} />
@@ -43,6 +47,8 @@ function App() {
           <Route path="/reading" element={<ReadingListPage />} />
           <Route path="/reading/:id/questions" element={<ReadingQuizPage />} />
           <Route path="/reading/:id" element={<ReadingDetailPage />} />
+          <Route path="/reading/new" element={<ReadingCreatePage />} />
+          <Route path="/reading/:id/edit" element={<ReadingEditPage />} />
           <Route element={<WordAuthGuard />}>
             <Route path="/words" element={<WordLookupPage />} />
             <Route path="/words/:id" element={<WordDetailPage />} />
