@@ -1152,3 +1152,83 @@ describe("GET /api/grammar/:id", () => {
     expect(res.body.error.code).toBe("INTERNAL");
   });
 });
+
+describe("GET /api/grammar/:id/examples", () => {
+  const storedExamples = [
+    { id: 11, japanese: "水が飲みたいです。", english: "Tôi muốn uống nước." },
+    { id: 12, japanese: "日本へ行きたいです。", english: "Tôi muốn đi Nhật." },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    findUniqueMock.mockResolvedValue({ examples: storedExamples });
+  });
+
+  it("is public and returns examples with Vietnamese translations", async () => {
+    const res = await request(makeApp()).get("/api/grammar/7/examples");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      examples: [
+        {
+          id: 11,
+          japanese: "水が飲みたいです。",
+          vietnamese: "Tôi muốn uống nước.",
+        },
+        {
+          id: 12,
+          japanese: "日本へ行きたいです。",
+          vietnamese: "Tôi muốn đi Nhật.",
+        },
+      ],
+    });
+  });
+
+  it("orders examples by position", async () => {
+    await request(makeApp()).get("/api/grammar/7/examples");
+
+    expect(findUniqueMock).toHaveBeenCalledWith({
+      where: { id: 7 },
+      select: {
+        examples: {
+          select: { id: true, japanese: true, english: true },
+          orderBy: [{ position: "asc" }, { id: "asc" }],
+        },
+      },
+    });
+  });
+
+  it("returns an empty list when the grammar has no examples", async () => {
+    findUniqueMock.mockResolvedValue({ examples: [] });
+
+    const res = await request(makeApp()).get("/api/grammar/7/examples");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ examples: [] });
+  });
+
+  it("returns 404 when the grammar does not exist", async () => {
+    findUniqueMock.mockResolvedValue(null);
+
+    const res = await request(makeApp()).get("/api/grammar/9999/examples");
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe("NOT_FOUND");
+  });
+
+  it.each(["abc", "0", "1.5"])("returns 400 for invalid id %s", async (id) => {
+    const res = await request(makeApp()).get(`/api/grammar/${id}/examples`);
+
+    expect(res.status).toBe(400);
+    expect(findUniqueMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 500 when the database is unreachable", async () => {
+    findUniqueMock.mockRejectedValue(new Error("connect ECONNREFUSED"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await request(makeApp()).get("/api/grammar/7/examples");
+
+    expect(res.status).toBe(500);
+  });
+});

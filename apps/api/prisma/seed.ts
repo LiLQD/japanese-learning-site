@@ -615,6 +615,195 @@ const GRAMMARS: SeedGrammar[] = [
   },
 ];
 
+type SeedGrammarExample = { japanese: string; vietnamese: string };
+
+// Example sentences per grammar pattern (US-29). The Vietnamese translation
+// is stored in grammar_examples.english, matching the admin grammar form.
+const GRAMMAR_EXAMPLES: Record<string, SeedGrammarExample[]> = {
+  "〜は〜です": [
+    { japanese: "わたしは がくせいです。", vietnamese: "Tôi là sinh viên." },
+    { japanese: "これは ほんです。", vietnamese: "Đây là quyển sách." },
+  ],
+  "〜は〜ではありません": [
+    {
+      japanese: "わたしは せんせいではありません。",
+      vietnamese: "Tôi không phải là giáo viên.",
+    },
+    {
+      japanese: "あれは わたしの かさではありません。",
+      vietnamese: "Kia không phải là ô của tôi.",
+    },
+  ],
+  "〜か": [
+    {
+      japanese: "あなたは がくせいですか。",
+      vietnamese: "Bạn có phải là sinh viên không?",
+    },
+    { japanese: "これは なんですか。", vietnamese: "Đây là cái gì?" },
+  ],
+  "〜の〜": [
+    {
+      japanese: "これは わたしの ほんです。",
+      vietnamese: "Đây là sách của tôi.",
+    },
+    {
+      japanese: "にほんごの せんせいです。",
+      vietnamese: "Đây là giáo viên tiếng Nhật.",
+    },
+  ],
+  "〜があります": [
+    {
+      japanese: "つくえの うえに ほんが あります。",
+      vietnamese: "Có quyển sách ở trên bàn.",
+    },
+    {
+      japanese: "あした テストが あります。",
+      vietnamese: "Ngày mai có bài kiểm tra.",
+    },
+  ],
+  "〜がいます": [
+    {
+      japanese: "きょうしつに せんせいが います。",
+      vietnamese: "Trong lớp học có giáo viên.",
+    },
+    {
+      japanese: "にわに ねこが います。",
+      vietnamese: "Ngoài vườn có con mèo.",
+    },
+  ],
+  "〜たいです": [
+    { japanese: "みずが のみたいです。", vietnamese: "Tôi muốn uống nước." },
+    {
+      japanese: "にほんへ いきたいです。",
+      vietnamese: "Tôi muốn đi Nhật Bản.",
+    },
+  ],
+  "〜ましょう": [
+    { japanese: "いっしょに たべましょう。", vietnamese: "Cùng ăn nào." },
+    { japanese: "ちょっと やすみましょう。", vietnamese: "Nghỉ một chút nào." },
+  ],
+  "〜ませんか": [
+    {
+      japanese: "いっしょに えいがを みませんか。",
+      vietnamese: "Bạn có muốn cùng xem phim không?",
+    },
+    {
+      japanese: "コーヒーを のみませんか。",
+      vietnamese: "Bạn có muốn uống cà phê không?",
+    },
+  ],
+  "〜てください": [
+    {
+      japanese: "ここに なまえを かいてください。",
+      vietnamese: "Hãy viết tên vào đây.",
+    },
+    {
+      japanese: "ちょっと まってください。",
+      vietnamese: "Xin hãy đợi một chút.",
+    },
+  ],
+  "〜ています": [
+    {
+      japanese: "いま ごはんを たべています。",
+      vietnamese: "Bây giờ tôi đang ăn cơm.",
+    },
+    {
+      japanese: "あには とうきょうに すんでいます。",
+      vietnamese: "Anh trai tôi đang sống ở Tokyo.",
+    },
+  ],
+  "〜てから": [
+    {
+      japanese: "てを あらってから、ごはんを たべます。",
+      vietnamese: "Sau khi rửa tay thì ăn cơm.",
+    },
+    {
+      japanese: "しゅくだいを してから、テレビを みます。",
+      vietnamese: "Làm bài tập xong rồi mới xem tivi.",
+    },
+  ],
+  "〜から": [
+    {
+      japanese: "あめが ふっていますから、でかけません。",
+      vietnamese: "Vì trời đang mưa nên tôi không ra ngoài.",
+    },
+    {
+      japanese: "じかんが ありませんから、いそぎましょう。",
+      vietnamese: "Vì không có thời gian nên hãy nhanh lên.",
+    },
+  ],
+  "〜より〜のほうが": [
+    {
+      japanese: "バスより でんしゃの ほうが はやいです。",
+      vietnamese: "Tàu điện nhanh hơn xe buýt.",
+    },
+    {
+      japanese: "なつより ふゆの ほうが すきです。",
+      vietnamese: "Tôi thích mùa đông hơn mùa hè.",
+    },
+  ],
+  "〜てもいいです": [
+    {
+      japanese: "しゃしんを とってもいいですか。",
+      vietnamese: "Tôi chụp ảnh có được không?",
+    },
+    {
+      japanese: "ここに すわってもいいです。",
+      vietnamese: "Bạn ngồi ở đây cũng được.",
+    },
+  ],
+  "〜てはいけません": [
+    {
+      japanese: "ここで たばこを すってはいけません。",
+      vietnamese: "Không được hút thuốc ở đây.",
+    },
+    {
+      japanese: "じゅぎょうちゅうに ねてはいけません。",
+      vietnamese: "Không được ngủ trong giờ học.",
+    },
+  ],
+  "〜なければなりません": [
+    {
+      japanese: "まいにち くすりを のまなければなりません。",
+      vietnamese: "Mỗi ngày phải uống thuốc.",
+    },
+    {
+      japanese: "あした はやく おきなければなりません。",
+      vietnamese: "Ngày mai phải dậy sớm.",
+    },
+  ],
+  "〜たことがあります": [
+    {
+      japanese: "ふじさんに のぼったことがあります。",
+      vietnamese: "Tôi đã từng leo núi Phú Sĩ.",
+    },
+    {
+      japanese: "すしを たべたことがありますか。",
+      vietnamese: "Bạn đã từng ăn sushi chưa?",
+    },
+  ],
+  "〜ことができます": [
+    {
+      japanese: "わたしは ピアノを ひくことができます。",
+      vietnamese: "Tôi có thể chơi piano.",
+    },
+    {
+      japanese: "ここで おかねを かえることができます。",
+      vietnamese: "Có thể đổi tiền ở đây.",
+    },
+  ],
+  "〜たほうがいいです": [
+    {
+      japanese: "はやく ねたほうがいいです。",
+      vietnamese: "Bạn nên đi ngủ sớm thì hơn.",
+    },
+    {
+      japanese: "びょういんへ いったほうがいいです。",
+      vietnamese: "Bạn nên đi bệnh viện thì hơn.",
+    },
+  ],
+};
+
 async function seedUsers(): Promise<void> {
   const adminHash = await hash(ADMIN_PASSWORD, 10);
   const userHash = await hash(USER_PASSWORD, 10);
@@ -851,8 +1040,26 @@ async function seedGrammars(): Promise<void> {
       select: { id: true },
     });
 
-    if (!existing) {
-      await prisma.grammar.create({ data: g });
+    const grammar =
+      existing ??
+      (await prisma.grammar.create({ data: g, select: { id: true } }));
+
+    // Only add sample examples to grammars that have none, so examples
+    // entered by an admin are never overwritten.
+    const examples = GRAMMAR_EXAMPLES[g.pattern] ?? [];
+    const exampleCount = await prisma.grammarExample.count({
+      where: { grammarId: grammar.id },
+    });
+
+    if (examples.length > 0 && exampleCount === 0) {
+      await prisma.grammarExample.createMany({
+        data: examples.map((example, index) => ({
+          grammarId: grammar.id,
+          japanese: example.japanese,
+          english: example.vietnamese,
+          position: index + 1,
+        })),
+      });
     }
   }
 }
