@@ -6,10 +6,12 @@ import { renderToStaticMarkup } from "../../web/node_modules/react-dom/server.js
 import type { GrammarListItem, GrammarListResponse } from "@app/shared";
 import {
   CONNECTION_ERROR,
+  deleteGrammar,
   fetchAdminGrammarList,
 } from "../../web/src/features/grammar/api.js";
 import GrammarAdminTable from "../../web/src/features/grammar/components/GrammarAdminTable.js";
 import GrammarAdminPage from "../../web/src/features/grammar/pages/GrammarAdminPage.js";
+import GrammarAdminDetailPage from "../../web/src/features/grammar/pages/GrammarAdminDetailPage.js";
 import { AuthContext } from "../../web/src/contexts/auth-context.js";
 import { MemoryRouter } from "../../web/node_modules/react-router/dist/development/index.js";
 
@@ -132,15 +134,20 @@ describe("grammar admin frontend", () => {
 
   it("renders grammar details, row numbering and only valid JLPT levels", () => {
     const markup = renderToStaticMarkup(
-      createElement(GrammarAdminTable, {
-        grammars: [
-          grammar,
-          { ...grammar, id: 43, jlpt: 6 },
-          { ...grammar, id: 44, jlpt: null },
-        ],
-        page: 2,
-        pageSize: 20,
-      }),
+      createElement(
+        MemoryRouter,
+        null,
+        createElement(GrammarAdminTable, {
+          grammars: [
+            grammar,
+            { ...grammar, id: 43, jlpt: 6 },
+            { ...grammar, id: 44, jlpt: null },
+          ],
+          page: 2,
+          pageSize: 20,
+          onDelete: vi.fn(),
+        }),
+      ),
     );
 
     expect(markup).toContain("<td>21</td><td>42</td>");
@@ -148,7 +155,67 @@ describe("grammar admin frontend", () => {
     expect(markup).toContain("〜てもいい");
     expect(markup).toContain("Được phép");
     expect(markup).toContain("N4");
-    expect(markup.match(/—/g)).toHaveLength(2);
+    expect(markup).toContain('href="/admin/grammar/42"');
+    expect(markup).toContain('href="/admin/grammar/42/edit"');
+    expect(markup).toContain("Xóa");
+    expect(markup).not.toContain(">Xem<");
+    expect(markup).toContain("Chưa phân loại");
+    expect(markup.match(/—/g)).toHaveLength(1);
+  });
+
+  it("sends an authenticated DELETE to the admin grammar endpoint", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(deleteGrammar(42)).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledWith("/api/admin/grammar/42", {
+      method: "DELETE",
+      credentials: "include",
+    });
+  });
+
+  it("shows a localized fallback for an internal delete failure", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: { code: "INTERNAL", message: "Internal server error" },
+          }),
+          { status: 500 },
+        ),
+      ),
+    );
+
+    await expect(deleteGrammar(42)).rejects.toThrow(
+      "Không thể xóa dữ liệu ngữ pháp.",
+    );
+  });
+
+  it("keeps the admin detail page hidden while session is unresolved", () => {
+    const markup = renderToStaticMarkup(
+      createElement(
+        AuthContext.Provider,
+        {
+          value: {
+            user: null,
+            isLoading: true,
+            refreshUser: async () => {},
+            logout: async () => {},
+          },
+        },
+        createElement(
+          MemoryRouter,
+          { initialEntries: ["/admin/grammar/42"] },
+          createElement(GrammarAdminDetailPage),
+        ),
+      ),
+    );
+
+    expect(markup).toContain("Đang kiểm tra phiên đăng nhập...");
+    expect(markup).not.toContain("Ví dụ minh họa");
   });
 
   it("renders the exact empty state", () => {
@@ -157,6 +224,7 @@ describe("grammar admin frontend", () => {
         grammars: [],
         page: 1,
         pageSize: 20,
+        onDelete: vi.fn(),
       }),
     );
 

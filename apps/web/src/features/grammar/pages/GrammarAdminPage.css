@@ -83,6 +83,100 @@
   border-radius: 10px;
 }
 
+.grammar-admin-edit-link {
+  color: var(--color-brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.grammar-admin-edit-link:hover {
+  text-decoration: underline;
+}
+
+.grammar-admin-title-link {
+  color: var(--color-brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.grammar-admin-title-link:hover {
+  text-decoration: underline;
+}
+
+.grammar-admin-delete-button {
+  margin-left: 12px;
+  padding: 0;
+  color: #a32222;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.grammar-admin-delete-button:hover {
+  text-decoration: underline;
+}
+
+.grammar-admin-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 20px;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.grammar-admin-search input {
+  width: min(100%, 420px);
+  padding: 11px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  font: inherit;
+}
+
+.grammar-admin-detail-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.grammar-admin-detail-heading h1 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.grammar-admin-examples {
+  margin-top: 32px;
+}
+
+.grammar-admin-examples h2 {
+  margin: 0 0 16px;
+}
+
+.grammar-admin-examples ol {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 24px;
+}
+
+.grammar-admin-examples li {
+  padding: 14px 16px;
+  background: var(--color-bg);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+
+.grammar-admin-examples li p {
+  margin: 0 0 8px;
+}
+
+.grammar-admin-examples li p:last-child {
+  margin-bottom: 0;
+}
+
 .grammar-admin-table-wrapper {
   overflow-x: auto;
   background: var(--color-surface);
@@ -149,5 +243,11 @@
 
   .grammar-admin-header h1 {
     font-size: 26px;
+  }
+
+  .grammar-admin-search,
+  .grammar-admin-detail-heading {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

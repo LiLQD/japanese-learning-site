@@ -1,9 +1,11 @@
 import type {
   ErrorResponse,
+  GrammarAdminDetailResponse,
   GrammarCreateInput,
   GrammarCreateResponse,
   GrammarDetailResponse,
   GrammarListResponse,
+  GrammarUpdateInput,
 } from "@app/shared";
 
 export const CONNECTION_ERROR = "Lỗi kết nối!";
@@ -83,11 +85,13 @@ export async function fetchGrammar(id: number): Promise<GrammarDetailResponse> {
 export async function fetchAdminGrammarList(
   page: number,
   pageSize: number,
+  keyword?: string,
 ): Promise<GrammarListResponse> {
   const params = new URLSearchParams({
     page: String(page),
     pageSize: String(pageSize),
   });
+  if (keyword?.trim()) params.set("keyword", keyword.trim());
 
   let response: Response;
   try {
@@ -153,4 +157,81 @@ export async function createGrammar(
   }
 
   return data as GrammarCreateResponse;
+}
+
+async function adminGrammarRequest<T extends object>(
+  url: string,
+  init: RequestInit,
+  fallbackMessage: string,
+): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(url, { ...init, credentials: "include" });
+  } catch {
+    throw new Error(CONNECTION_ERROR);
+  }
+
+  const data = (await response.json().catch(() => null)) as
+    | T
+    | ErrorResponse
+    | null;
+
+  if (!response.ok) {
+    const error = data && "error" in data ? data.error : null;
+    if (error?.message === CONNECTION_ERROR) {
+      throw new Error(CONNECTION_ERROR);
+    }
+
+    switch (error?.code) {
+      case "UNAUTHORIZED":
+        throw new Error("Vui lòng đăng nhập để tiếp tục.");
+      case "FORBIDDEN":
+        throw new Error("Bạn không có quyền thực hiện thao tác này.");
+      case "NOT_FOUND":
+        throw new Error("Không tìm thấy ngữ pháp này!");
+      case "BAD_REQUEST":
+        throw new Error(error.message || fallbackMessage);
+      case "DATABASE_UNAVAILABLE":
+        throw new Error(CONNECTION_ERROR);
+      case "INTERNAL":
+        throw new Error(fallbackMessage);
+      default:
+        throw new Error(error?.message ?? fallbackMessage);
+    }
+  }
+
+  return data as T;
+}
+
+export function fetchAdminGrammar(
+  id: number,
+): Promise<GrammarAdminDetailResponse> {
+  return adminGrammarRequest(
+    `/api/admin/grammar/${id}`,
+    { method: "GET" },
+    "Không thể tải dữ liệu ngữ pháp.",
+  );
+}
+
+export function updateGrammar(
+  id: number,
+  input: GrammarUpdateInput,
+): Promise<GrammarAdminDetailResponse> {
+  return adminGrammarRequest(
+    `/api/admin/grammar/${id}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+    "Không thể cập nhật dữ liệu ngữ pháp.",
+  );
+}
+
+export async function deleteGrammar(id: number): Promise<void> {
+  await adminGrammarRequest<Record<string, never>>(
+    `/api/admin/grammar/${id}`,
+    { method: "DELETE" },
+    "Không thể xóa dữ liệu ngữ pháp.",
+  );
 }

@@ -5,7 +5,7 @@ import { describe, expect, it } from "../../api/node_modules/vitest";
 import Navbar from "../src/components/Navbar";
 import { AuthContext } from "../src/contexts/auth-context";
 
-function renderNavbar(role: "ADMIN" | "USER" | null) {
+function renderNavbar(role: "ADMIN" | "USER" | null, pathname = "/") {
   return renderToStaticMarkup(
     createElement(
       AuthContext.Provider,
@@ -24,39 +24,58 @@ function renderNavbar(role: "ADMIN" | "USER" | null) {
           logout: async () => {},
         },
       },
-      createElement(MemoryRouter, null, createElement(Navbar)),
+      createElement(
+        MemoryRouter,
+        { initialEntries: [pathname] },
+        createElement(Navbar),
+      ),
     ),
   );
 }
 
-describe("Navbar administration menu", () => {
-  it("shows a closed administration dropdown to ADMIN", () => {
+describe("Navbar navigation by role", () => {
+  it("shows direct administration links to ADMIN without a dropdown", () => {
     const markup = renderNavbar("ADMIN");
 
-    expect(markup).toContain("Quản trị");
-    expect(markup).toContain('aria-expanded="false"');
-    expect(markup).not.toContain("/admin/dashboard");
-    expect(markup).not.toContain("/admin/users");
-    expect(markup).not.toContain("/admin/grammar");
+    expect(markup).not.toContain("admin-menu");
+    expect(markup).toContain('href="/admin/dashboard"');
+    expect(markup).toContain('href="/admin/users"');
+    expect(markup).toContain('href="/admin/grammar"');
+    expect(markup).toContain("Tài khoản");
+    expect(markup).toContain('href="/reading"');
+    expect(markup).not.toContain("/forum");
+  });
+
+  it("marks admin grammar navigation active on all admin grammar routes", () => {
+    const markup = renderNavbar("ADMIN", "/admin/grammar/42/edit");
+
+    expect(markup).toMatch(/class="active" href="\/admin\/grammar"/);
   });
 
   it.each(["USER", null] as const)(
-    "hides administration navigation from %s",
+    "%s continues to use public grammar and sees no admin links",
     (role) => {
       const markup = renderNavbar(role);
 
-      expect(markup).not.toContain("Quản trị");
+      expect(markup).toContain('href="/grammar"');
       expect(markup).not.toContain("/admin/dashboard");
       expect(markup).not.toContain("/admin/users");
       expect(markup).not.toContain("/admin/grammar");
+      expect(markup).not.toContain("/forum");
     },
   );
 
-  it("keeps the primary home, vocabulary and grammar links together", () => {
+  it("keeps the guest registration and login actions", () => {
     const markup = renderNavbar(null);
 
-    expect(markup).toMatch(
-      /<nav[^>]*>[\s\S]*href="\/"[^>]*>Trang chủ[\s\S]*href="\/words"[^>]*>Từ vựng[\s\S]*href="\/grammar"[^>]*>Ngữ pháp[\s\S]*<\/nav>/,
-    );
+    expect(markup).toContain('href="/register"');
+    expect(markup).toContain('href="/login"');
+  });
+
+  it("provides a responsive navigation toggle", () => {
+    const markup = renderNavbar("ADMIN");
+    expect(markup).toContain('aria-controls="primary-navigation"');
+    expect(markup).toContain('aria-expanded="false"');
+    expect(markup).toContain('id="primary-navigation"');
   });
 });
