@@ -163,6 +163,7 @@ export default function Navbar() {
                       >
                         Quản lý ngữ pháp
                       </Link>
+                      <Link to="/reading">Quản lý Bài đọc</Link>
                     </div>
                   )}
                 </div>

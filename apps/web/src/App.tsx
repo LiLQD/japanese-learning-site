@@ -21,6 +21,8 @@ import WordEditPage from "./features/words/pages/WordEditPage";
 import WordAuthGuard from "./features/words/components/WordAuthGuard";
 import ReadingListPage from "./features/reading/pages/ReadingListPage";
 import ReadingDetailPage from "./features/reading/pages/ReadingDetailPage";
+import ReadingCreatePage from "./features/reading/pages/ReadingCreatePage";
+import ReadingEditPage from "./features/reading/pages/ReadingEditPage";
 import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
@@ -43,6 +45,8 @@ function App() {
           <Route path="/kanji/:id" element={<KanjiDetailPage />} />
           <Route path="/reading" element={<ReadingListPage />} />
           <Route path="/reading/:id" element={<ReadingDetailPage />} />
+          <Route path="/reading/new" element={<ReadingCreatePage />} />
+          <Route path="/reading/:id/edit" element={<ReadingEditPage />} />
           <Route element={<WordAuthGuard />}>
             <Route path="/words" element={<WordLookupPage />} />
             <Route path="/words/:id" element={<WordDetailPage />} />
