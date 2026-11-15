@@ -83,6 +83,18 @@ export type GrammarCreateResponse = {
   grammar: GrammarListItem;
 };
 
+// One example sentence shown on the grammar detail page (US-29).
+// The translation is stored in the `english` column but holds Vietnamese.
+export type GrammarExampleItem = {
+  id: number;
+  japanese: string;
+  vietnamese: string;
+};
+
+export type GrammarExamplesResponse = {
+  examples: GrammarExampleItem[];
+};
+
 export const grammarUpdateExampleInputSchema = grammarExampleInputSchema.extend(
   {
     id: z.number().int().positive().optional(),

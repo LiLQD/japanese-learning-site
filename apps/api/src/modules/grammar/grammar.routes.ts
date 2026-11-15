@@ -3,6 +3,7 @@ import { requireRole } from "../../middleware/auth.js";
 import {
   createGrammarHandler,
   getGrammarByIdHandler,
+  getGrammarExamplesHandler,
   getGrammarList,
 } from "./grammar.controller.js";
 
@@ -12,6 +13,7 @@ const router = Router();
 // must be guarded with requireRole("ADMIN").
 router.get("/", getGrammarList);
 router.get("/:id", getGrammarByIdHandler);
+router.get("/:id/examples", getGrammarExamplesHandler);
 router.post("/", requireRole("ADMIN"), createGrammarHandler);
 
 export default router;

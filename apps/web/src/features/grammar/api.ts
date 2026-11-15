@@ -4,6 +4,7 @@ import type {
   GrammarCreateInput,
   GrammarCreateResponse,
   GrammarDetailResponse,
+  GrammarExamplesResponse,
   GrammarListResponse,
   GrammarUpdateInput,
 } from "@app/shared";
@@ -157,6 +158,33 @@ export async function createGrammar(
   }
 
   return data as GrammarCreateResponse;
+}
+
+export async function fetchGrammarExamples(
+  id: number,
+): Promise<GrammarExamplesResponse> {
+  let response: Response;
+
+  try {
+    response = await fetch(`/api/grammar/${id}/examples`, {
+      credentials: "include",
+    });
+  } catch {
+    throw new Error(CONNECTION_ERROR);
+  }
+
+  if (response.status >= 500) {
+    throw new Error(CONNECTION_ERROR);
+  }
+
+  if (!response.ok) {
+    const data = (await response
+      .json()
+      .catch(() => null)) as ErrorResponse | null;
+    throw new Error(data?.error?.message ?? "Không thể tải ví dụ ngữ pháp.");
+  }
+
+  return (await response.json()) as GrammarExamplesResponse;
 }
 
 async function adminGrammarRequest<T extends object>(

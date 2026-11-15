@@ -11,6 +11,7 @@ import {
   deleteGrammar,
   getAdminGrammarById,
   getGrammarById,
+  getGrammarExamples,
   listGrammars,
   updateGrammar,
 } from "./grammar.service.js";
@@ -81,6 +82,28 @@ export const getAdminGrammarByIdHandler: RequestHandler = async (
     res
       .status(200)
       .json({ grammar: await getAdminGrammarById(params.data.id) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getGrammarExamplesHandler: RequestHandler = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    const params = grammarIdParamSchema.safeParse(req.params);
+
+    if (!params.success) {
+      const message = params.error.issues.map((i) => i.message).join(", ");
+      next(badRequest(message));
+      return;
+    }
+
+    res
+      .status(200)
+      .json({ examples: await getGrammarExamples(params.data.id) });
   } catch (error) {
     next(error);
   }

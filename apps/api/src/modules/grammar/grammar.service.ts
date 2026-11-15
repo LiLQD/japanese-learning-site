@@ -221,6 +221,28 @@ export async function updateGrammar(id: number, input: GrammarUpdateInput) {
   });
 }
 
+// Examples of one grammar, in the order chosen by the admin (US-29).
+export async function getGrammarExamples(id: number) {
+  const grammar = await prisma.grammar.findUnique({
+    where: { id },
+    select: {
+      examples: {
+        select: { id: true, japanese: true, english: true },
+        orderBy: [{ position: "asc" }, { id: "asc" }],
+      },
+    },
+  });
+
+  if (!grammar) {
+    throw notFound(GRAMMAR_NOT_FOUND_MESSAGE);
+  }
+
+  return grammar.examples.map(({ english, ...example }) => ({
+    ...example,
+    vietnamese: english,
+  }));
+}
+
 export async function deleteGrammar(id: number) {
   const grammar = await prisma.grammar.findUnique({
     where: { id },
