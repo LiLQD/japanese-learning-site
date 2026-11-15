@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { badRequest, notFound } from "../../errors.js";
 
 export async function listReadingPassages() {
   const passages = await prisma.readingPassage.findMany({
@@ -33,7 +34,7 @@ export async function getReadingQuestionsByPassageId(passageId: number) {
   });
 
   if (!passage) {
-    return null; // Không tìm thấy bài đọc
+    return null;
   }
 
   const questions = await prisma.readingQuestion.findMany({
@@ -43,7 +44,6 @@ export async function getReadingQuestionsByPassageId(passageId: number) {
       question: true,
       options: true,
       position: true,
-      // Tuyệt đối không select correctIndex ở đây để bảo mật
     },
     orderBy: { position: "asc" },
   });
@@ -57,59 +57,75 @@ export async function submitReadingQuiz(
   timeSpent: number,
   answers: { questionId: number; selectedOption: number }[],
 ) {
-  // Lấy toàn bộ câu hỏi kèm đáp án đúng từ DB
   const questions = await prisma.readingQuestion.findMany({
     where: { passageId },
   });
 
-  if (!questions || questions.length === 0) {
-    throw new Error("Bài đọc chưa có câu hỏi.");
+  if (questions.length === 0) {
+    throw notFound("Bài đọc chưa có câu hỏi.");
   }
 
-  const questionMap = new Map(questions.map((q) => [q.id, q]));
-  let correctCount = 0;
   const totalCount = questions.length;
 
-  const detailsData = answers.map((ans) => {
-    const q = questionMap.get(Number(ans.questionId));
-    // Ép kiểu về Number để so sánh chính xác tránh lệch kiểu dữ liệu
-    const isCorrect = q
-      ? Number(q.correctIndex) === Number(ans.selectedOption)
-      : false;
+  if (answers.length !== totalCount) {
+    throw badRequest(`Vui lòng trả lời đủ ${totalCount} câu hỏi.`);
+  }
+
+  const uniqueIds = new Set(answers.map((a) => a.questionId));
+  if (uniqueIds.size !== totalCount) {
+    throw badRequest("Dữ liệu câu trả lời bị trùng lặp.");
+  }
+
+  const answerMap = new Map(
+    answers.map((a) => [a.questionId, a.selectedOption]),
+  );
+
+  let correctCount = 0;
+  const detailsData: {
+    questionId: number;
+    selectedOption: number;
+    isCorrect: boolean;
+  }[] = [];
+
+  for (const q of questions) {
+    const selectedOption = answerMap.get(q.id);
+
+    if (selectedOption === undefined) {
+      throw badRequest("Danh sách câu trả lời không khớp với bài đọc.");
+    }
+
+    const isCorrect = q.correctIndex === selectedOption;
     if (isCorrect) correctCount++;
 
-    return {
-      questionId: Number(ans.questionId),
-      selectedOption: Number(ans.selectedOption),
+    detailsData.push({
+      questionId: q.id,
+      selectedOption,
       isCorrect,
-    };
-  });
+    });
+  }
 
-  const score = Number(((correctCount / totalCount) * 10).toFixed(2)); // Tính điểm hệ số 10
+  const score = Number(((correctCount / totalCount) * 10).toFixed(2));
 
-  // Sử dụng Prisma Transaction đảm bảo tính nhất quán
   const result = await prisma.$transaction(async (tx) => {
     const readingResult = await tx.readingResult.create({
       data: {
-        userId: Number(userId),
-        passageId: Number(passageId),
+        userId,
+        passageId,
         score,
         correctCount,
         totalCount,
-        timeSpent: Number(timeSpent || 0),
+        timeSpent,
       },
     });
 
-    if (detailsData.length > 0) {
-      await tx.readingResultDetail.createMany({
-        data: detailsData.map((d) => ({
-          resultId: readingResult.id,
-          questionId: d.questionId,
-          selectedOption: d.selectedOption,
-          isCorrect: d.isCorrect,
-        })),
-      });
-    }
+    await tx.readingResultDetail.createMany({
+      data: detailsData.map((d) => ({
+        resultId: readingResult.id,
+        questionId: d.questionId,
+        selectedOption: d.selectedOption,
+        isCorrect: d.isCorrect,
+      })),
+    });
 
     return readingResult;
   });
