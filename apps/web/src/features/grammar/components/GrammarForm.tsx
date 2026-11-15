@@ -19,6 +19,7 @@ type ExampleValue = {
   key: number;
   id?: number;
   japanese: string;
+  reading: string | null | undefined;
   vietnamese: string;
 };
 
@@ -66,6 +67,7 @@ function GrammarForm(props: GrammarFormProps) {
           key: index,
           id: example.id,
           japanese: example.japanese,
+          reading: example.reading,
           vietnamese: example.vietnamese,
         }))
       : [],
@@ -89,14 +91,14 @@ function GrammarForm(props: GrammarFormProps) {
     nextExampleKey.current += 1;
     setExamples((current) => [
       ...current,
-      { key, japanese: "", vietnamese: "" },
+      { key, japanese: "", reading: "", vietnamese: "" },
     ]);
     clearValidation();
   }
 
   function updateExample(
     key: number,
-    field: "japanese" | "vietnamese",
+    field: "japanese" | "reading" | "vietnamese",
     value: string,
   ) {
     setExamples((current) =>
@@ -121,10 +123,16 @@ function GrammarForm(props: GrammarFormProps) {
       pattern: values.pattern,
       meaning: values.meaning,
     };
-    const exampleValues = examples.map(({ id, japanese, vietnamese }) =>
-      props.mode === "edit"
-        ? { ...(id === undefined ? {} : { id }), japanese, vietnamese }
-        : { japanese, vietnamese },
+    const exampleValues = examples.map(
+      ({ id, japanese, reading, vietnamese }) =>
+        props.mode === "edit"
+          ? {
+              ...(id === undefined ? {} : { id }),
+              japanese,
+              reading,
+              vietnamese,
+            }
+          : { japanese, reading, vietnamese },
     );
 
     if (props.mode === "create") {
@@ -303,6 +311,17 @@ function GrammarForm(props: GrammarFormProps) {
                 {fieldErrors[`examples.${index}.japanese`] && (
                   <small>{fieldErrors[`examples.${index}.japanese`]}</small>
                 )}
+              </label>
+              <label className="grammar-create-field">
+                <span>Cách đọc (Kana)</span>
+                <input
+                  value={example.reading || ""}
+                  onChange={(event) =>
+                    updateExample(example.key, "reading", event.target.value)
+                  }
+                  disabled={isSubmitting}
+                  lang="ja"
+                />
               </label>
               <label className="grammar-create-field">
                 <span>

@@ -12,9 +12,6 @@ const {
   createMock,
   updateMock,
   deleteMock,
-  exampleUpdateMock,
-  exampleCreateMock,
-  exampleDeleteManyMock,
   sessionFindFirstMock,
   transactionMock,
 } = vi.hoisted(() => ({
@@ -24,9 +21,6 @@ const {
   createMock: vi.fn(),
   updateMock: vi.fn(),
   deleteMock: vi.fn(),
-  exampleUpdateMock: vi.fn(),
-  exampleCreateMock: vi.fn(),
-  exampleDeleteManyMock: vi.fn(),
   sessionFindFirstMock: vi.fn(),
   transactionMock: vi.fn(),
 }));
@@ -42,9 +36,9 @@ vi.mock("../../lib/prisma.js", () => ({
       delete: deleteMock,
     },
     grammarExample: {
-      update: exampleUpdateMock,
-      create: exampleCreateMock,
-      deleteMany: exampleDeleteManyMock,
+      update: vi.fn(),
+      create: vi.fn(),
+      deleteMany: vi.fn(),
     },
     session: { findFirst: sessionFindFirstMock },
     $transaction: transactionMock,
@@ -91,8 +85,16 @@ describe("POST /api/grammar", () => {
     meaning: "Xin hãy làm gì",
     jlpt: 5,
     examples: [
-      { japanese: "座ってください", vietnamese: "Xin hãy ngồi xuống" },
-      { japanese: "見てください", vietnamese: "Xin hãy xem" },
+      {
+        japanese: "座ってください",
+        reading: null as string | null,
+        vietnamese: "Xin hãy ngồi xuống",
+      },
+      {
+        japanese: "見てください",
+        reading: null as string | null,
+        vietnamese: "Xin hãy xem",
+      },
     ],
   };
 
@@ -126,10 +128,16 @@ describe("POST /api/grammar", () => {
           create: [
             {
               japanese: "座ってください",
+              reading: null as string | null,
               english: "Xin hãy ngồi xuống",
               position: 1,
             },
-            { japanese: "見てください", english: "Xin hãy xem", position: 2 },
+            {
+              japanese: "見てください",
+              reading: null as string | null,
+              english: "Xin hãy xem",
+              position: 2,
+            },
           ],
         },
       },
@@ -156,6 +164,7 @@ describe("POST /api/grammar", () => {
             create: [
               {
                 japanese: input.examples[0].japanese,
+                reading: null as string | null,
                 english: input.examples[0].vietnamese,
                 position: 1,
               },
@@ -198,7 +207,6 @@ describe("POST /api/grammar", () => {
 
   it("rejects guests", async () => {
     const res = await request(makeApp()).post("/api/grammar").send(input);
-
     expect(res.status).toBe(401);
     expect(createMock).not.toHaveBeenCalled();
   });
@@ -207,7 +215,6 @@ describe("POST /api/grammar", () => {
     const res = await request(makeApp({ id: 2, role: "USER" }))
       .post("/api/grammar")
       .send(input);
-
     expect(res.status).toBe(403);
     expect(createMock).not.toHaveBeenCalled();
   });
@@ -230,7 +237,12 @@ describe("POST /api/grammar", () => {
     ],
     [
       "empty Japanese example",
-      { ...input, examples: [{ japanese: " ", vietnamese: "Dịch" }] },
+      {
+        ...input,
+        examples: [
+          { japanese: " ", reading: null as string | null, vietnamese: "Dịch" },
+        ],
+      },
     ],
     [
       "missing Vietnamese translation",
@@ -238,7 +250,12 @@ describe("POST /api/grammar", () => {
     ],
     [
       "empty Vietnamese translation",
-      { ...input, examples: [{ japanese: "例", vietnamese: " " }] },
+      {
+        ...input,
+        examples: [
+          { japanese: "例", reading: null as string | null, vietnamese: " " },
+        ],
+      },
     ],
   ])("rejects %s", async (_label, body) => {
     const res = await request(makeApp({ id: 1, role: "ADMIN" }))
@@ -340,14 +357,14 @@ describe("GET and PATCH /api/admin/grammar/:id", () => {
       {
         id: 21,
         japanese: "座ってください",
-        reading: null,
+        reading: null as string | null,
         english: "Xin hãy ngồi xuống",
         position: 1,
       },
       {
         id: 22,
         japanese: "見てください",
-        reading: "みてください",
+        reading: null as string | null,
         english: "Xin hãy xem",
         position: 2,
       },
@@ -356,9 +373,11 @@ describe("GET and PATCH /api/admin/grammar/:id", () => {
 
   type ExampleFields = {
     japanese: string;
+    reading: string | null;
     english: string;
     position: number;
   };
+
   type UpdateData = Partial<
     Pick<typeof current, "title" | "pattern" | "meaning" | "jlpt">
   > & {
@@ -387,7 +406,7 @@ describe("GET and PATCH /api/admin/grammar/:id", () => {
         ...data.examples.create.map((example, index) => ({
           id: nextId + index,
           ...example,
-          reading: null,
+          reading: null as string | null,
         })),
       );
       examples.sort((left, right) => left.position - right.position);
@@ -431,15 +450,15 @@ describe("GET and PATCH /api/admin/grammar/:id", () => {
         {
           id: 21,
           japanese: "座ってください",
+          reading: null as string | null,
           vietnamese: "Xin hãy ngồi xuống",
-          reading: null,
           position: 1,
         },
         {
           id: 22,
           japanese: "見てください",
+          reading: null as string | null,
           vietnamese: "Xin hãy xem",
-          reading: "みてください",
           position: 2,
         },
       ],
@@ -486,8 +505,17 @@ describe("GET and PATCH /api/admin/grammar/:id", () => {
       meaning: "Ý nghĩa mới",
       jlpt: 3,
       examples: [
-        { id: 22, japanese: "見てください", vietnamese: "Hãy xem nhé" },
-        { japanese: "読んでください", vietnamese: "Xin hãy đọc" },
+        {
+          id: 22,
+          japanese: "見てください",
+          reading: null as string | null,
+          vietnamese: "Hãy xem nhé",
+        },
+        {
+          japanese: "読んでください",
+          reading: null as string | null,
+          vietnamese: "Xin hãy đọc",
+        },
       ],
     };
     const res = await request(makeApp({ id: 1, role: "ADMIN" }))
@@ -499,15 +527,15 @@ describe("GET and PATCH /api/admin/grammar/:id", () => {
       {
         id: 22,
         japanese: "見てください",
+        reading: null as string | null,
         vietnamese: "Hãy xem nhé",
-        reading: "みてください",
         position: 1,
       },
       {
         id: 23,
         japanese: "読んでください",
+        reading: null as string | null,
         vietnamese: "Xin hãy đọc",
-        reading: null,
         position: 2,
       },
     ]);
@@ -532,13 +560,19 @@ describe("GET and PATCH /api/admin/grammar/:id", () => {
               where: { id: 22 },
               data: {
                 japanese: "見てください",
+                reading: null as string | null,
                 english: "Hãy xem nhé",
                 position: 1,
               },
             },
           ],
           create: [
-            { japanese: "読んでください", english: "Xin hãy đọc", position: 2 },
+            {
+              japanese: "読んでください",
+              reading: null as string | null,
+              english: "Xin hãy đọc",
+              position: 2,
+            },
           ],
         },
       },
@@ -586,7 +620,14 @@ describe("GET and PATCH /api/admin/grammar/:id", () => {
     const res = await request(makeApp({ id: 1, role: "ADMIN" }))
       .patch("/api/admin/grammar/12")
       .send({
-        examples: [{ id: 999, japanese: "例", vietnamese: "Ví dụ" }],
+        examples: [
+          {
+            id: 999,
+            japanese: "例",
+            reading: null as string | null,
+            vietnamese: "Ví dụ",
+          },
+        ],
       });
 
     expect(res.status).toBe(400);
@@ -612,14 +653,28 @@ describe("GET and PATCH /api/admin/grammar/:id", () => {
     ["non-integer JLPT", { jlpt: 2.5 }],
     [
       "blank example translation",
-      { examples: [{ japanese: "例", vietnamese: " " }] },
+      {
+        examples: [
+          { japanese: "例", reading: null as string | null, vietnamese: " " },
+        ],
+      },
     ],
     [
       "duplicate example IDs",
       {
         examples: [
-          { id: 21, japanese: "例1", vietnamese: "Ví dụ 1" },
-          { id: 21, japanese: "例2", vietnamese: "Ví dụ 2" },
+          {
+            id: 21,
+            japanese: "例1",
+            reading: null as string | null,
+            vietnamese: "Ví dụ 1",
+          },
+          {
+            id: 21,
+            japanese: "例2",
+            reading: null as string | null,
+            vietnamese: "Ví dụ 2",
+          },
         ],
       },
     ],
@@ -689,7 +744,6 @@ describe("DELETE /api/admin/grammar/:id", () => {
     ["regular user", { id: 2, role: "USER" } satisfies AuthUser, 403],
   ])("rejects %s from deleting a grammar", async (_actor, user, status) => {
     const res = await request(makeApp(user)).delete("/api/admin/grammar/12");
-
     expect(res.status).toBe(status);
     expect(findUniqueMock).not.toHaveBeenCalled();
     expect(deleteMock).not.toHaveBeenCalled();
@@ -714,7 +768,6 @@ describe("DELETE /api/admin/grammar/:id", () => {
     const res = await request(makeApp({ id: 1, role: "ADMIN" })).delete(
       "/api/admin/grammar/999",
     );
-
     expect(res.status).toBe(404);
     expect(res.body.error.code).toBe("NOT_FOUND");
     expect(deleteMock).not.toHaveBeenCalled();
@@ -752,7 +805,6 @@ describe("GET /api/grammar", () => {
 
   it("is public for guests", async () => {
     const res = await request(makeApp()).get("/api/grammar");
-
     expect(res.status).toBe(200);
   });
 
@@ -760,13 +812,11 @@ describe("GET /api/grammar", () => {
     const res = await request(makeApp({ id: 2, role: "USER" })).get(
       "/api/grammar",
     );
-
     expect(res.status).toBe(200);
   });
 
   it("returns the first page with default page size", async () => {
     const res = await request(makeApp()).get("/api/grammar");
-
     expect(res.body).toEqual({
       grammars: sampleGrammars,
       total: 21,
@@ -780,7 +830,6 @@ describe("GET /api/grammar", () => {
 
   it("orders N5 first, then by id", async () => {
     await request(makeApp()).get("/api/grammar");
-
     expect(findManyMock).toHaveBeenCalledWith(
       expect.objectContaining({
         orderBy: [{ jlpt: { sort: "desc", nulls: "last" } }, { id: "asc" }],
@@ -790,7 +839,6 @@ describe("GET /api/grammar", () => {
 
   it("applies page and pageSize from the query", async () => {
     const res = await request(makeApp()).get("/api/grammar?page=3&pageSize=5");
-
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ page: 3, pageSize: 5 });
     expect(findManyMock).toHaveBeenCalledWith(
@@ -801,9 +849,7 @@ describe("GET /api/grammar", () => {
   it("returns an empty list when there is no grammar", async () => {
     findManyMock.mockResolvedValue([]);
     countMock.mockResolvedValue(0);
-
     const res = await request(makeApp()).get("/api/grammar");
-
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       grammars: [],
@@ -817,7 +863,6 @@ describe("GET /api/grammar", () => {
     "returns 400 for invalid query %s",
     async (query) => {
       const res = await request(makeApp()).get(`/api/grammar?${query}`);
-
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe("BAD_REQUEST");
       expect(findManyMock).not.toHaveBeenCalled();
@@ -826,7 +871,6 @@ describe("GET /api/grammar", () => {
 
   it("does not filter when no keyword or jlpt is given", async () => {
     await request(makeApp()).get("/api/grammar");
-
     expect(findManyMock).toHaveBeenCalledWith(
       expect.objectContaining({ where: {} }),
     );
@@ -871,7 +915,6 @@ describe("GET /api/grammar", () => {
 
   it("filters by JLPT level", async () => {
     await request(makeApp()).get("/api/grammar?jlpt=4");
-
     expect(findManyMock).toHaveBeenCalledWith(
       expect.objectContaining({ where: { jlpt: 4 } }),
     );
@@ -880,7 +923,6 @@ describe("GET /api/grammar", () => {
 
   it("combines keyword and JLPT level", async () => {
     await request(makeApp()).get("/api/grammar?keyword=te&jlpt=4&page=2");
-
     expect(findManyMock).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ jlpt: 4, OR: expect.any(Array) }),
@@ -891,7 +933,6 @@ describe("GET /api/grammar", () => {
 
   it("ignores a blank keyword", async () => {
     await request(makeApp()).get("/api/grammar?keyword=%20%20");
-
     expect(findManyMock).toHaveBeenCalledWith(
       expect.objectContaining({ where: {} }),
     );
@@ -901,7 +942,6 @@ describe("GET /api/grammar", () => {
     const res = await request(makeApp()).get(
       `/api/grammar?keyword=${"a".repeat(101)}`,
     );
-
     expect(res.status).toBe(400);
     expect(res.body.error.message).toBe("Từ khóa tối đa 100 ký tự");
     expect(findManyMock).not.toHaveBeenCalled();
@@ -911,7 +951,6 @@ describe("GET /api/grammar", () => {
     "returns 400 for invalid level %s",
     async (query) => {
       const res = await request(makeApp()).get(`/api/grammar?${query}`);
-
       expect(res.status).toBe(400);
       expect(findManyMock).not.toHaveBeenCalled();
     },
@@ -920,9 +959,7 @@ describe("GET /api/grammar", () => {
   it("returns 500 when the database is unreachable", async () => {
     findManyMock.mockRejectedValue(new Error("connect ECONNREFUSED"));
     vi.spyOn(console, "error").mockImplementation(() => {});
-
     const res = await request(makeApp()).get("/api/grammar");
-
     expect(res.status).toBe(500);
     expect(res.body.error.code).toBe("INTERNAL");
   });
@@ -942,7 +979,6 @@ describe("GET /api/admin/grammar", () => {
     const res = await request(makeApp({ id: 1, role: "ADMIN" })).get(
       "/api/admin/grammar",
     );
-
     expect(res.status).toBe(200);
     expect(res.body.grammars).toEqual(sampleGrammars);
   });
@@ -952,7 +988,6 @@ describe("GET /api/admin/grammar", () => {
     ["regular user", { id: 2, role: "USER" } satisfies AuthUser],
   ])("rejects %s", async (_actor, user) => {
     const res = await request(makeApp(user)).get("/api/admin/grammar");
-
     expect(res.status).toBe(user ? 403 : 401);
     expect(findManyMock).not.toHaveBeenCalled();
   });
@@ -960,11 +995,9 @@ describe("GET /api/admin/grammar", () => {
   it("returns an empty list when no grammar exists", async () => {
     findManyMock.mockResolvedValue([]);
     countMock.mockResolvedValue(0);
-
     const res = await request(makeApp({ id: 1, role: "ADMIN" })).get(
       "/api/admin/grammar",
     );
-
     expect(res.status).toBe(200);
     expect(res.body.grammars).toEqual([]);
     expect(res.body.total).toBe(0);
@@ -973,11 +1006,9 @@ describe("GET /api/admin/grammar", () => {
   it("uses the common internal error response for other server failures", async () => {
     findManyMock.mockRejectedValue(new Error("query failed"));
     vi.spyOn(console, "error").mockImplementation(() => {});
-
     const res = await request(makeApp({ id: 1, role: "ADMIN" })).get(
       "/api/admin/grammar",
     );
-
     expect(res.status).toBe(500);
     expect(res.body.error).toEqual({
       code: "INTERNAL",
@@ -990,15 +1021,13 @@ describe("GET /api/admin/grammar", () => {
       Object.assign(new Error("connection refused"), { code: "ECONNREFUSED" }),
     );
     vi.spyOn(console, "error").mockImplementation(() => {});
-
     const res = await request(makeApp({ id: 1, role: "ADMIN" })).get(
       "/api/admin/grammar",
     );
-
     expect(res.status).toBe(500);
     expect(res.body.error).toEqual({
       code: "INTERNAL",
-      message: "L\u1ed7i k\u1ebft n\u1ed1i!",
+      message: "Lỗi kết nối!",
     });
   });
 });
@@ -1011,7 +1040,6 @@ describe("GET /api/grammar/:id", () => {
 
   it("is public and returns the grammar", async () => {
     const res = await request(makeApp()).get("/api/grammar/1");
-
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ grammar: sampleGrammars[0] });
     expect(findUniqueMock).toHaveBeenCalledWith(
@@ -1021,9 +1049,7 @@ describe("GET /api/grammar/:id", () => {
 
   it("returns 404 when the grammar does not exist", async () => {
     findUniqueMock.mockResolvedValue(null);
-
     const res = await request(makeApp()).get("/api/grammar/9999");
-
     expect(res.status).toBe(404);
     expect(res.body.error).toEqual({
       code: "NOT_FOUND",
@@ -1035,7 +1061,6 @@ describe("GET /api/grammar/:id", () => {
     "returns 400 for invalid id %s",
     async (id) => {
       const res = await request(makeApp()).get(`/api/grammar/${id}`);
-
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe("BAD_REQUEST");
       expect(findUniqueMock).not.toHaveBeenCalled();
@@ -1045,9 +1070,7 @@ describe("GET /api/grammar/:id", () => {
   it("returns 500 when the database is unreachable", async () => {
     findUniqueMock.mockRejectedValue(new Error("connect ECONNREFUSED"));
     vi.spyOn(console, "error").mockImplementation(() => {});
-
     const res = await request(makeApp()).get("/api/grammar/1");
-
     expect(res.status).toBe(500);
     expect(res.body.error.code).toBe("INTERNAL");
   });

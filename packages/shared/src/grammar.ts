@@ -60,6 +60,7 @@ export type GrammarDetailResponse = {
 
 export const grammarExampleInputSchema = z.object({
   japanese: z.string().trim().min(1, "Vui lòng nhập câu tiếng Nhật"),
+  reading: z.string().trim().optional().nullable(), // <--- Đã thêm trường reading
   vietnamese: z.string().trim().min(1, "Vui lòng nhập bản dịch tiếng Việt"),
 });
 

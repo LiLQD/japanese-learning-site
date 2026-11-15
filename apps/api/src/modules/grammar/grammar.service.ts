@@ -44,6 +44,7 @@ export async function createGrammar(data: GrammarCreateInput) {
         examples: {
           create: examples.map((example, index) => ({
             japanese: example.japanese,
+            reading: example.reading ?? null,
             english: example.vietnamese,
             position: index + 1,
           })),
@@ -168,6 +169,7 @@ export async function updateGrammar(id: number, input: GrammarUpdateInput) {
                     where: { id: example.id },
                     data: {
                       japanese: example.japanese,
+                      reading: example.reading ?? null,
                       english: example.vietnamese,
                       position: position + 1,
                     },
@@ -180,6 +182,7 @@ export async function updateGrammar(id: number, input: GrammarUpdateInput) {
               : [
                   {
                     japanese: example.japanese,
+                    reading: example.reading ?? null,
                     english: example.vietnamese,
                     position: position + 1,
                   },
