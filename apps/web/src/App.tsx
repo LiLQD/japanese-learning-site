@@ -27,6 +27,8 @@ import ReadingQuizPage from "./features/reading/pages/ReadingQuizPage";
 import ReadingResultPage from "./features/reading/pages/ReadingResultPage";
 import ReadingCreatePage from "./features/reading/pages/ReadingCreatePage";
 import ReadingEditPage from "./features/reading/pages/ReadingEditPage";
+import FlashcardDeckListPage from "./features/flashcards/pages/FlashcardDeckListPage";
+import FlashcardAuthGuard from "./features/flashcards/components/FlashcardAuthGuard";
 import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
@@ -61,6 +63,9 @@ function App() {
           <Route path="/reading/:id" element={<ReadingDetailPage />} />
           <Route path="/reading/new" element={<ReadingCreatePage />} />
           <Route path="/reading/:id/edit" element={<ReadingEditPage />} />
+          <Route element={<FlashcardAuthGuard />}>
+            <Route path="/flashcards" element={<FlashcardDeckListPage />} />
+          </Route>
           <Route element={<WordAuthGuard />}>
             <Route path="/words" element={<WordLookupPage />} />
             <Route path="/words/:id" element={<WordDetailPage />} />

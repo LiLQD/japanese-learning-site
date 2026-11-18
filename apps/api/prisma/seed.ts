@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "bcryptjs";
 import { PrismaClient } from "../generated/prisma/client.js";
+import { seedFlashcardDecks } from "./flashcard-seed.js";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -578,6 +579,42 @@ const GRAMMARS: SeedGrammar[] = [
     jlpt: 5,
   },
   {
+    title: "Cũng",
+    pattern: "〜も",
+    meaning: "Cũng; cũng là/cũng có",
+    jlpt: 5,
+  },
+  {
+    title: "Khoảng thời gian từ ... đến ...",
+    pattern: "〜から〜まで",
+    meaning: "Từ ... đến ...",
+    jlpt: 5,
+  },
+  {
+    title: "Liệt kê danh từ",
+    pattern: "〜と",
+    meaning: "Và; cùng với",
+    jlpt: 5,
+  },
+  {
+    title: "Nói về sở thích",
+    pattern: "〜が好きです",
+    meaning: "Thích ...",
+    jlpt: 5,
+  },
+  {
+    title: "Đi để làm gì",
+    pattern: "〜に行きます",
+    meaning: "Đi để làm ...",
+    jlpt: 5,
+  },
+  {
+    title: "Diễn tả mong muốn có",
+    pattern: "〜がほしいです",
+    meaning: "Muốn có ...",
+    jlpt: 5,
+  },
+  {
     title: "Xin phép, cho phép",
     pattern: "〜てもいいです",
     meaning: "Làm ~ cũng được",
@@ -742,6 +779,63 @@ const GRAMMAR_EXAMPLES: Record<string, SeedGrammarExample[]> = {
       vietnamese: "Tôi thích mùa đông hơn mùa hè.",
     },
   ],
+  "〜も": [
+    {
+      japanese: "わたしも がくせいです。",
+      vietnamese: "Tôi cũng là sinh viên.",
+    },
+    { japanese: "ねこも います。", vietnamese: "Cũng có mèo." },
+  ],
+  "〜から〜まで": [
+    {
+      japanese: "くじから ごじまで はたらきます。",
+      vietnamese: "Tôi làm việc từ 9 giờ đến 5 giờ.",
+    },
+    {
+      japanese: "げつようびから きんようびまで がっこうへ いきます。",
+      vietnamese: "Tôi đi học từ thứ Hai đến thứ Sáu.",
+    },
+  ],
+  "〜と": [
+    {
+      japanese: "りんごと バナナを かいます。",
+      vietnamese: "Tôi mua táo và chuối.",
+    },
+    {
+      japanese: "ともだちと えいがを みます。",
+      vietnamese: "Tôi xem phim cùng bạn.",
+    },
+  ],
+  "〜が好きです": [
+    {
+      japanese: "わたしは ねこが すきです。",
+      vietnamese: "Tôi thích mèo.",
+    },
+    {
+      japanese: "たなかさんは おんがくが すきです。",
+      vietnamese: "Anh Tanaka thích âm nhạc.",
+    },
+  ],
+  "〜に行きます": [
+    {
+      japanese: "スーパーへ かいものに いきます。",
+      vietnamese: "Tôi đi siêu thị để mua sắm.",
+    },
+    {
+      japanese: "としょかんへ べんきょうに いきます。",
+      vietnamese: "Tôi đến thư viện để học.",
+    },
+  ],
+  "〜がほしいです": [
+    {
+      japanese: "あたらしい くつが ほしいです。",
+      vietnamese: "Tôi muốn có đôi giày mới.",
+    },
+    {
+      japanese: "みずが ほしいです。",
+      vietnamese: "Tôi muốn có nước.",
+    },
+  ],
   "〜てもいいです": [
     {
       japanese: "しゃしんを とってもいいですか。",
@@ -802,6 +896,44 @@ const GRAMMAR_EXAMPLES: Record<string, SeedGrammarExample[]> = {
       vietnamese: "Bạn nên đi bệnh viện thì hơn.",
     },
   ],
+};
+
+const GRAMMAR_USAGE: Record<string, string> = {
+  "〜は〜です":
+    "Danh từ A は danh từ B です dùng để giới thiệu hoặc xác định A là B.",
+  "〜は〜ではありません":
+    "Dùng ではありません sau danh từ để phủ định lịch sự.",
+  "〜か": "Đặt か ở cuối câu để tạo câu hỏi lịch sự.",
+  "〜の〜":
+    "Nối hai danh từ; danh từ đứng trước の bổ nghĩa hoặc thể hiện sở hữu cho danh từ sau.",
+  "〜があります": "Dùng あります để nói đồ vật hoặc sự việc tồn tại.",
+  "〜がいます": "Dùng います để nói người hoặc động vật tồn tại.",
+  "〜たいです":
+    "Gắn たいです vào thân động từ ます để nói mong muốn làm việc gì.",
+  "〜ましょう":
+    "Gắn ましょう vào thân động từ ます để rủ hoặc đề nghị cùng làm.",
+  "〜ませんか":
+    "Dùng động từ dạng ませんか để mời người nghe cùng làm một việc.",
+  "〜てください":
+    "Dùng động từ thể てください để yêu cầu hoặc nhờ ai làm việc gì.",
+  "〜ています":
+    "Dùng động từ thể ています để diễn tả hành động đang diễn ra hoặc trạng thái tiếp diễn.",
+  "〜てから":
+    "Nối động từ thể て với から để nói sau khi làm việc trước thì làm việc tiếp theo.",
+  "〜から": "Đặt から sau mệnh đề nêu lý do, thường đứng trước kết quả.",
+  "〜より〜のほうが":
+    "Dùng より để nêu đối tượng so sánh và のほうが để chỉ đối tượng được đánh giá hơn.",
+  "〜も":
+    "Đặt も sau danh từ để diễn tả nghĩa cũng; も thay cho は hoặc が trong cách dùng này.",
+  "〜から〜まで": "Đặt から sau mốc bắt đầu và まで sau mốc kết thúc.",
+  "〜と":
+    "Nối các danh từ với nghĩa và, hoặc đặt sau danh từ chỉ người cùng tham gia.",
+  "〜が好きです":
+    "Dùng danh từ + が好きです để nói thích một người hoặc sự vật.",
+  "〜に行きます":
+    "Dùng thân động từ ます + に行きます để nói đi đâu đó nhằm thực hiện hành động.",
+  "〜がほしいです":
+    "Dùng danh từ + がほしいです để diễn tả mong muốn có một sự vật.",
 };
 
 async function seedUsers(): Promise<void> {
@@ -1064,7 +1196,42 @@ async function seedGrammars(): Promise<void> {
   }
 }
 
+async function seedFlashcards(): Promise<void> {
+  const grammars = GRAMMARS.filter((grammar) => grammar.jlpt === 5).map(
+    (grammar) => {
+      const usage = GRAMMAR_USAGE[grammar.pattern];
+      if (!usage) {
+        throw new Error(
+          `Missing flashcard usage description for ${grammar.pattern}.`,
+        );
+      }
+
+      return {
+        pattern: grammar.pattern,
+        meaning: grammar.meaning,
+        usage,
+        jlpt: grammar.jlpt,
+        examples: (GRAMMAR_EXAMPLES[grammar.pattern] ?? []).map(
+          ({ japanese, vietnamese }) => ({ japanese, vietnamese }),
+        ),
+      };
+    },
+  );
+
+  console.log("Seeding 3 shared flashcard decks and 80 cards...");
+  await seedFlashcardDecks(prisma, {
+    vocabulary: DAILY_VOCABULARY,
+    grammars,
+  });
+}
+
 async function main(): Promise<void> {
+  if (process.argv.includes("--flashcards-only")) {
+    await seedFlashcards();
+    console.log("Shared flashcard seed complete.");
+    return;
+  }
+
   console.log("Seeding users...");
   await seedUsers();
 
@@ -1078,6 +1245,7 @@ async function main(): Promise<void> {
   await seedReadingPassages();
   console.log(`Seeding ${GRAMMARS.length} grammars...`);
   await seedGrammars();
+  await seedFlashcards();
 
   console.log("Done.");
   console.log(`  admin: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);

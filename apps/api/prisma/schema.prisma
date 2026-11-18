@@ -15,6 +15,11 @@ enum Role {
   ADMIN
 }
 
+enum FlashcardDeckVisibility {
+  PERSONAL
+  SHARED
+}
+
 enum AccountStatus {
   ACTIVE
   LOCKED
@@ -256,13 +261,15 @@ model ReadingQuestion {
 // ============================================================
 
 model FlashcardDeck {
-  id          Int         @id @default(autoincrement())
-  userId      Int
+  id          Int                     @id @default(autoincrement())
+  userId      Int?
+  visibility  FlashcardDeckVisibility @default(PERSONAL)
+  seedKey     String?                 @unique
   name        String
   description String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  user        User?                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   cards       Flashcard[]
 
   @@index([userId])
@@ -272,6 +279,7 @@ model FlashcardDeck {
 model Flashcard {
   id        Int           @id @default(autoincrement())
   deckId    Int
+  seedKey   String?       @unique
   front     String
   back      String
   position  Int
@@ -279,6 +287,7 @@ model Flashcard {
   updatedAt DateTime      @updatedAt
   deck      FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
 
+  @@unique([deckId, position])
   @@index([deckId])
   @@map("flashcards")
 }
