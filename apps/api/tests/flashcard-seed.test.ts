@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { Prisma } from "../generated/prisma/client.js";
 import {
   buildFlashcardDeckSeeds,
   seedFlashcardDecks,
@@ -112,7 +113,9 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
       cardCreateCount = 0;
     },
     flashcardDeck: {
-      findUnique: async ({ where }) => {
+      findUnique: async ({ where }: Prisma.FlashcardDeckFindUniqueArgs & {
+        where: Prisma.FlashcardDeckWhereUniqueInput & { seedKey: string };
+      }) => {
         const deck = decks.get(where.seedKey);
         return deck
           ? {
@@ -122,7 +125,15 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
             }
           : null;
       },
-      create: async ({ data }) => {
+      create: async ({ data }: Prisma.FlashcardDeckCreateArgs & {
+        data: Prisma.FlashcardDeckUncheckedCreateInput & {
+          seedKey: string;
+          name: string;
+          description: string;
+          visibility: "SHARED";
+          userId: null;
+        };
+      }) => {
         if (decks.has(data.seedKey)) {
           throw new Error(`Unique seedKey conflict: ${data.seedKey}`);
         }
@@ -130,7 +141,14 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
         decks.set(data.seedKey, deck);
         return { id: deck.id };
       },
-      updateMany: async ({ where, data }) => {
+      updateMany: async ({ where, data }: Prisma.FlashcardDeckUpdateManyArgs & {
+        where: Prisma.FlashcardDeckWhereInput & {
+          id: number;
+          seedKey: string;
+          visibility: "SHARED";
+          userId: null;
+        };
+      }) => {
         deckUpdateCount++;
         if (failure.deckUpdateAt === deckUpdateCount) {
           return { count: 0 };
@@ -150,11 +168,21 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
       },
     },
     flashcard: {
-      findUnique: async ({ where }) => {
+      findUnique: async ({ where }: Prisma.FlashcardFindUniqueArgs & {
+        where: Prisma.FlashcardWhereUniqueInput & { seedKey: string };
+      }) => {
         const card = cards.get(where.seedKey);
         return card ? { id: card.id, deckId: card.deckId } : null;
       },
-      create: async ({ data }) => {
+      create: async ({ data }: Prisma.FlashcardCreateArgs & {
+        data: Prisma.FlashcardUncheckedCreateInput & {
+          seedKey: string;
+          deckId: number;
+          front: string;
+          back: string;
+          position: number;
+        };
+      }) => {
         cardCreateCount++;
         if (failure.cardCreateAt === cardCreateCount) {
           throw new Error(`Unique seedKey conflict: ${data.seedKey}`);
@@ -166,7 +194,13 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
         cards.set(data.seedKey, card);
         return card;
       },
-      updateMany: async ({ where, data }) => {
+      updateMany: async ({ where, data }: Prisma.FlashcardUpdateManyArgs & {
+        where: Prisma.FlashcardWhereInput & {
+          id: number;
+          seedKey: string;
+          deckId: number;
+        };
+      }) => {
         cardUpdateCount++;
         if (failure.cardUpdateAt === cardUpdateCount) {
           return { count: 0 };
