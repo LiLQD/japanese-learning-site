@@ -113,7 +113,9 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
       cardCreateCount = 0;
     },
     flashcardDeck: {
-      findUnique: async ({ where }: Prisma.FlashcardDeckFindUniqueArgs & {
+      findUnique: async ({
+        where,
+      }: Prisma.FlashcardDeckFindUniqueArgs & {
         where: Prisma.FlashcardDeckWhereUniqueInput & { seedKey: string };
       }) => {
         const deck = decks.get(where.seedKey);
@@ -125,7 +127,9 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
             }
           : null;
       },
-      create: async ({ data }: Prisma.FlashcardDeckCreateArgs & {
+      create: async ({
+        data,
+      }: Prisma.FlashcardDeckCreateArgs & {
         data: Prisma.FlashcardDeckUncheckedCreateInput & {
           seedKey: string;
           name: string;
@@ -141,7 +145,10 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
         decks.set(data.seedKey, deck);
         return { id: deck.id };
       },
-      updateMany: async ({ where, data }: Prisma.FlashcardDeckUpdateManyArgs & {
+      updateMany: async ({
+        where,
+        data,
+      }: Prisma.FlashcardDeckUpdateManyArgs & {
         where: Prisma.FlashcardDeckWhereInput & {
           id: number;
           seedKey: string;
@@ -168,13 +175,17 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
       },
     },
     flashcard: {
-      findUnique: async ({ where }: Prisma.FlashcardFindUniqueArgs & {
+      findUnique: async ({
+        where,
+      }: Prisma.FlashcardFindUniqueArgs & {
         where: Prisma.FlashcardWhereUniqueInput & { seedKey: string };
       }) => {
         const card = cards.get(where.seedKey);
         return card ? { id: card.id, deckId: card.deckId } : null;
       },
-      create: async ({ data }: Prisma.FlashcardCreateArgs & {
+      create: async ({
+        data,
+      }: Prisma.FlashcardCreateArgs & {
         data: Prisma.FlashcardUncheckedCreateInput & {
           seedKey: string;
           deckId: number;
@@ -194,7 +205,10 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
         cards.set(data.seedKey, card);
         return card;
       },
-      updateMany: async ({ where, data }: Prisma.FlashcardUpdateManyArgs & {
+      updateMany: async ({
+        where,
+        data,
+      }: Prisma.FlashcardUpdateManyArgs & {
         where: Prisma.FlashcardWhereInput & {
           id: number;
           seedKey: string;
