@@ -6,7 +6,7 @@ import type {
   FlashcardDeckDetailResponse,
   FlashcardDeckListResponse,
 } from "@app/shared";
-import type { Prisma } from "../../../generated/prisma/client.js";
+import { Prisma } from "../../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 
 const flashcardDeckListSelect = {
@@ -38,6 +38,14 @@ type FlashcardDb = Pick<
   Prisma.TransactionClient,
   "flashcardDeck" | "flashcard"
 >;
+
+const CREATE_FLASHCARD_RETRY_LIMIT = 3;
+
+function isPrismaError(error: unknown, code: string) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError && error.code === code
+  );
+}
 
 function mapDeck<T extends { createdAt: Date; updatedAt: Date }>(
   deck: T,
@@ -159,32 +167,47 @@ export async function createFlashcard(
   deckId: number,
   input: FlashcardCardCreateInput,
 ) {
-  return prisma.$transaction(async (tx) => {
-    await getPersonalDeck(tx, userId, deckId);
-    const lastCard = await tx.flashcard.findFirst({
-      where: { deckId },
-      orderBy: [{ position: "desc" }, { id: "desc" }],
-      select: { position: true },
-    });
+  for (let attempt = 0; attempt < CREATE_FLASHCARD_RETRY_LIMIT; attempt += 1) {
+    try {
+      return await prisma.$transaction(
+        async (tx) => {
+          await getPersonalDeck(tx, userId, deckId);
+          const lastCard = await tx.flashcard.findFirst({
+            where: { deckId },
+            orderBy: [{ position: "desc" }, { id: "desc" }],
+            select: { position: true },
+          });
 
-    const card = await tx.flashcard.create({
-      data: {
-        deckId,
-        front: input.front,
-        back: input.back,
-        position: (lastCard?.position ?? 0) + 1,
-      },
-      select: {
-        id: true,
-        front: true,
-        back: true,
-        position: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-    return mapCard(card);
-  });
+          const card = await tx.flashcard.create({
+            data: {
+              deckId,
+              front: input.front,
+              back: input.back,
+              position: (lastCard?.position ?? 0) + 1,
+            },
+            select: {
+              id: true,
+              front: true,
+              back: true,
+              position: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          });
+          return mapCard(card);
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    } catch (error) {
+      const retryable =
+        isPrismaError(error, "P2002") || isPrismaError(error, "P2034");
+      if (!retryable || attempt === CREATE_FLASHCARD_RETRY_LIMIT - 1) {
+        throw error;
+      }
+    }
+  }
+
+  throw new Error("Unable to create flashcard");
 }
 
 export async function updateFlashcard(
