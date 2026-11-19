@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Prisma } from "../../../generated/prisma/client.js";
 
 const {
   deckFindFirstMock,
@@ -123,6 +124,33 @@ describe("flashcard CRUD service", () => {
         data: { deckId: 7, front: "猫", back: "Mèo", position: 4 },
       }),
     );
+  });
+
+  it("retries card creation after a concurrent position conflict", async () => {
+    const uniqueError = new Prisma.PrismaClientKnownRequestError(
+      "Unique constraint failed",
+      { code: "P2002", clientVersion: "test" },
+    );
+    transactionMock
+      .mockRejectedValueOnce(uniqueError)
+      .mockImplementationOnce(
+        async (callback: (client: typeof transactionClient) => unknown) =>
+          callback(transactionClient),
+      );
+    cardFindFirstMock.mockResolvedValue({ position: 3 });
+    cardCreateMock.mockResolvedValue({
+      id: 11,
+      front: "猫",
+      back: "Mèo",
+      position: 4,
+      createdAt: new Date("2026-11-19T00:00:00.000Z"),
+      updatedAt: new Date("2026-11-19T00:00:00.000Z"),
+    });
+
+    await expect(
+      createFlashcard(42, 7, { front: "猫", back: "Mèo" }),
+    ).resolves.toMatchObject({ id: 11, position: 4 });
+    expect(transactionMock).toHaveBeenCalledTimes(2);
   });
 
   it("rejects mutations against shared decks", async () => {
