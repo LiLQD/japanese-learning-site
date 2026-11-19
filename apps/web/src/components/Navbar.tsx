@@ -12,6 +12,7 @@ export default function Navbar() {
   const isWordsPage = pathname.startsWith("/words");
   const isReadingPage = pathname.startsWith("/reading");
   const isGrammarPage = pathname.startsWith("/grammar");
+  const isFlashcardsPage = pathname.startsWith("/flashcards");
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -113,6 +114,14 @@ export default function Navbar() {
             <Link to="/reading" className={isReadingPage ? "active" : ""}>
               Bài đọc
             </Link>
+            {user && (
+              <Link
+                to="/flashcards"
+                className={isFlashcardsPage ? "active" : ""}
+              >
+                Flashcard
+              </Link>
+            )}
             <Link to="/forum">Diễn đàn</Link>
           </nav>
           <input

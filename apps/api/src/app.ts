@@ -8,6 +8,7 @@ import readingRouter from "./modules/reading/reading.routes.js";
 import wordsRouter from "./modules/words/words.routes.js";
 import grammarRouter from "./modules/grammar/grammar.routes.js";
 import grammarAdminRouter from "./modules/grammar/grammar-admin.routes.js";
+import flashcardsRouter from "./modules/flashcards/flashcards.routes.js";
 
 import express from "express";
 import helmet from "helmet";
@@ -39,6 +40,7 @@ export function createApp() {
   app.use("/api/kanji", kanjiRouter);
   app.use("/api/reading", readingRouter);
   app.use("/api/words", wordsRouter);
+  app.use("/api/flashcards", flashcardsRouter);
   app.use("/api/grammar", grammarRouter);
   app.use("/api/admin/grammar", grammarAdminRouter);
   app.use("/api/users/me", profileRouter);

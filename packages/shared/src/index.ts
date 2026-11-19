@@ -6,6 +6,7 @@ export * from "./profile.js";
 export * from "./notifications.js";
 export * from "./kanji.js";
 export * from "./words.js";
+export * from "./flashcards.js";
 export * from "./grammar.js";
 export * from "./reading.js";
 
