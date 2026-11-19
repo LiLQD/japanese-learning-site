@@ -157,40 +157,56 @@
 
 .flashcard-deck-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  grid-auto-rows: 1fr;
+  gap: 28px;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.flashcard-deck-list-item {
+  display: flex;
+  min-width: 0;
+  min-height: 220px;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+
+.flashcard-deck-list-item:hover,
+.flashcard-deck-list-item:focus-within {
+  border-color: var(--color-brand);
+  transform: translateY(-2px);
 }
 
 .flashcard-deck-card {
   display: flex;
   width: 100%;
   min-height: 160px;
+  flex: 1;
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
   padding: 22px;
   color: var(--color-ink);
   text-align: left;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
+  box-sizing: border-box;
   font: inherit;
   cursor: pointer;
   text-decoration: none;
-  transition:
-    border-color 0.2s,
-    transform 0.2s;
 }
 
-.flashcard-deck-card:hover,
 .flashcard-deck-card:focus-visible,
-.flashcard-deck-card.selected {
-  border-color: var(--color-brand);
-  transform: translateY(-2px);
+.flashcard-study-deck-link:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: -4px;
 }
 
 .flashcard-deck-card-heading {
@@ -219,6 +235,28 @@
 .flashcard-deck-open {
   color: var(--color-brand);
   font-weight: 600;
+}
+
+.flashcard-empty .flashcard-deck-open,
+.flashcard-personal-empty .flashcard-deck-open {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 8px 14px;
+  color: white;
+  background: var(--color-brand);
+  border: 1px solid var(--color-brand);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.flashcard-empty .flashcard-deck-open:hover,
+.flashcard-personal-empty .flashcard-deck-open:hover {
+  background: var(--color-brand-hover);
 }
 
 .flashcard-cards-section {
@@ -276,6 +314,261 @@
   gap: 8px;
 }
 
+.flashcard-study-deck-link {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  align-self: flex-start;
+  box-sizing: border-box;
+  margin: auto 22px 18px;
+  padding: 8px 14px;
+  color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 35%, transparent);
+  border-radius: 8px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.flashcard-study-deck-link:hover {
+  background: color-mix(in srgb, var(--color-brand) 14%, transparent);
+}
+
+.flashcard-study-start-link {
+  display: inline-flex;
+  margin-bottom: 24px;
+  text-decoration: none;
+}
+
+.flashcard-study-main {
+  max-width: 900px;
+}
+
+.flashcard-study-back-button {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.flashcard-study,
+.flashcard-study-summary,
+.flashcard-study-empty {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.flashcard-study-heading,
+.flashcard-study-progress-row,
+.flashcard-study-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.flashcard-study-heading h1,
+.flashcard-study-summary h1,
+.flashcard-study-empty h1 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.flashcard-study-deck-name,
+.flashcard-study-progress-row {
+  color: var(--color-muted);
+}
+
+.flashcard-study-progress-row {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.flashcard-study-progress {
+  width: 100%;
+  height: 10px;
+  accent-color: var(--color-brand);
+}
+
+.flashcard-study-card {
+  display: grid;
+  min-height: 320px;
+  place-items: center;
+  gap: 20px;
+  padding: 28px;
+  color: var(--color-ink);
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  font: inherit;
+  cursor: pointer;
+  perspective: 1000px;
+}
+
+.flashcard-study-card:focus-visible,
+.flashcard-study button:focus-visible,
+.flashcard-study-summary button:focus-visible,
+.flashcard-study a:focus-visible,
+.flashcard-study-empty a:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 3px;
+}
+
+.flashcard-study-flip-inner {
+  display: grid;
+  width: 100%;
+  height: 220px;
+  min-height: 170px;
+  place-items: center;
+  transform-style: preserve-3d;
+  transition: transform 420ms ease;
+}
+
+.flashcard-study-card.is-flipped .flashcard-study-flip-inner {
+  transform: rotateY(180deg);
+}
+
+.flashcard-study-card-content {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+  overflow-wrap: anywhere;
+  text-align: center;
+  font-size: clamp(18px, 2.4vw, 26px);
+  font-weight: 700;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  backface-visibility: hidden;
+  line-break: auto;
+}
+
+.flashcard-study-card-content.is-long {
+  font-size: clamp(16px, 2vw, 20px);
+}
+
+.flashcard-study-card-content.is-very-long {
+  font-size: 16px;
+}
+
+.flashcard-study-front-face,
+.flashcard-study-back-face {
+  grid-area: 1 / 1;
+}
+
+.flashcard-study-back-face {
+  transform: rotateY(180deg);
+}
+
+.flashcard-study-side-label,
+.flashcard-study-flip-hint {
+  color: var(--color-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.flashcard-study-rating {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.flashcard-study-rating button,
+.flashcard-study-button,
+.flashcard-study-secondary,
+.flashcard-study-exit {
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.flashcard-study-rating button,
+.flashcard-study-secondary,
+.flashcard-study-exit {
+  color: var(--color-ink);
+  background: transparent;
+  border: 1px solid var(--color-line);
+}
+
+.flashcard-study-rating button.is-selected {
+  color: var(--color-brand);
+  border-color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 10%, transparent);
+}
+
+.flashcard-study-button {
+  color: white;
+  background: var(--color-brand);
+  border: 0;
+}
+
+.flashcard-study-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.flashcard-study-counts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.flashcard-study-counts div {
+  padding: 16px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+}
+
+.flashcard-study-counts dt {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.flashcard-study-counts dd {
+  margin: 8px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.flashcard-study-summary-link {
+  justify-self: center;
+  color: var(--color-brand);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flashcard-study-flip-inner {
+    transition: none;
+  }
+}
+
 .flashcard-secondary-button,
 .flashcard-danger-button {
   padding: 9px 13px;
@@ -318,5 +611,32 @@
 
   .flashcard-card-actions {
     grid-column: 2;
+  }
+
+  .flashcard-study-heading,
+  .flashcard-study-navigation {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .flashcard-study-counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flashcard-study-card {
+    min-height: 260px;
+    padding: 20px;
+  }
+
+  .flashcard-study-flip-inner {
+    height: 180px;
+  }
+
+  .flashcard-deck-list {
+    gap: 20px;
+  }
+
+  .flashcard-deck-list-item {
+    min-height: 200px;
   }
 }

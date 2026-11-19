@@ -6,11 +6,12 @@ type FlashcardDeckListViewProps = {
   isLoading: boolean;
   errorMessage: string;
   onRetry: () => void;
+  canStudy: boolean;
 };
 
-function renderDeck(deck: FlashcardDeckListItem) {
+function renderDeck(deck: FlashcardDeckListItem, canStudy: boolean) {
   return (
-    <li key={deck.id}>
+    <li key={deck.id} className="flashcard-deck-list-item">
       <Link to={`/flashcards/${deck.id}`} className="flashcard-deck-card">
         <span className="flashcard-deck-card-heading">{deck.name}</span>
         {deck.visibility === "SHARED" && (
@@ -22,6 +23,14 @@ function renderDeck(deck: FlashcardDeckListItem) {
         <span className="flashcard-deck-count">{deck.cardCount} thẻ</span>
         <span className="flashcard-deck-open">Mở bộ thẻ</span>
       </Link>
+      {canStudy && (
+        <Link
+          to={`/flashcards/${deck.id}/learn`}
+          className="flashcard-study-deck-link"
+        >
+          Bắt đầu học
+        </Link>
+      )}
     </li>
   );
 }
@@ -31,6 +40,7 @@ function FlashcardDeckListView({
   isLoading,
   errorMessage,
   onRetry,
+  canStudy,
 }: FlashcardDeckListViewProps) {
   if (isLoading) {
     return (
@@ -55,6 +65,9 @@ function FlashcardDeckListView({
     return (
       <section className="flashcard-empty">
         <p role="status">Bạn chưa có bộ flashcard nào</p>
+        <Link to="#flashcard-deck-form" className="flashcard-deck-open">
+          Tạo bộ flashcard
+        </Link>
       </section>
     );
   }
@@ -67,7 +80,9 @@ function FlashcardDeckListView({
       <section className="flashcard-deck-section">
         <h2>Bộ flashcard mẫu</h2>
         {sharedDecks.length > 0 ? (
-          <ul className="flashcard-deck-list">{sharedDecks.map(renderDeck)}</ul>
+          <ul className="flashcard-deck-list">
+            {sharedDecks.map((deck) => renderDeck(deck, canStudy))}
+          </ul>
         ) : (
           <p className="flashcard-note">Chưa có bộ flashcard mẫu.</p>
         )}
@@ -76,11 +91,14 @@ function FlashcardDeckListView({
         <h2>Bộ flashcard của tôi</h2>
         {personalDecks.length > 0 ? (
           <ul className="flashcard-deck-list">
-            {personalDecks.map(renderDeck)}
+            {personalDecks.map((deck) => renderDeck(deck, canStudy))}
           </ul>
         ) : (
           <div className="flashcard-personal-empty">
-            <p role="status">Bạn chưa có bộ flashcard cá nhân nào</p>
+            <p role="status">Bạn chưa có bộ flashcard nào</p>
+            <Link to="#flashcard-deck-form" className="flashcard-deck-open">
+              Tạo bộ flashcard
+            </Link>
           </div>
         )}
       </section>

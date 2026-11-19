@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { requireAuth } from "../../middleware/auth.js";
+import { requireAuth, requireRole } from "../../middleware/auth.js";
 import {
+  getFlashcardDeckForLearning,
   getFlashcardDeckDetail,
   getFlashcardDeckList,
   patchFlashcard,
@@ -12,6 +13,12 @@ import {
 const router = Router();
 
 router.get("/decks", requireAuth, getFlashcardDeckList);
+router.get(
+  "/decks/:deckId/learning",
+  requireAuth,
+  requireRole("USER"),
+  getFlashcardDeckForLearning,
+);
 router.get("/decks/:deckId", requireAuth, getFlashcardDeckDetail);
 router.post("/decks", requireAuth, postFlashcardDeck);
 router.post("/decks/:deckId/cards", requireAuth, postFlashcard);

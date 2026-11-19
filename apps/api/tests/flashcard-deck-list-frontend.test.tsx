@@ -32,10 +32,12 @@ function renderView({
   items = null,
   isLoading = false,
   errorMessage = "",
+  canStudy = true,
 }: {
   items?: FlashcardDeckListItem[] | null;
   isLoading?: boolean;
   errorMessage?: string;
+  canStudy?: boolean;
 } = {}) {
   return renderToStaticMarkup(
     createElement(
@@ -46,6 +48,7 @@ function renderView({
         isLoading,
         errorMessage,
         onRetry: () => {},
+        canStudy,
       }),
     ),
   );
@@ -62,6 +65,7 @@ describe("Flashcard deck list frontend", () => {
     const markup = renderView({ items: [] });
 
     expect(markup).toContain("Bạn chưa có bộ flashcard nào");
+    expect(markup).toContain('href="/flashcards#flashcard-deck-form"');
   });
 
   it("shows a friendly error and a retry action", () => {
@@ -86,7 +90,30 @@ describe("Flashcard deck list frontend", () => {
     expect(markup).toContain("12 thẻ");
     expect(markup).toContain('href="/flashcards/8"');
     expect(markup).toContain('href="/flashcards/9"');
+    expect(markup).toContain('href="/flashcards/9/learn"');
+    expect(markup).toContain('href="/flashcards/8/learn"');
     expect(markup).not.toContain("flashcard answer");
+  });
+
+  it("does not show study actions to administrators", () => {
+    const markup = renderView({ items: decks, canStudy: false });
+
+    expect(markup).not.toContain('href="/flashcards/8/learn"');
+    expect(markup).not.toContain('href="/flashcards/9/learn"');
+  });
+
+  it("keeps each study action inside the same deck card container", () => {
+    const markup = renderView({ items: decks });
+    const cards = Array.from(
+      markup.matchAll(/<li class="flashcard-deck-list-item">([\s\S]*?)<\/li>/g),
+      ([, contents]) => contents,
+    );
+
+    expect(cards).toHaveLength(2);
+    expect(cards[0]).toContain('href="/flashcards/8"');
+    expect(cards[0]).toContain('href="/flashcards/8/learn"');
+    expect(cards[1]).toContain('href="/flashcards/9"');
+    expect(cards[1]).toContain('href="/flashcards/9/learn"');
   });
 
   it("keeps the shared group visible when the user has no personal decks", () => {
@@ -94,6 +121,7 @@ describe("Flashcard deck list frontend", () => {
 
     expect(markup).toContain("Từ vựng N5");
     expect(markup).toContain("Bộ flashcard của tôi");
-    expect(markup).toContain("Bạn chưa có bộ flashcard cá nhân nào");
+    expect(markup).toContain("Bạn chưa có bộ flashcard nào");
+    expect(markup).toContain('href="/flashcards#flashcard-deck-form"');
   });
 });

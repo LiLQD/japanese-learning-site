@@ -51,6 +51,7 @@ function FlashcardDeckListPage() {
           </p>
         </header>
         <form
+          id="flashcard-deck-form"
           className="flashcard-form flashcard-deck-form"
           onSubmit={(event) => {
             event.preventDefault();
@@ -90,6 +91,7 @@ function FlashcardDeckListPage() {
           isLoading={query.isPending}
           errorMessage={errorMessage}
           onRetry={() => void query.refetch()}
+          canStudy={user?.role === "USER"}
         />
       </main>
     </div>

@@ -107,9 +107,19 @@ function FlashcardDeckPage() {
                 <p className="flashcard-description">{deck.description}</p>
               )}
             </header>
+            {user?.role === "USER" && (
+              <Link
+                to={`/flashcards/${deck.id}/learn`}
+                className="flashcard-create-button flashcard-study-start-link"
+              >
+                Bắt đầu học
+              </Link>
+            )}
             {!canEdit && (
               <p className="flashcard-note">
-                Đây là bộ flashcard dùng chung và chỉ có thể xem.
+                {user?.role === "USER"
+                  ? "Đây là bộ flashcard dùng chung; bạn có thể học nhưng không thể chỉnh sửa."
+                  : "Đây là bộ flashcard dùng chung và chỉ có thể xem."}
               </p>
             )}
             {canEdit && (
