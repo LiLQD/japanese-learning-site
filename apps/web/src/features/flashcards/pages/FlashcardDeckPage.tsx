@@ -15,6 +15,7 @@ function FlashcardDeckPage() {
   const { user } = useAuth();
   const { deckId: deckIdParam } = useParams();
   const deckId = Number(deckIdParam);
+  const isValidDeckId = Number.isInteger(deckId) && deckId > 0;
   const queryClient = useQueryClient();
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
@@ -26,7 +27,7 @@ function FlashcardDeckPage() {
   const query = useQuery({
     queryKey: ["flashcardDeck", user?.id, deckId],
     queryFn: () => fetchFlashcardDeck(deckId),
-    enabled: user !== null && Number.isInteger(deckId) && deckId > 0,
+    enabled: user !== null && isValidDeckId,
     retry: false,
   });
 
@@ -78,6 +79,11 @@ function FlashcardDeckPage() {
         <Link to="/flashcards" className="flashcard-back-link">
           ← Danh sách bộ flashcard
         </Link>
+        {!isValidDeckId && (
+          <div className="flashcard-error" role="alert">
+            Không tìm thấy bộ flashcard.
+          </div>
+        )}
         {query.isPending && (
           <p className="flashcard-note" role="status">
             Đang tải bộ flashcard...
