@@ -52,7 +52,7 @@ type MemoryClient = FlashcardSeedDatabaseClient & {
     string,
     {
       id: number;
-      seedKey: string;
+      seedKey: string | null;
       deckId: number;
       front: string;
       back: string;
@@ -83,7 +83,7 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
     string,
     {
       id: number;
-      seedKey: string;
+      seedKey: string | null;
       deckId: number;
       front: string;
       back: string;
@@ -181,7 +181,9 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
         where: Prisma.FlashcardWhereUniqueInput & { seedKey: string };
       }) => {
         const card = cards.get(where.seedKey);
-        return card ? { id: card.id, deckId: card.deckId } : null;
+        return card
+          ? { id: card.id, deckId: card.deckId, position: card.position }
+          : null;
       },
       create: async ({
         data,
@@ -214,6 +216,9 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
           seedKey: string;
           deckId: number;
         };
+        data: Prisma.FlashcardUpdateManyMutationInput & {
+          position: number;
+        };
       }) => {
         cardUpdateCount++;
         if (failure.cardUpdateAt === cardUpdateCount) {
@@ -228,8 +233,53 @@ function createMemoryClient(): MemoryClient & FlashcardSeedClient {
         if (!entry) {
           return { count: 0 };
         }
+        if (
+          [...cards.values()].some(
+            (card) =>
+              card !== entry[1] &&
+              card.deckId === where.deckId &&
+              card.position === data.position,
+          )
+        ) {
+          throw new Error(
+            `Unique position conflict: ${where.deckId}:${data.position}`,
+          );
+        }
         Object.assign(entry[1], data);
         return { count: 1 };
+      },
+      deleteMany: async ({
+        where,
+      }: {
+        where: {
+          deckId?: number;
+          id?: number | { in: number[] };
+          seedKey?: string | { not: null; notIn?: string[] };
+        };
+      }) => {
+        let count = 0;
+        for (const [seedKey, card] of cards) {
+          const matchesId =
+            where.id === undefined ||
+            (typeof where.id === "number"
+              ? card.id === where.id
+              : (where.id.in?.includes(card.id) ?? false));
+          const matchesDeck =
+            where.deckId === undefined || card.deckId === where.deckId;
+          const seedKeyFilter = where.seedKey;
+          const matchesSeedKey =
+            seedKeyFilter === undefined ||
+            (typeof seedKeyFilter === "string"
+              ? card.seedKey === seedKeyFilter
+              : card.seedKey !== null &&
+                !seedKeyFilter.notIn?.includes(card.seedKey));
+
+          if (matchesId && matchesDeck && matchesSeedKey) {
+            cards.delete(seedKey);
+            count++;
+          }
+        }
+        return { count };
       },
     },
   };
@@ -409,6 +459,65 @@ describe("Flashcard seed", () => {
         (deck) => deck.visibility === "SHARED" && deck.userId === null,
       ),
     ).toBe(true);
+  });
+
+  it("removes obsolete seeded cards without deleting unkeyed cards", async () => {
+    const client = createMemoryClient();
+    const source = {
+      vocabulary: [...vocabulary(5, 50), ...vocabulary(4, 50)],
+      grammars: grammar(20),
+    };
+
+    await seedFlashcardDecks(client, source);
+    const n5DeckId = client.decks.get("vocabulary-n5")?.id;
+    expect(n5DeckId).toBeDefined();
+    client.cards.set("flashcard:vocabulary-n5:31", {
+      id: 1000,
+      seedKey: "flashcard:vocabulary-n5:31",
+      deckId: n5DeckId!,
+      front: "obsolete",
+      back: "obsolete",
+      position: 31,
+    });
+    client.cards.set("custom-card", {
+      id: 1001,
+      seedKey: null,
+      deckId: n5DeckId!,
+      front: "custom",
+      back: "custom",
+      position: 32,
+    });
+
+    await seedFlashcardDecks(client, source);
+
+    expect(client.cards.has("flashcard:vocabulary-n5:31")).toBe(false);
+    expect(client.cards.has("custom-card")).toBe(true);
+    expect(client.cards.size).toBe(81);
+  });
+
+  it("recreates seeded cards whose positions changed before updating them", async () => {
+    const client = createMemoryClient();
+    const source = {
+      vocabulary: [...vocabulary(5, 50), ...vocabulary(4, 50)],
+      grammars: grammar(20),
+    };
+
+    await seedFlashcardDecks(client, source);
+    const firstCard = client.cards.get("flashcard:vocabulary-n5:1");
+    const secondCard = client.cards.get("flashcard:vocabulary-n5:2");
+    expect(firstCard).toBeDefined();
+    expect(secondCard).toBeDefined();
+    firstCard!.position = 2;
+    secondCard!.position = 1;
+
+    await seedFlashcardDecks(client, source);
+
+    expect(client.cards.get("flashcard:vocabulary-n5:1")).toMatchObject({
+      position: 1,
+    });
+    expect(client.cards.get("flashcard:vocabulary-n5:2")).toMatchObject({
+      position: 2,
+    });
   });
 
   it("rolls back all writes when a deck update affects no row", async () => {

@@ -226,7 +226,7 @@ async function seedFlashcardDecksInTransaction(
 
   const existingCards = new Map<
     string,
-    { id: number; deckId: number } | null
+    { id: number; deckId: number; position: number } | null
   >();
 
   for (const deck of decks) {
@@ -235,7 +235,7 @@ async function seedFlashcardDecksInTransaction(
     for (const card of deck.cards) {
       const existing = await prisma.flashcard.findUnique({
         where: { seedKey: card.seedKey },
-        select: { id: true, deckId: true },
+        select: { id: true, deckId: true, position: true },
       });
 
       if (existing && (!existingDeck || existing.deckId !== existingDeck.id)) {
@@ -281,9 +281,37 @@ async function seedFlashcardDecksInTransaction(
       });
       deckId = created.id;
     }
+
+    await prisma.flashcard.deleteMany({
+      where: {
+        deckId,
+        seedKey: { not: null, notIn: deck.cards.map((card) => card.seedKey) },
+      },
+    });
+
+    const recreatedCards = new Set<string>();
     for (const card of deck.cards) {
       const existingCard = existingCards.get(card.seedKey);
-      if (existingCard) {
+      if (existingCard && existingCard.position !== card.position) {
+        const deleted = await prisma.flashcard.deleteMany({
+          where: {
+            id: existingCard.id,
+            deckId,
+            seedKey: card.seedKey,
+          },
+        });
+        if (deleted.count !== 1) {
+          throw new Error(
+            `Flashcard seedKey "${card.seedKey}" changed decks while reseeding its position.`,
+          );
+        }
+        recreatedCards.add(card.seedKey);
+      }
+    }
+
+    for (const card of deck.cards) {
+      const existingCard = existingCards.get(card.seedKey);
+      if (existingCard && !recreatedCards.has(card.seedKey)) {
         const updated = await prisma.flashcard.updateMany({
           where: {
             id: existingCard.id,
