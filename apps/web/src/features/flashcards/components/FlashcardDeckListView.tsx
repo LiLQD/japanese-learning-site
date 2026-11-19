@@ -1,21 +1,36 @@
 import type { FlashcardDeckListItem } from "@app/shared";
+import { Link } from "react-router";
 
 type FlashcardDeckListViewProps = {
   decks: FlashcardDeckListItem[] | null;
   isLoading: boolean;
   errorMessage: string;
-  selectedDeckId: number | null;
   onRetry: () => void;
-  onSelectDeck: (deckId: number) => void;
 };
+
+function renderDeck(deck: FlashcardDeckListItem) {
+  return (
+    <li key={deck.id}>
+      <Link to={`/flashcards/${deck.id}`} className="flashcard-deck-card">
+        <span className="flashcard-deck-card-heading">{deck.name}</span>
+        {deck.visibility === "SHARED" && (
+          <span className="flashcard-deck-visibility">Dùng chung</span>
+        )}
+        {deck.description && (
+          <span className="flashcard-deck-description">{deck.description}</span>
+        )}
+        <span className="flashcard-deck-count">{deck.cardCount} thẻ</span>
+        <span className="flashcard-deck-open">Mở bộ thẻ</span>
+      </Link>
+    </li>
+  );
+}
 
 function FlashcardDeckListView({
   decks,
   isLoading,
   errorMessage,
-  selectedDeckId,
   onRetry,
-  onSelectDeck,
 }: FlashcardDeckListViewProps) {
   if (isLoading) {
     return (
@@ -40,47 +55,12 @@ function FlashcardDeckListView({
     return (
       <section className="flashcard-empty">
         <p role="status">Bạn chưa có bộ flashcard nào</p>
-        <button
-          type="button"
-          className="flashcard-create-button"
-          disabled
-          title="Chức năng tạo bộ flashcard chưa khả dụng."
-        >
-          Tạo bộ flashcard mới
-        </button>
       </section>
     );
   }
 
   const sharedDecks = decks.filter((deck) => deck.visibility === "SHARED");
   const personalDecks = decks.filter((deck) => deck.visibility === "PERSONAL");
-  const selectedDeck = decks.find((deck) => deck.id === selectedDeckId);
-
-  const renderDeck = (deck: FlashcardDeckListItem) => {
-    const isSelected = deck.id === selectedDeckId;
-
-    return (
-      <li key={deck.id}>
-        <button
-          type="button"
-          className={`flashcard-deck-card${isSelected ? " selected" : ""}`}
-          aria-pressed={isSelected}
-          onClick={() => onSelectDeck(deck.id)}
-        >
-          <span className="flashcard-deck-card-heading">{deck.name}</span>
-          {deck.visibility === "SHARED" && (
-            <span className="flashcard-deck-visibility">Dùng chung</span>
-          )}
-          {deck.description && (
-            <span className="flashcard-deck-description">
-              {deck.description}
-            </span>
-          )}
-          <span className="flashcard-deck-count">{deck.cardCount} thẻ</span>
-        </button>
-      </li>
-    );
-  };
 
   return (
     <>
@@ -101,22 +81,9 @@ function FlashcardDeckListView({
         ) : (
           <div className="flashcard-personal-empty">
             <p role="status">Bạn chưa có bộ flashcard cá nhân nào</p>
-            <button
-              type="button"
-              className="flashcard-create-button"
-              disabled
-              title="Chức năng tạo bộ flashcard chưa khả dụng."
-            >
-              Tạo bộ flashcard mới
-            </button>
           </div>
         )}
       </section>
-      {selectedDeck && (
-        <p className="flashcard-selection-status" role="status">
-          Đã chọn bộ flashcard: {selectedDeck.name}
-        </p>
-      )}
     </>
   );
 }

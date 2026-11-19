@@ -2,6 +2,7 @@
 import { createElement } from "../../web/node_modules/react/index.js";
 // @ts-expect-error React DOM is resolved from the web workspace for this SSR test.
 import { renderToStaticMarkup } from "../../web/node_modules/react-dom/server.js";
+import { MemoryRouter } from "../../web/node_modules/react-router/dist/development/index.js";
 import { describe, expect, it } from "vitest";
 import type { FlashcardDeckListItem } from "@app/shared";
 import FlashcardDeckListView from "../../web/src/features/flashcards/components/FlashcardDeckListView.js";
@@ -31,22 +32,22 @@ function renderView({
   items = null,
   isLoading = false,
   errorMessage = "",
-  selectedDeckId = null,
 }: {
   items?: FlashcardDeckListItem[] | null;
   isLoading?: boolean;
   errorMessage?: string;
-  selectedDeckId?: number | null;
 } = {}) {
   return renderToStaticMarkup(
-    createElement(FlashcardDeckListView, {
-      decks: items,
-      isLoading,
-      errorMessage,
-      selectedDeckId,
-      onRetry: () => {},
-      onSelectDeck: () => {},
-    }),
+    createElement(
+      MemoryRouter,
+      { initialEntries: ["/flashcards"] },
+      createElement(FlashcardDeckListView, {
+        decks: items,
+        isLoading,
+        errorMessage,
+        onRetry: () => {},
+      }),
+    ),
   );
 }
 
@@ -57,12 +58,10 @@ describe("Flashcard deck list frontend", () => {
     );
   });
 
-  it("shows the requested empty state and a disabled create option", () => {
+  it("shows the requested empty state", () => {
     const markup = renderView({ items: [] });
 
     expect(markup).toContain("Bạn chưa có bộ flashcard nào");
-    expect(markup).toContain("Tạo bộ flashcard mới");
-    expect(markup).toContain('disabled=""');
   });
 
   it("shows a friendly error and a retry action", () => {
@@ -75,8 +74,8 @@ describe("Flashcard deck list frontend", () => {
     expect(markup).toContain("Thử tải lại");
   });
 
-  it("shows deck metadata and lets the user identify a selected deck", () => {
-    const markup = renderView({ items: decks, selectedDeckId: 8 });
+  it("shows deck metadata and links each deck to its detail page", () => {
+    const markup = renderView({ items: decks });
 
     expect(markup).toContain("Bộ flashcard mẫu");
     expect(markup).toContain("Bộ flashcard của tôi");
@@ -85,7 +84,8 @@ describe("Flashcard deck list frontend", () => {
     expect(markup).toContain("Các từ vựng cơ bản.");
     expect(markup).toContain("Deck cá nhân");
     expect(markup).toContain("12 thẻ");
-    expect(markup).toContain('aria-pressed="true"');
+    expect(markup).toContain('href="/flashcards/8"');
+    expect(markup).toContain('href="/flashcards/9"');
     expect(markup).not.toContain("flashcard answer");
   });
 
