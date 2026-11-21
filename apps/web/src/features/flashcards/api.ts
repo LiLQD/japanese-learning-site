@@ -100,7 +100,7 @@ export function fetchFlashcardDeckForLearning(
   return flashcardRequest(
     `/api/flashcards/decks/${deckId}/learning`,
     { method: "GET" },
-    "KhÃ´ng thá»ƒ táº£i bá»™ flashcard.",
+    "Không thể tải bộ flashcard.",
   );
 }
 

@@ -338,6 +338,7 @@ describe("GET /api/flashcards/decks/:deckId/learning", () => {
       .set("Cookie", "yume_session=valid-token");
 
     expect(res.status).toBe(404);
+    expect(res.body.error.message).toBe("Không tìm thấy bộ flashcard");
     expect(flashcardDeckFindFirstMock).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {

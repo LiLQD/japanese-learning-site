@@ -134,7 +134,7 @@ export async function getFlashcardDeckForLearning(
   });
 
   if (!deck) {
-    throw notFound("KhÃ´ng tÃ¬m tháº¥y bá»™ flashcard");
+    throw notFound("Không tìm thấy bộ flashcard");
   }
 
   const { _count, ...deckWithoutCount } = deck;

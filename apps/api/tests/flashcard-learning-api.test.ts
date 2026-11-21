@@ -29,4 +29,19 @@ describe("fetchFlashcardDeckForLearning", () => {
       "Lỗi kết nối!",
     );
   });
+
+  it("uses the localized fallback when the learning endpoint returns no message", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        json: async () => ({}),
+      }),
+    );
+
+    await expect(fetchFlashcardDeckForLearning(7)).rejects.toThrow(
+      "Không thể tải bộ flashcard.",
+    );
+  });
 });
