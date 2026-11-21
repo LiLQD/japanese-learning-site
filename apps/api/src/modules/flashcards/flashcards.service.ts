@@ -121,6 +121,32 @@ export async function getFlashcardDeck(
   };
 }
 
+export async function getFlashcardDeckForLearning(
+  userId: number,
+  deckId: number,
+): Promise<FlashcardDeckDetailResponse> {
+  const deck = await prisma.flashcardDeck.findFirst({
+    where: {
+      id: deckId,
+      OR: [{ visibility: "SHARED" }, { visibility: "PERSONAL", userId }],
+    },
+    select: flashcardDeckDetailSelect,
+  });
+
+  if (!deck) {
+    throw notFound("Không tìm thấy bộ flashcard");
+  }
+
+  const { _count, ...deckWithoutCount } = deck;
+  return {
+    deck: {
+      ...mapDeck(deckWithoutCount),
+      cardCount: _count.cards,
+      cards: deck.cards.map(mapCard),
+    },
+  };
+}
+
 async function getPersonalDeck(
   db: FlashcardDb,
   userId: number,

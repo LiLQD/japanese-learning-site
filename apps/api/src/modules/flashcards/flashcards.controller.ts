@@ -12,6 +12,7 @@ import {
   createFlashcardDeck,
   deleteFlashcard,
   getFlashcardDeck,
+  getFlashcardDeckForLearning as loadFlashcardDeckForLearning,
   listFlashcardDecks,
   updateFlashcard,
 } from "./flashcards.service.js";
@@ -53,6 +54,28 @@ export const getFlashcardDeckDetail: RequestHandler = async (
     res
       .status(200)
       .json(await getFlashcardDeck(getUserId(req), params.data.deckId));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getFlashcardDeckForLearning: RequestHandler = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    const params = flashcardDeckIdParamSchema.safeParse(req.params);
+    if (!params.success) {
+      next(badRequest(validationMessage(params)));
+      return;
+    }
+
+    res
+      .status(200)
+      .json(
+        await loadFlashcardDeckForLearning(getUserId(req), params.data.deckId),
+      );
   } catch (error) {
     next(error);
   }

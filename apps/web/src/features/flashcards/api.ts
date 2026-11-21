@@ -94,6 +94,16 @@ export function fetchFlashcardDeck(
   );
 }
 
+export function fetchFlashcardDeckForLearning(
+  deckId: number,
+): Promise<FlashcardDeckDetailResponse> {
+  return flashcardRequest(
+    `/api/flashcards/decks/${deckId}/learning`,
+    { method: "GET" },
+    "Không thể tải bộ flashcard.",
+  );
+}
+
 export function createFlashcardDeck(
   input: FlashcardDeckCreateInput,
 ): Promise<{ deck: FlashcardDeckListResponse["decks"][number] }> {
